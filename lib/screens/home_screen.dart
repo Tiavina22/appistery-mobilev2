@@ -48,75 +48,52 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.black87,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           elevation: 0,
-          leading: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Consumer<AuthProvider>(
-              builder: (context, authProvider, _) {
-                final avatarData = authProvider.user?['avatar'] as String?;
-                return GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedIndex = 3);
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.1),
-                    ),
-                    child: avatarData != null && avatarData.isNotEmpty
-                        ? ClipOval(child: _buildImageFromString(avatarData))
-                        : const Icon(Icons.account_circle, color: Colors.white),
-                  ),
-                );
-              },
-            ),
-          ),
-          title: Text(
-            'app_name'.tr(),
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
+          toolbarHeight: 60,
+          title: Image.asset('assets/logo/logo-appistery-no.png', height: 28),
           actions: [
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onSelected: (String value) {
-                if (value == 'logout') {
-                  _logout(context);
-                } else if (value == 'settings') {
-                  setState(() => _selectedIndex = 3);
-                }
+            // Icône notifications
+            IconButton(
+              icon: const Icon(
+                Icons.notifications_none,
+                color: Colors.white,
+                size: 26,
+              ),
+              onPressed: () {
+                // TODO: Notifications
               },
-              itemBuilder: (BuildContext context) => [
-                PopupMenuItem(
-                  value: 'settings',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.settings),
-                      const SizedBox(width: 10),
-                      Text('settings'.tr()),
-                    ],
-                  ),
-                ),
-                PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      const Icon(Icons.logout, color: Colors.red),
-                      const SizedBox(width: 10),
-                      Text(
-                        'logout'.tr(),
-                        style: const TextStyle(color: Colors.red),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ),
             const SizedBox(width: 8),
+            // Avatar
+            Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  final avatarData = authProvider.user?['avatar'] as String?;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _selectedIndex = 3);
+                    },
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.white.withOpacity(0.1),
+                      ),
+                      child: avatarData != null && avatarData.isNotEmpty
+                          ? ClipOval(child: _buildAvatarImage(avatarData))
+                          : const Icon(
+                              Icons.account_circle,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
         body: _buildBody(),
@@ -126,8 +103,10 @@ class _HomeScreenState extends State<HomeScreen> {
             setState(() => _selectedIndex = index);
           },
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.black,
-          selectedItemColor: const Color(0xFF1DB954),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          selectedItemColor: Theme.of(context).brightness == Brightness.dark
+              ? Colors.white
+              : const Color(0xFF1DB954),
           unselectedItemColor: Colors.grey,
           selectedFontSize: 12,
           unselectedFontSize: 12,
@@ -153,6 +132,23 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'settings'.tr(),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(String label, int index) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () {
+        setState(() => _selectedIndex = index);
+      },
+      child: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? Colors.white : Colors.grey[400],
+          fontSize: 14,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         ),
       ),
     );
@@ -499,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (stories.isNotEmpty) {
         return [
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -538,7 +534,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (stories.isNotEmpty) {
         sections.add(
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -832,6 +828,67 @@ class _HomeScreenState extends State<HomeScreen> {
         color: Colors.grey.shade800,
         child: const Icon(Icons.image_not_supported, color: Colors.grey),
       );
+    }
+  }
+
+  // Helper method for avatar images (smaller, circular)
+  Widget _buildAvatarImage(String imageData) {
+    try {
+      // Check if it's a base64 string
+      if (imageData.startsWith('data:image') || !imageData.startsWith('http')) {
+        // It's likely base64
+        String base64String = imageData;
+
+        // Remove data URI prefix if present (e.g., 'data:image/png;base64,')
+        if (imageData.startsWith('data:image')) {
+          base64String = imageData.split(',').last;
+        }
+
+        return Image.memory(
+          const Base64Decoder().convert(base64String),
+          fit: BoxFit.cover,
+          width: 32,
+          height: 32,
+          errorBuilder: (context, error, stackTrace) {
+            print('DEBUG Avatar: Error decoding base64 image: $error');
+            return const Icon(
+              Icons.account_circle,
+              color: Colors.white,
+              size: 24,
+            );
+          },
+        );
+      } else {
+        // It's a URL
+        return Image.network(
+          imageData,
+          fit: BoxFit.cover,
+          width: 32,
+          height: 32,
+          errorBuilder: (context, error, stackTrace) {
+            print('DEBUG Avatar: Error loading network image: $error');
+            return const Icon(
+              Icons.account_circle,
+              color: Colors.white,
+              size: 24,
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            );
+          },
+        );
+      }
+    } catch (e) {
+      print('DEBUG Avatar: Exception in _buildAvatarImage: $e');
+      return const Icon(Icons.account_circle, color: Colors.white, size: 24);
     }
   }
 

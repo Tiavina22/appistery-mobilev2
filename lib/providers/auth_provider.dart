@@ -22,7 +22,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _checkLoginStatus() async {
     _isLoggedIn = await _authService.isLoggedIn();
     if (_isLoggedIn) {
-      _user = await _authService.getUserFromToken();
+      // Récupérer le profil complet depuis l'API
+      _user = await _authService.getUserProfile();
     }
     notifyListeners();
   }

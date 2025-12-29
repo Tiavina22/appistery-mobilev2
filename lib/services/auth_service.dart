@@ -197,6 +197,22 @@ class AuthService {
     await deleteToken();
   }
 
+  // Récupérer le profil complet de l'utilisateur connecté
+  Future<Map<String, dynamic>?> getUserProfile() async {
+    try {
+      final dio = await getDioWithAuth();
+      final response = await dio.get('/api/auth/profile');
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        return response.data['user'];
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user profile: $e');
+      return null;
+    }
+  }
+
   // Récupérer les informations de l'utilisateur depuis le token
   Future<Map<String, dynamic>?> getUserFromToken() async {
     final token = await getToken();
