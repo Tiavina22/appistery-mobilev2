@@ -10,6 +10,7 @@ import 'screens/login_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/story_provider.dart';
+import 'providers/websocket_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,6 +27,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => ThemeProvider()),
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => StoryProvider()),
+          ChangeNotifierProvider(create: (_) => WebSocketProvider()),
         ],
         child: const MainApp(),
       ),

@@ -5,6 +5,7 @@ import 'dart:convert';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/story_provider.dart';
+import '../providers/websocket_provider.dart';
 import '../services/story_service.dart';
 import 'login_screen.dart';
 
@@ -53,6 +54,50 @@ class _HomeScreenState extends State<HomeScreen> {
           toolbarHeight: 60,
           title: Image.asset('assets/logo/logo-appistery-no.png', height: 28),
           actions: [
+            // Indicateur WebSocket
+            Consumer<WebSocketProvider>(
+              builder: (context, wsProvider, _) {
+                return Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: wsProvider.isConnected
+                        ? Colors.green.withOpacity(0.2)
+                        : Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: wsProvider.isConnected
+                              ? Colors.green
+                              : Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        wsProvider.isConnected ? 'En ligne' : 'Hors ligne',
+                        style: TextStyle(
+                          color: wsProvider.isConnected
+                              ? Colors.green
+                              : Colors.red,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
             // Icône notifications
             IconButton(
               icon: const Icon(
@@ -560,7 +605,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 12),
                 // Stories in horizontal list
                 SizedBox(
-                  height: 240,
+                  height: 180,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: stories.length,
@@ -600,67 +645,24 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Container(
         width: 140,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey.shade900,
         ),
-        child: Stack(
-          children: [
-            // Background image with base64 or URL support
-            if (story.coverImage != null && story.coverImage!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: _buildImageFromString(story.coverImage!),
-              )
-            else
-              Container(
-                width: 140,
-                color: Colors.grey.shade800,
-                child: const Center(
-                  child: Icon(Icons.image_not_supported, color: Colors.grey),
-                ),
-              ),
-            // Gradient overlay
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      story.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: story.coverImage != null && story.coverImage!.isNotEmpty
+              ? _buildImageFromString(story.coverImage!)
+              : Container(
+                  width: 140,
+                  color: Colors.grey.shade900,
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                      size: 40,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      story.author,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ],
         ),
       ),
     );
@@ -690,78 +692,26 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: Colors.grey.shade800,
+          borderRadius: BorderRadius.circular(8),
+          color: Colors.grey.shade900,
         ),
-        child: Stack(
-          children: [
-            if (story.coverImage != null && story.coverImage!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: _buildImageFromString(story.coverImage!),
-              )
-            else
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.grey.shade800,
-                ),
-                child: const Center(
-                  child: Icon(Icons.image_not_supported, color: Colors.grey),
-                ),
-              ),
-            Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.8)],
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      story.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: story.coverImage != null && story.coverImage!.isNotEmpty
+              ? _buildImageFromString(story.coverImage!)
+              : Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey.shade900,
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.image_not_supported,
+                      color: Colors.grey,
+                      size: 60,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      story.author,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.book, size: 12),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${story.chapters} chapters',
-                          style: const TextStyle(fontSize: 11),
-                        ),
-                      ],
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ],
         ),
       ),
     );
