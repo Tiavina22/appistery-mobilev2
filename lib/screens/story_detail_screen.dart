@@ -3,7 +3,10 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../services/story_service.dart';
+import '../services/reading_service.dart';
 import '../providers/story_provider.dart';
+import 'author_profile_screen.dart';
+import 'reader_screen.dart';
 
 class StoryDetailScreen extends StatefulWidget {
   final Story story;
@@ -16,6 +19,7 @@ class StoryDetailScreen extends StatefulWidget {
 
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
+  bool _isLoadingStory = false;
 
   @override
   Widget build(BuildContext context) {
@@ -177,13 +181,97 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                       Expanded(
                         flex: 2,
                         child: ElevatedButton.icon(
-                          onPressed: () {
-                            // TODO: Naviguer vers le lecteur
-                          },
-                          icon: const Icon(Icons.play_arrow, size: 28),
-                          label: const Text(
-                            'Lire',
-                            style: TextStyle(
+                          onPressed: _isLoadingStory
+                              ? null
+                              : () async {
+                                  setState(() => _isLoadingStory = true);
+                                  try {
+                                    // Charger les détails complets de l'histoire avec les chapitres
+                                    final storyService = StoryService();
+                                    final fullStory = await storyService
+                                        .getStoryById(widget.story.id);
+
+                                    // Vérifier qu'il y a des chapitres
+                                    if (fullStory.chaptersList.isEmpty) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Cette histoire n\'a pas encore de chapitres',
+                                            ),
+                                            backgroundColor: Colors.orange,
+                                          ),
+                                        );
+                                      }
+                                      return;
+                                    }
+
+                                    // Récupérer la dernière position de lecture
+                                    final readingService = ReadingService();
+                                    final lastPosition = await readingService
+                                        .getLastPosition(fullStory.id);
+
+                                    int startChapter = 0;
+                                    if (lastPosition != null &&
+                                        lastPosition['chapter_id'] != null) {
+                                      // Trouver l'index du chapitre
+                                      final chapterIndex = fullStory
+                                          .chaptersList
+                                          .indexWhere(
+                                            (c) =>
+                                                c['id'] ==
+                                                lastPosition['chapter_id'],
+                                          );
+                                      if (chapterIndex >= 0) {
+                                        startChapter = chapterIndex;
+                                      }
+                                    }
+
+                                    if (mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => ReaderScreen(
+                                            story: fullStory,
+                                            initialChapterIndex: startChapter,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Erreur: $e'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() => _isLoadingStory = false);
+                                    }
+                                  }
+                                },
+                          icon: _isLoadingStory
+                              ? const SizedBox(
+                                  width: 28,
+                                  height: 28,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.black,
+                                    ),
+                                  ),
+                                )
+                              : const Icon(Icons.play_arrow, size: 28),
+                          label: Text(
+                            _isLoadingStory ? 'Chargement...' : 'Lire',
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
@@ -415,62 +503,77 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
   }
 
   Widget _buildAuthorSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Row(
-        children: [
-          // Avatar de l'auteur
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
-              shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () {
+        // Naviguer vers le profil de l'auteur
+        // Note: Pour l'instant on utilise un ID fictif, il faudra récupérer le vrai author_id
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AuthorProfileScreen(
+              authorId: 1, // TODO: Récupérer le vrai author_id depuis la Story
+              authorName: widget.story.author,
             ),
-            child: const Icon(Icons.person, color: Colors.white70, size: 30),
           ),
-          const SizedBox(width: 16),
-          // Infos auteur
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.story.author,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white12),
+        ),
+        child: Row(
+          children: [
+            // Avatar de l'auteur
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person, color: Colors.white70, size: 30),
+            ),
+            const SizedBox(width: 16),
+            // Infos auteur
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.story.author,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Voir tous les ouvrages',
-                  style: TextStyle(color: Colors.blue, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-          // Bouton suivre
-          OutlinedButton(
-            onPressed: () {
-              // TODO: Suivre l'auteur
-            },
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white70),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Voir tous les ouvrages',
+                    style: TextStyle(color: Colors.blue, fontSize: 14),
+                  ),
+                ],
               ),
             ),
-            child: const Text('Suivre'),
-          ),
-        ],
+            // Bouton suivre
+            OutlinedButton(
+              onPressed: () {
+                // TODO: Suivre l'auteur
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white70),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text('Suivre'),
+            ),
+          ],
+        ),
       ),
     );
   }

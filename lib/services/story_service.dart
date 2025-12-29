@@ -173,6 +173,7 @@ class Story {
   final double? rating;
   final bool isFavorite;
   final String genre;
+  final List<Map<String, dynamic>> chaptersList;
 
   Story({
     required this.id,
@@ -184,6 +185,7 @@ class Story {
     this.rating,
     this.isFavorite = false,
     required this.genre,
+    this.chaptersList = const [],
   });
 
   factory Story.fromJson(Map<String, dynamic> json) {
@@ -227,6 +229,22 @@ class Story {
       genre = json['genre']['title'] ?? 'Story';
     }
 
+    // Gérer la liste des chapitres
+    List<Map<String, dynamic>> chaptersList = [];
+    if (json['chaptersList'] is List) {
+      chaptersList = List<Map<String, dynamic>>.from(
+        json['chaptersList'].map((ch) => Map<String, dynamic>.from(ch)),
+      );
+    } else if (json['chapters'] is List) {
+      chaptersList = List<Map<String, dynamic>>.from(
+        json['chapters'].map((ch) => Map<String, dynamic>.from(ch)),
+      );
+    } else if (json['Chapters'] is List) {
+      chaptersList = List<Map<String, dynamic>>.from(
+        json['Chapters'].map((ch) => Map<String, dynamic>.from(ch)),
+      );
+    }
+
     return Story(
       id: json['id'] ?? 0,
       title: title,
@@ -237,6 +255,7 @@ class Story {
       rating: json['rating']?.toDouble(),
       isFavorite: json['is_favorite'] ?? false,
       genre: genre,
+      chaptersList: chaptersList,
     );
   }
 }
