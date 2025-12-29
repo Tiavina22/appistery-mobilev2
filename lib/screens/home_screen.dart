@@ -385,90 +385,146 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Theme Settings
+            // Theme & Language Settings in one card
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Theme
                     Text(
                       'theme'.tr(),
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF181818)
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                themeProvider.themeMode == ThemeMode.dark
+                                    ? Icons.dark_mode
+                                    : Icons.light_mode,
+                                color: const Color(0xFF1DB954),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                themeProvider.themeMode == ThemeMode.dark
+                                    ? 'dark_mode'.tr()
+                                    : 'light_mode'.tr(),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Transform.scale(
+                            scale: 0.8,
+                            child: Switch(
+                              value: themeProvider.themeMode == ThemeMode.dark,
+                              onChanged: (bool value) {
+                                themeProvider.setTheme(
+                                  value ? ThemeMode.dark : ThemeMode.light,
+                                );
+                              },
+                              activeColor: const Color(0xFF1DB954),
+                              activeTrackColor: const Color(
+                                0xFF1DB954,
+                              ).withOpacity(0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 12),
-                    ListTile(
-                      title: Text('light_mode'.tr()),
-                      leading: const Icon(Icons.light_mode),
-                      trailing: Radio<ThemeMode>(
-                        value: ThemeMode.light,
-                        groupValue: themeProvider.themeMode,
-                        onChanged: (ThemeMode? value) {
-                          if (value != null) {
-                            themeProvider.setTheme(value);
-                          }
-                        },
-                      ),
-                    ),
-                    ListTile(
-                      title: Text('dark_mode'.tr()),
-                      leading: const Icon(Icons.dark_mode),
-                      trailing: Radio<ThemeMode>(
-                        value: ThemeMode.dark,
-                        groupValue: themeProvider.themeMode,
-                        onChanged: (ThemeMode? value) {
-                          if (value != null) {
-                            themeProvider.setTheme(value);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Language Settings
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                    // Language
                     Text(
                       'language'.tr(),
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    ListTile(
-                      title: const Text('Français'),
-                      leading: const Text('🇫🇷'),
-                      trailing: Radio<Locale>(
-                        value: const Locale('fr'),
-                        groupValue: context.locale,
-                        onChanged: (Locale? value) {
-                          if (value != null) {
-                            context.setLocale(value);
-                          }
-                        },
+                    const SizedBox(height: 8),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
                       ),
-                    ),
-                    ListTile(
-                      title: const Text('English'),
-                      leading: const Text('🇬🇧'),
-                      trailing: Radio<Locale>(
-                        value: const Locale('en'),
-                        groupValue: context.locale,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF181818)
+                            : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: DropdownButton<Locale>(
+                        value: context.locale,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        dropdownColor:
+                            Theme.of(context).brightness == Brightness.dark
+                            ? const Color(0xFF181818)
+                            : Colors.grey[100],
+                        items: const [
+                          DropdownMenuItem(
+                            value: Locale('fr'),
+                            child: Row(
+                              children: [
+                                Text('🇫🇷', style: TextStyle(fontSize: 16)),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Français',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                              ],
+                            ),
+                          ),
+                          DropdownMenuItem(
+                            value: Locale('en'),
+                            child: Row(
+                              children: [
+                                Text('🇬🇧', style: TextStyle(fontSize: 16)),
+                                SizedBox(width: 10),
+                                Text('English', style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
+                        ],
                         onChanged: (Locale? value) {
                           if (value != null) {
                             context.setLocale(value);
@@ -480,45 +536,50 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             // Account Settings
             Card(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'account'.tr(),
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     if (authProvider.user != null)
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Email: ${authProvider.user!['email'] ?? 'N/A'}',
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 13),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             'Username: ${authProvider.user!['username'] ?? 'N/A'}',
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 13),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 12),
                         ],
                       ),
-                    ElevatedButton.icon(
-                      onPressed: () => _logout(context),
-                      icon: const Icon(Icons.logout),
-                      label: Text('logout'.tr()),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _logout(context),
+                        icon: const Icon(Icons.logout, size: 18),
+                        label: Text('logout'.tr()),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          textStyle: const TextStyle(fontSize: 14),
+                        ),
                       ),
                     ),
                   ],
