@@ -8,6 +8,7 @@ import '../providers/story_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../services/story_service.dart';
 import 'login_screen.dart';
+import 'story_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -703,7 +704,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStoryCard(Story story) {
     return GestureDetector(
       onTap: () {
-        // Navigate to story details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StoryDetailScreen(story: story),
+          ),
+        );
       },
       child: Container(
         width: 140,
@@ -743,7 +749,12 @@ class _HomeScreenState extends State<HomeScreen> {
       title: Text(story.title),
       subtitle: Text(story.author),
       onTap: () {
-        // Navigate to story details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StoryDetailScreen(story: story),
+          ),
+        );
       },
     );
   }
@@ -751,7 +762,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStoryGridItem(Story story) {
     return GestureDetector(
       onTap: () {
-        // Navigate to story details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StoryDetailScreen(story: story),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
