@@ -50,7 +50,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          surfaceTintColor: Colors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0,
           toolbarHeight: 60,
           title: Image.asset('assets/logo/logo-appistery-no.png', height: 28),
           actions: [
