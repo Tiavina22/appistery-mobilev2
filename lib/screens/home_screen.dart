@@ -125,21 +125,31 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: (int index) {
             setState(() => _selectedIndex = index);
           },
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: Colors.black,
+          selectedItemColor: const Color(0xFF1DB954),
+          unselectedItemColor: Colors.grey,
+          selectedFontSize: 12,
+          unselectedFontSize: 12,
           items: [
             BottomNavigationBarItem(
-              icon: const Icon(Icons.home),
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
               label: 'home'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.search),
+              icon: const Icon(Icons.explore_outlined),
+              activeIcon: const Icon(Icons.explore),
               label: 'search'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.favorite),
+              icon: const Icon(Icons.favorite_border),
+              activeIcon: const Icon(Icons.favorite),
               label: 'favorites'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.settings),
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
               label: 'settings'.tr(),
             ),
           ],
