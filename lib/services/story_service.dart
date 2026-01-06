@@ -161,6 +161,52 @@ class StoryService {
       throw Exception('Error loading favorites: $e');
     }
   }
+
+  Future<List<Map<String, dynamic>>> getGenres() async {
+    try {
+      print('DEBUG: Fetching genres from $apiUrl/api/stories/genres');
+      final response = await _dio.get('/api/stories/genres');
+      print('DEBUG: Genres response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List? ?? response.data as List;
+        final genres = data
+            .map((genre) => Map<String, dynamic>.from(genre as Map))
+            .toList();
+        print('DEBUG: Parsed ${genres.length} genres');
+        return genres;
+      }
+      throw Exception('Failed to load genres: ${response.statusCode}');
+    } on DioException catch (e) {
+      print('DEBUG: DioException getting genres - ${e.message}');
+      throw Exception('Error loading genres: ${e.message}');
+    } catch (e) {
+      throw Exception('Error loading genres: $e');
+    }
+  }
+
+  Future<List<Author>> getAuthors() async {
+    try {
+      print('DEBUG: Fetching authors from $apiUrl/api/stories/authors');
+      final response = await _dio.get('/api/stories/authors');
+      print('DEBUG: Authors response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List? ?? response.data as List;
+        final authors = data
+            .map((author) => Author.fromJson(author as Map<String, dynamic>))
+            .toList();
+        print('DEBUG: Parsed ${authors.length} authors');
+        return authors;
+      }
+      throw Exception('Failed to load authors: ${response.statusCode}');
+    } on DioException catch (e) {
+      print('DEBUG: DioException getting authors - ${e.message}');
+      throw Exception('Error loading authors: ${e.message}');
+    } catch (e) {
+      throw Exception('Error loading authors: $e');
+    }
+  }
 }
 
 class Story {
@@ -215,8 +261,12 @@ class Story {
     if (json['author'] is String) {
       author = json['author'];
     } else if (json['author'] is Map) {
+      // Afficher le pseudo d'abord, sinon fallback sur email ou biography
       author =
-          json['author']['email'] ?? json['author']['biography'] ?? 'Unknown';
+          json['author']['pseudo'] ??
+          json['author']['email'] ??
+          json['author']['biography'] ??
+          'Unknown';
     } else if (json['author_name'] is String) {
       author = json['author_name'];
     }
@@ -256,6 +306,24 @@ class Story {
       isFavorite: json['is_favorite'] ?? false,
       genre: genre,
       chaptersList: chaptersList,
+    );
+  }
+}
+
+class Author {
+  final int id;
+  final String pseudo;
+  final String? avatar;
+  final String? biography;
+
+  Author({required this.id, required this.pseudo, this.avatar, this.biography});
+
+  factory Author.fromJson(Map<String, dynamic> json) {
+    return Author(
+      id: json['id'] ?? 0,
+      pseudo: json['pseudo'] ?? 'Unknown Author',
+      avatar: json['avatar'],
+      biography: json['biography'],
     );
   }
 }

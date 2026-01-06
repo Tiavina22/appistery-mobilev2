@@ -9,6 +9,8 @@ class StoryProvider extends ChangeNotifier {
   List<Story> _stories = [];
   List<Story> _favorites = [];
   List<Story> _searchResults = [];
+  List<Map<String, dynamic>> _genres = [];
+  List<Author> _authors = [];
   bool _isLoading = false;
   String? _error;
 
@@ -16,6 +18,8 @@ class StoryProvider extends ChangeNotifier {
   List<Story> get stories => _stories;
   List<Story> get favorites => _favorites;
   List<Story> get searchResults => _searchResults;
+  List<Map<String, dynamic>> get genres => _genres;
+  List<Author> get authors => _authors;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -172,5 +176,41 @@ class StoryProvider extends ChangeNotifier {
   void clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  // Charger tous les genres
+  Future<void> loadGenres() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      _genres = await _storyService.getGenres();
+      print('✅ ${_genres.length} genres loaded');
+    } catch (e) {
+      _error = e.toString();
+      print('❌ Error loading genres: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Charger tous les auteurs
+  Future<void> loadAuthors() async {
+    try {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+
+      _authors = await _storyService.getAuthors();
+      print('✅ ${_authors.length} authors loaded');
+    } catch (e) {
+      _error = e.toString();
+      print('❌ Error loading authors: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

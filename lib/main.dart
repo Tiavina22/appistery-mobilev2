@@ -11,6 +11,9 @@ import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/story_provider.dart';
 import 'providers/websocket_provider.dart';
+import 'providers/version_provider.dart';
+import 'widgets/force_update_dialog.dart';
+import 'widgets/home_with_version_check.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +31,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => AuthProvider()),
           ChangeNotifierProvider(create: (_) => StoryProvider()),
           ChangeNotifierProvider(create: (_) => WebSocketProvider()),
+          ChangeNotifierProvider(create: (_) => VersionProvider()),
         ],
         child: const MainApp(),
       ),
@@ -41,6 +45,13 @@ class MainApp extends StatelessWidget {
   Future<Widget> _getInitialScreen(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final versionProvider = Provider.of<VersionProvider>(
+      context,
+      listen: false,
+    );
+
+    // Check version immediately
+    await versionProvider.checkVersionAtStartup();
 
     final languageSelected = prefs.getBool('language_selected') ?? false;
     final themeSelected = prefs.getBool('theme_selected') ?? false;
@@ -63,7 +74,7 @@ class MainApp extends StatelessWidget {
     await authProvider.refreshLoginStatus();
 
     if (authProvider.isLoggedIn) {
-      return const HomeScreen();
+      return const HomeWithVersionCheck();
     } else {
       return const LoginScreen();
     }

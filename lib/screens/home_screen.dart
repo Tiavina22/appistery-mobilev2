@@ -9,6 +9,7 @@ import '../providers/websocket_provider.dart';
 import '../services/story_service.dart';
 import 'login_screen.dart';
 import 'story_detail_screen.dart';
+import 'author_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -274,59 +275,238 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSearchTab() {
     return Consumer<StoryProvider>(
       builder: (context, storyProvider, _) {
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  storyProvider.searchStories(value);
-                },
-                decoration: InputDecoration(
-                  hintText: 'search_stories'.tr(),
-                  prefixIcon: const Icon(Icons.search),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+        // Load genres and authors on first build
+        if (storyProvider.genres.isEmpty) {
+          storyProvider.loadGenres();
+          storyProvider.loadAuthors();
+        }
+
+        return SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Search TextField
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    storyProvider.searchStories(value);
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'search_stories'.tr(),
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: _searchController.text.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search,
-                            size: 60,
-                            color: Colors.grey.shade500,
-                          ),
-                          const SizedBox(height: 16),
-                          Text('search_placeholder'.tr()),
-                        ],
-                      ),
-                    )
-                  : storyProvider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : storyProvider.searchResults.isEmpty
-                  ? Center(child: Text('no_results'.tr()))
-                  : ListView.builder(
-                      itemCount: storyProvider.searchResults.length,
-                      itemBuilder: (context, index) {
-                        final story = storyProvider.searchResults[index];
-                        return _buildSearchResultTile(story);
-                      },
+
+              // Si recherche vide, afficher les genres et auteurs
+              if (_searchController.text.isEmpty) ...[
+                // Section Auteurs
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: Text(
+                    'Featured creators',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-            ),
-          ],
+                  ),
+                ),
+
+                // Authors List (Horizontal Scroll)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: storyProvider.authors.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: CircularProgressIndicator(),
+                        )
+                      : SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(
+                              storyProvider.authors.length,
+                              (index) {
+                                final author = storyProvider.authors[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 12.0),
+                                  child: _buildAuthorCard(author),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Section Genres
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: Text(
+                    'Browse all',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                // Genres Grid (Spotify style)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: storyProvider.genres.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          child: CircularProgressIndicator(),
+                        )
+                      : GridView.builder(
+                          physics: const NeverScrollableScrollPhysics(),
+                          shrinkWrap: true,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1.5,
+                              ),
+                          itemCount: storyProvider.genres.length,
+                          itemBuilder: (context, index) {
+                            final genre = storyProvider.genres[index];
+                            return _buildGenreCard(genre, context);
+                          },
+                        ),
+                ),
+
+                const SizedBox(height: 24),
+              ] else ...[
+                // Résultats de recherche
+                if (storyProvider.isLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else if (storyProvider.searchResults.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24.0),
+                    child: Center(child: Text('no_results'.tr())),
+                  )
+                else
+                  ListView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    itemCount: storyProvider.searchResults.length,
+                    itemBuilder: (context, index) {
+                      final story = storyProvider.searchResults[index];
+                      return _buildSearchResultTile(story);
+                    },
+                  ),
+              ],
+            ],
+          ),
         );
       },
+    );
+  }
+
+  // Genre Card (Spotify style - colorful background)
+  Widget _buildGenreCard(Map<String, dynamic> genre, BuildContext context) {
+    final colors = [
+      const Color(0xFF1DB954), // Green
+      const Color(0xFFE61828), // Red
+      const Color(0xFF007FD5), // Blue
+      const Color(0xFFA239CA), // Purple
+      const Color(0xFFF39C12), // Orange
+      const Color(0xFF1ABC9C), // Teal
+    ];
+
+    final randomColor = colors[(genre['id'] as int) % colors.length];
+
+    return GestureDetector(
+      onTap: () {
+        // TODO: Filter by genre
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: randomColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                genre['title'] ?? 'Unknown',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Author Card
+  Widget _buildAuthorCard(Author author) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => AuthorProfileScreen(
+              authorId: author.id,
+              authorName: author.pseudo,
+            ),
+          ),
+        );
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey.withOpacity(0.3),
+            ),
+            child: author.avatar != null && author.avatar!.isNotEmpty
+                ? ClipOval(child: _buildAvatarImage(author.avatar!))
+                : Icon(Icons.person, size: 60, color: Colors.grey.shade500),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: 120,
+            child: Text(
+              author.pseudo,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -380,6 +560,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Settings tab is now in a separate SettingsScreen
+  // This method is kept for reference but is no longer used
+  /*
   Widget _buildSettingsTab() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
@@ -592,6 +775,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+  */
 
   // Construire dynamiquement les sections par genre
   List<Widget> _buildGenreSections(StoryProvider storyProvider) {
@@ -951,5 +1135,366 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     }
+  }
+
+  Widget _buildSettingsTab() {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Display Section
+            _buildSectionTitle('display'.tr()),
+            _buildDisplaySection(context),
+            const SizedBox(height: 16),
+
+            // Account Section
+            _buildSectionTitle('account'.tr()),
+            _buildAccountSection(context),
+            const SizedBox(height: 16),
+
+            // Notifications Section
+            _buildSectionTitle('notifications'.tr()),
+            _buildNotificationsSection(context),
+            const SizedBox(height: 16),
+
+            // Privacy & Security Section
+            _buildSectionTitle('privacy_security'.tr()),
+            _buildPrivacySection(context),
+            const SizedBox(height: 16),
+
+            // About Section
+            _buildSectionTitle('about'.tr()),
+            _buildAboutSection(context),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF1DB954),
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDisplaySection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return Column(
+      children: [
+        // Theme Toggle
+        _buildSettingsTile(
+          icon: Icons.brightness_4,
+          title: 'theme'.tr(),
+          subtitle: themeProvider.themeMode == ThemeMode.dark
+              ? 'dark_mode'.tr()
+              : 'light_mode'.tr(),
+          trailing: Switch(
+            value: themeProvider.themeMode == ThemeMode.dark,
+            onChanged: (bool value) {
+              themeProvider.setTheme(value ? ThemeMode.dark : ThemeMode.light);
+            },
+            activeColor: const Color(0xFF1DB954),
+          ),
+        ),
+
+        // Language Selection
+        _buildSettingsTile(
+          icon: Icons.language,
+          title: 'language'.tr(),
+          subtitle: _getLanguageLabel(context.locale),
+          onTap: () => _showLanguageDialog(context),
+          trailing: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAccountSection(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    return Column(
+      children: [
+        // Profile Info
+        if (authProvider.user != null)
+          _buildSettingsTile(
+            icon: Icons.person,
+            title: authProvider.user!['username'] ?? 'User',
+            subtitle: authProvider.user!['email'] ?? 'No email',
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              // Navigate to profile edit
+            },
+          ),
+
+        // Change Password
+        _buildSettingsTile(
+          icon: Icons.lock,
+          title: 'change_password'.tr(),
+          subtitle: 'update_password_subtitle'.tr(),
+          onTap: () {
+            // Navigate to change password screen
+          },
+          trailing: const Icon(Icons.chevron_right),
+        ),
+
+        // Logout
+        _buildSettingsTile(
+          icon: Icons.logout,
+          title: 'logout'.tr(),
+          subtitle: 'logout_subtitle'.tr(),
+          onTap: () => _confirmLogout(context),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: Colors.red.withOpacity(0.7),
+          ),
+          titleColor: Colors.red,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationsSection(BuildContext context) {
+    return Column(
+      children: [
+        // Push Notifications
+        _buildSettingsTile(
+          icon: Icons.notifications,
+          title: 'push_notifications'.tr(),
+          subtitle: 'enable_notifications'.tr(),
+          trailing: Switch(
+            value: true,
+            onChanged: (bool value) {
+              // Handle notification toggle
+            },
+            activeColor: const Color(0xFF1DB954),
+          ),
+        ),
+
+        // Email Notifications
+        _buildSettingsTile(
+          icon: Icons.mail,
+          title: 'email_notifications'.tr(),
+          subtitle: 'email_notification_subtitle'.tr(),
+          trailing: Switch(
+            value: true,
+            onChanged: (bool value) {
+              // Handle email notification toggle
+            },
+            activeColor: const Color(0xFF1DB954),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrivacySection(BuildContext context) {
+    return Column(
+      children: [
+        // Private Account
+        _buildSettingsTile(
+          icon: Icons.privacy_tip,
+          title: 'private_account'.tr(),
+          subtitle: 'private_account_subtitle'.tr(),
+          trailing: Switch(
+            value: false,
+            onChanged: (bool value) {
+              // Handle private account toggle
+            },
+            activeColor: const Color(0xFF1DB954),
+          ),
+        ),
+
+        // Block Users
+        _buildSettingsTile(
+          icon: Icons.block,
+          title: 'blocked_users'.tr(),
+          subtitle: 'manage_blocked_users'.tr(),
+          onTap: () {
+            // Navigate to blocked users
+          },
+          trailing: const Icon(Icons.chevron_right),
+        ),
+
+        // Privacy Policy
+        _buildSettingsTile(
+          icon: Icons.description,
+          title: 'privacy_policy'.tr(),
+          subtitle: 'read_our_privacy_policy'.tr(),
+          onTap: () {
+            // Open privacy policy
+          },
+          trailing: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAboutSection(BuildContext context) {
+    return Column(
+      children: [
+        // Version
+        _buildSettingsTile(
+          icon: Icons.info,
+          title: 'version'.tr(),
+          subtitle: 'v1.0.0',
+          trailing: const SizedBox.shrink(),
+        ),
+
+        // Terms of Service
+        _buildSettingsTile(
+          icon: Icons.assignment,
+          title: 'terms_of_service'.tr(),
+          subtitle: 'read_our_terms'.tr(),
+          onTap: () {
+            // Open terms
+          },
+          trailing: const Icon(Icons.chevron_right),
+        ),
+
+        // Contact Support
+        _buildSettingsTile(
+          icon: Icons.help,
+          title: 'contact_support'.tr(),
+          subtitle: 'get_help_support'.tr(),
+          onTap: () {
+            // Open support
+          },
+          trailing: const Icon(Icons.chevron_right),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+    Color? titleColor,
+  }) {
+    return Material(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: titleColor ?? const Color(0xFF1DB954),
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: titleColor,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              if (trailing != null) trailing,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getLanguageLabel(Locale locale) {
+    if (locale.languageCode == 'fr') {
+      return 'Français';
+    } else if (locale.languageCode == 'en') {
+      return 'English';
+    }
+    return 'Unknown';
+  }
+
+  void _showLanguageDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('select_language'.tr()),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                title: const Text('🇫🇷 Français'),
+                onTap: () {
+                  context.setLocale(const Locale('fr'));
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                title: const Text('🇬🇧 English'),
+                onTap: () {
+                  context.setLocale(const Locale('en'));
+                  Navigator.pop(context);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('confirm_logout'.tr()),
+          content: Text('logout_confirmation_message'.tr()),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('cancel'.tr()),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _logout(context);
+              },
+              child: Text(
+                'logout'.tr(),
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
