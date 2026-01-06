@@ -102,12 +102,37 @@ class _ReaderScreenState extends State<ReaderScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Vérifier si les chapitres sont chargés
+      late Map<String, dynamic> chapter;
+
+      if (widget.story.chaptersList.isEmpty) {
+        // Si les chapitres ne sont pas chargés, récupérer l'histoire complète
+        final storyService = StoryService();
+        final fullStory = await storyService.getStoryById(widget.story.id);
+
+        if (fullStory.chaptersList.isEmpty) {
+          throw Exception('Aucun chapitre disponible pour cette histoire');
+        }
+
+        chapter = fullStory.chaptersList[_currentChapterIndex];
+      } else {
+        chapter = widget.story.chaptersList[_currentChapterIndex];
+      }
+
+      print('DEBUG: Chapter data: $chapter');
+      print('DEBUG: Chapter ID: ${chapter['id']}');
+
       // Load chapter content
-      final chapter = widget.story.chaptersList[_currentChapterIndex];
-      final chapterData = await _readingService.getChapter(chapter['id']);
+      final chapterData = await _readingService.getChapter(
+        chapter['id'] as int,
+      );
+
+      print('DEBUG: Chapter data from API: $chapterData');
 
       setState(() {
-        _currentChapter = chapterData;
+        _currentChapter = chapterData is Map<String, dynamic>
+            ? chapterData
+            : {'content': chapterData.toString()};
       });
 
       // Load last reading position for this chapter
@@ -127,6 +152,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         );
       }
     } catch (e) {
+      print('DEBUG: Error in _loadChapterAndProgress: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,

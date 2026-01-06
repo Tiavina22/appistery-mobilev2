@@ -90,7 +90,14 @@ class ReadingService {
       );
 
       if (response.statusCode == 200 && response.data['success']) {
-        return response.data['data'];
+        final data = response.data['data'];
+        // Si le backend retourne une liste, prendre le premier élément
+        if (data is List && data.isNotEmpty) {
+          return data[0] as Map<String, dynamic>;
+        } else if (data is Map) {
+          return data as Map<String, dynamic>;
+        }
+        return null;
       }
       return null;
     } on DioException catch (e) {

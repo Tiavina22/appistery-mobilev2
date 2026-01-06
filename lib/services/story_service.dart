@@ -215,6 +215,9 @@ class Story {
   final String description;
   final String? coverImage;
   final String author;
+  final String? authorAvatar;
+  final String? authorBio;
+  final int? authorFollowers;
   final int chapters;
   final double? rating;
   final bool isFavorite;
@@ -227,6 +230,9 @@ class Story {
     required this.description,
     this.coverImage,
     required this.author,
+    this.authorAvatar,
+    this.authorBio,
+    this.authorFollowers,
     required this.chapters,
     this.rating,
     this.isFavorite = false,
@@ -258,6 +264,9 @@ class Story {
 
     // Gérer l'auteur qui peut être un string ou un objet
     String author = 'Unknown';
+    String? authorAvatar;
+    String? authorBio;
+    int? authorFollowers;
     if (json['author'] is String) {
       author = json['author'];
     } else if (json['author'] is Map) {
@@ -267,6 +276,11 @@ class Story {
           json['author']['email'] ??
           json['author']['biography'] ??
           'Unknown';
+      // Récupérer l'avatar, la bio et les followers de l'auteur
+      authorAvatar = json['author']['avatar'];
+      authorBio = json['author']['biography'];
+      authorFollowers =
+          json['author']['followers_count'] ?? json['author']['followersCount'];
     } else if (json['author_name'] is String) {
       author = json['author_name'];
     }
@@ -301,6 +315,9 @@ class Story {
       description: description,
       coverImage: json['cover_image'] ?? json['coverImage'],
       author: author,
+      authorAvatar: authorAvatar,
+      authorBio: authorBio,
+      authorFollowers: authorFollowers,
       chapters: json['chapters_count'] ?? json['chapters'] ?? 0,
       rating: json['rating']?.toDouble(),
       isFavorite: json['is_favorite'] ?? false,

@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../services/story_service.dart';
 import '../services/reading_service.dart';
+import '../services/author_service.dart';
 import '../providers/story_provider.dart';
+import '../widgets/facebook_notification.dart';
 import 'author_profile_screen.dart';
 import 'reader_screen.dart';
 
@@ -20,6 +22,79 @@ class StoryDetailScreen extends StatefulWidget {
 class _StoryDetailScreenState extends State<StoryDetailScreen> {
   bool _isExpanded = false;
   bool _isLoadingStory = false;
+  bool _isFollowing = false;
+  bool _isLoadingFollow = false;
+  late AuthorService _authorService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authorService = AuthorService();
+    _loadFollowingStatus();
+  }
+
+  Future<void> _loadFollowingStatus() async {
+    try {
+      final isFollowing = await _authorService.isFollowing(1);
+      if (mounted) {
+        setState(() {
+          _isFollowing = isFollowing;
+        });
+      }
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  Future<void> _toggleFollow() async {
+    setState(() => _isLoadingFollow = true);
+    try {
+      final wasFollowing = _isFollowing;
+      if (_isFollowing) {
+        await _authorService.unfollowAuthor(1);
+      } else {
+        await _authorService.followAuthor(1);
+      }
+      if (mounted) {
+        setState(() {
+          _isFollowing = !_isFollowing;
+        });
+
+        // Afficher une belle notification style Facebook
+        if (_isFollowing) {
+          NotificationOverlay.show(
+            context,
+            message: 'Vous suivez maintenant ${widget.story.author}',
+            icon: Icons.check_circle_outline,
+            backgroundColor: Colors.green[600]!,
+            duration: const Duration(seconds: 3),
+          );
+        } else {
+          NotificationOverlay.show(
+            context,
+            message: 'Vous avez arrêté de suivre ${widget.story.author}',
+            icon: Icons.remove_circle_outline,
+            backgroundColor: Colors.orange[600]!,
+            duration: const Duration(seconds: 3),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        NotificationOverlay.show(
+          context,
+          message: 'Erreur: ${e.toString()}',
+          icon: Icons.error_outline,
+          backgroundColor: Colors.red[600]!,
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingFollow = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -154,23 +229,51 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                   ),
                   const SizedBox(height: 8),
 
-                  // Auteur
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.person_outline,
-                        size: 18,
-                        color: Colors.white70,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        widget.story.author,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
+                  // Auteur avec avatar
+                  GestureDetector(
+                    onTap: () {
+                      // TODO: Naviguer vers le profil de l'auteur
+                    },
+                    child: Row(
+                      children: [
+                        // Avatar de l'auteur
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey.withOpacity(0.3),
+                          ),
+                          child: ClipOval(child: _buildAuthorAvatar()),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        // Nom de l'auteur
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'By',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white60,
+                                ),
+                              ),
+                              Text(
+                                widget.story.author,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
@@ -489,13 +592,31 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
           trailing: IconButton(
-            icon: const Icon(Icons.download_outlined, color: Colors.white70),
+            icon: const Icon(Icons.play_circle_outline, color: Colors.white70),
             onPressed: () {
-              // TODO: Télécharger le chapitre
+              // Naviguer vers le lecteur à ce chapitre
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ReaderScreen(
+                    story: widget.story,
+                    initialChapterIndex: index,
+                  ),
+                ),
+              );
             },
           ),
           onTap: () {
-            // TODO: Lire le chapitre
+            // Naviguer vers le lecteur à ce chapitre
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReaderScreen(
+                  story: widget.story,
+                  initialChapterIndex: index,
+                ),
+              ),
+            );
           },
         );
       },
@@ -534,7 +655,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                 color: Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person, color: Colors.white70, size: 30),
+              child: ClipOval(
+                child:
+                    widget.story.authorAvatar != null &&
+                        widget.story.authorAvatar!.isNotEmpty
+                    ? _buildAuthorAvatarLarge()
+                    : const Icon(Icons.person, color: Colors.white70, size: 30),
+              ),
             ),
             const SizedBox(width: 16),
             // Infos auteur
@@ -551,30 +678,99 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
-                    'Voir tous les ouvrages',
-                    style: TextStyle(color: Colors.blue, fontSize: 14),
+                  // Afficher le nombre de followers
+                  Text(
+                    widget.story.authorFollowers != null
+                        ? '${widget.story.authorFollowers} followers'
+                        : 'Followers',
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],
               ),
             ),
             // Bouton suivre
             OutlinedButton(
-              onPressed: () {
-                // TODO: Suivre l'auteur
-              },
+              onPressed: _isLoadingFollow ? null : _toggleFollow,
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.white70),
+                foregroundColor: _isFollowing ? Colors.white : Colors.white,
+                backgroundColor: _isFollowing
+                    ? Colors.white.withOpacity(0.1)
+                    : Colors.transparent,
+                side: BorderSide(
+                  color: _isFollowing ? Colors.white : Colors.white70,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
               ),
-              child: const Text('Suivre'),
+              child: Text(
+                _isLoadingFollow
+                    ? 'Chargement...'
+                    : (_isFollowing ? 'Suivi' : 'Suivre'),
+              ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  // Méthode pour construire l'avatar de l'auteur en base64 (version large pour la section "À propos")
+  Widget _buildAuthorAvatarLarge() {
+    if (widget.story.authorAvatar != null &&
+        widget.story.authorAvatar!.isNotEmpty) {
+      try {
+        final base64String = widget.story.authorAvatar!.contains(',')
+            ? widget.story.authorAvatar!.split(',').last
+            : widget.story.authorAvatar!;
+
+        return Image.memory(
+          base64Decode(base64String),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(Icons.person, color: Colors.white70, size: 30);
+          },
+        );
+      } catch (e) {
+        return const Icon(Icons.person, color: Colors.white70, size: 30);
+      }
+    }
+    return const Icon(Icons.person, color: Colors.white70, size: 30);
+  }
+
+  // Méthode pour construire l'avatar de l'auteur en base64
+  Widget _buildAuthorAvatar() {
+    // Afficher l'avatar en base64 s'il existe, sinon afficher une icône par défaut
+    if (widget.story.authorAvatar != null &&
+        widget.story.authorAvatar!.isNotEmpty) {
+      try {
+        // Décoder le base64
+        final base64String = widget.story.authorAvatar!.contains(',')
+            ? widget.story.authorAvatar!.split(',').last
+            : widget.story.authorAvatar!;
+
+        return Image.memory(
+          base64Decode(base64String),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey.withOpacity(0.3),
+              child: const Icon(Icons.person, color: Colors.white70, size: 24),
+            );
+          },
+        );
+      } catch (e) {
+        // En cas d'erreur de décodage, afficher l'icône par défaut
+        return Container(
+          color: Colors.grey.withOpacity(0.3),
+          child: const Icon(Icons.person, color: Colors.white70, size: 24),
+        );
+      }
+    }
+    // Si pas d'avatar, afficher l'icône par défaut
+    return Container(
+      color: Colors.grey.withOpacity(0.3),
+      child: const Icon(Icons.person, color: Colors.white70, size: 24),
     );
   }
 }

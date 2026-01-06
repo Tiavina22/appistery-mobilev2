@@ -10,6 +10,7 @@ import '../services/story_service.dart';
 import 'login_screen.dart';
 import 'story_detail_screen.dart';
 import 'author_profile_screen.dart';
+import 'genre_stories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -436,7 +437,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        // TODO: Filter by genre
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GenreStoriesScreen(
+              genreId: genre['id'] ?? 0,
+              genreTitle: genre['title'] ?? 'Unknown',
+            ),
+          ),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
