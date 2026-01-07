@@ -5,10 +5,12 @@ import 'dart:convert';
 import '../services/story_service.dart';
 import '../services/reading_service.dart';
 import '../services/author_service.dart';
+import '../services/reaction_service.dart';
 import '../providers/story_provider.dart';
 import '../widgets/facebook_notification.dart';
 import 'author_profile_screen.dart';
 import 'reader_screen.dart';
+import 'story_comments_screen.dart';
 
 class StoryDetailScreen extends StatefulWidget {
   final Story story;
@@ -26,6 +28,14 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   bool _isFollowing = false;
   bool _isLoadingFollow = false;
   late AuthorService _authorService;
+  late ReactionService _reactionService;
+
+  // États pour les réactions
+  Map<String, dynamic>? _reactionsData;
+  bool _isLoadingReactions = false;
+  bool _hasUserReacted = false;
+  String? _userReactionType;
+  int _commentsCount = 0;
 
   // Nouveaux états pour le suivi de lecture
   bool _isCompleted = false;
@@ -42,9 +52,11 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _authorService = AuthorService();
+    _reactionService = ReactionService();
     _loadFollowingStatus();
     _loadReadingStats();
     _loadLastReadingPosition();
+    _loadReactions();
   }
 
   @override
@@ -135,6 +147,99 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     }
   }
 
+  Future<void> _loadReactions() async {
+    try {
+      setState(() => _isLoadingReactions = true);
+      final data = await _reactionService.getStoryReactions(widget.story.id);
+      print('📊 [_loadReactions] Données reçues: $data');
+      print('   userReaction: ${data['userReaction']}');
+      print('   totalCount: ${data['totalCount']}');
+
+      // Charger aussi le nombre de commentaires
+      final commentsData = await _reactionService.getStoryComments(
+        widget.story.id,
+      );
+      final comments = commentsData['comments'] as List? ?? [];
+
+      if (mounted) {
+        setState(() {
+          _reactionsData = data;
+          _hasUserReacted = data['userReaction'] != null;
+          _userReactionType = data['userReaction']?['reaction_type'];
+          _commentsCount =
+              commentsData['pagination']?['total'] ?? comments.length;
+          _isLoadingReactions = false;
+        });
+        print('   _hasUserReacted mis à jour: $_hasUserReacted');
+        print('   _userReactionType mis à jour: $_userReactionType');
+        print('   _commentsCount mis à jour: $_commentsCount');
+      }
+    } catch (e) {
+      print('❌ Erreur _loadReactions: $e');
+      if (mounted) {
+        setState(() => _isLoadingReactions = false);
+      }
+    }
+  }
+
+  Future<void> _toggleReaction() async {
+    try {
+      // Sauvegarder l'état actuel avant le toggle
+      final hadReactionBefore = _hasUserReacted;
+
+      await _reactionService.toggleReaction(widget.story.id);
+      await _loadReactions();
+
+      if (mounted) {
+        // Si l'utilisateur n'avait pas réagi avant et maintenant oui = ajout
+        if (!hadReactionBefore && _hasUserReacted) {
+          NotificationOverlay.show(
+            context,
+            message: 'Vous aimez cette histoire',
+            icon: Icons.favorite,
+            backgroundColor: Colors.pink[600]!,
+            duration: const Duration(seconds: 2),
+          );
+        }
+        // Si l'utilisateur avait réagi avant et maintenant non = retrait
+        else if (hadReactionBefore && !_hasUserReacted) {
+          NotificationOverlay.show(
+            context,
+            message: 'Réaction retirée',
+            icon: Icons.favorite_border,
+            backgroundColor: Colors.grey[600]!,
+            duration: const Duration(seconds: 2),
+          );
+        }
+      }
+    } catch (e) {
+      print('❌ Erreur _toggleReaction: $e');
+      if (mounted) {
+        NotificationOverlay.show(
+          context,
+          message: 'Erreur: ${e.toString()}',
+          icon: Icons.error_outline,
+          backgroundColor: Colors.red[600]!,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    }
+  }
+
+  void _openComments() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => StoryCommentsScreen(
+          storyId: widget.story.id,
+          storyTitle: widget.story.title,
+        ),
+      ),
+    );
+    // Recharger le compteur de commentaires au retour
+    _loadReactions();
+  }
+
   Future<void> _toggleFollow() async {
     setState(() => _isLoadingFollow = true);
     try {
@@ -211,21 +316,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               ),
               onPressed: () => Navigator.pop(context),
             ),
-            actions: [
-              IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.share, color: Colors.white),
-                ),
-                onPressed: () {
-                  // TODO: Partager l'histoire
-                },
-              ),
-            ],
+            actions: [],
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -272,6 +363,45 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       ),
                     ),
                   ),
+                  // Stats en overlay style Instagram
+                  if (_readingStats != null && !_isLoadingStats)
+                    Positioned(
+                      bottom: 16,
+                      right: 16,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.6),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildCompactStat(
+                              Icons.visibility_outlined,
+                              '${_readingStats!['total_views'] ?? 0}',
+                            ),
+                            const SizedBox(width: 12),
+                            _buildCompactStat(
+                              Icons.people_outline,
+                              '${_readingStats!['unique_readers'] ?? 0}',
+                            ),
+                            const SizedBox(width: 12),
+                            _buildCompactStat(
+                              Icons.check_circle_outline,
+                              '${_readingStats!['completed_reads'] ?? 0}',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -522,6 +652,71 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             foregroundColor: Colors.white,
                             side: const BorderSide(color: Colors.white70),
                             padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Boutons de réactions et commentaires
+                  Row(
+                    children: [
+                      // Bouton J'aime
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _isLoadingReactions
+                              ? null
+                              : _toggleReaction,
+                          icon: Icon(
+                            _hasUserReacted
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            size: 20,
+                            color: _hasUserReacted
+                                ? Colors.pink
+                                : Colors.white70,
+                          ),
+                          label: Text(
+                            _reactionsData != null &&
+                                    _reactionsData!['totalCount'] != null
+                                ? '${_reactionsData!['totalCount']}'
+                                : '0',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                            side: BorderSide(
+                              color: _hasUserReacted
+                                  ? Colors.pink
+                                  : Colors.white30,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Bouton Commentaires
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: _openComments,
+                          icon: const Icon(Icons.comment_outlined, size: 20),
+                          label: Text(
+                            _commentsCount > 0
+                                ? '$_commentsCount'
+                                : 'Commentaires',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white70,
+                            side: const BorderSide(color: Colors.white30),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -936,58 +1131,25 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           ),
 
         const SizedBox(height: 16),
-
-        // Stats publiques
-        if (_readingStats != null && !_isLoadingStats)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              border: Border.all(color: Colors.white24),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem('${_readingStats!['total_views'] ?? 0}', 'Vues'),
-                Container(height: 40, width: 1, color: Colors.white12),
-                _buildStatItem(
-                  '${_readingStats!['unique_readers'] ?? 0}',
-                  'Lecteurs',
-                ),
-                Container(height: 40, width: 1, color: Colors.white12),
-                _buildStatItem(
-                  '${_readingStats!['completed_reads'] ?? 0}',
-                  'Complétées',
-                ),
-              ],
-            ),
-          ),
       ],
     );
   }
 
-  Widget _buildStatItem(String value, String label) {
-    return Expanded(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
+  Widget _buildCompactStat(IconData icon, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: Colors.white70),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white70, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

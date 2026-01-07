@@ -20,15 +20,25 @@ class NotificationBottomSheet extends StatefulWidget {
 }
 
 class _NotificationBottomSheetState extends State<NotificationBottomSheet> {
+  bool _isDismissed = false;
+
   @override
   void initState() {
     super.initState();
     // Auto-dismiss après la durée spécifiée
     Future.delayed(widget.duration, () {
-      if (mounted) {
+      if (mounted && !_isDismissed) {
+        _isDismissed = true;
         Navigator.pop(context);
       }
     });
+  }
+
+  void _dismiss() {
+    if (!_isDismissed && mounted) {
+      _isDismissed = true;
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -88,9 +98,7 @@ class _NotificationBottomSheetState extends State<NotificationBottomSheet> {
             width: double.infinity,
             height: 44,
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: _dismiss,
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.backgroundColor,
                 foregroundColor: Colors.white,

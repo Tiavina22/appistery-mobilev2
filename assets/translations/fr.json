@@ -163,5 +163,9 @@
   "explore_stories": "Explorer les histoires",
   "reading": "En cours de lecture",
   "completed": "Complétée",
-  "recent_activity": "Activité récente"
+  "recent_activity": "Activité récente",
+  "comments": "Commentaires",
+  "no_comments_yet": "Aucun commentaire pour le moment",
+  "be_first_to_comment": "Soyez le premier à commenter",
+  "add_comment": "Ajouter un commentaire..."
 }

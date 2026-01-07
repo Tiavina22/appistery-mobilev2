@@ -1172,16 +1172,6 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildAccountSection(context),
             const SizedBox(height: 16),
 
-            // Notifications Section
-            _buildSectionTitle('notifications'.tr()),
-            _buildNotificationsSection(context),
-            const SizedBox(height: 16),
-
-            // Privacy & Security Section
-            _buildSectionTitle('privacy_security'.tr()),
-            _buildPrivacySection(context),
-            const SizedBox(height: 16),
-
             // About Section
             _buildSectionTitle('about'.tr()),
             _buildAboutSection(context),
@@ -1193,6 +1183,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Text(
@@ -1200,7 +1193,7 @@ class _HomeScreenState extends State<HomeScreen> {
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: const Color(0xFF1DB954),
+          color: isDark ? Colors.white : Colors.black,
           letterSpacing: 0.5,
         ),
       ),
@@ -1317,91 +1310,6 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.red.withOpacity(0.7),
           ),
           titleColor: Colors.red,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildNotificationsSection(BuildContext context) {
-    return Column(
-      children: [
-        // Push Notifications
-        _buildSettingsTile(
-          icon: Icons.notifications,
-          title: 'push_notifications'.tr(),
-          subtitle: 'enable_notifications'.tr(),
-          trailing: Switch(
-            value: true,
-            onChanged: (bool value) {
-              // Handle notification toggle
-            },
-            activeColor: const Color(0xFF1DB954),
-          ),
-        ),
-
-        // Email Notifications
-        _buildSettingsTile(
-          icon: Icons.mail,
-          title: 'email_notifications'.tr(),
-          subtitle: 'email_notification_subtitle'.tr(),
-          trailing: Switch(
-            value: true,
-            onChanged: (bool value) {
-              // Handle email notification toggle
-            },
-            activeColor: const Color(0xFF1DB954),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPrivacySection(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
-
-    return Column(
-      children: [
-        // Private Account
-        _buildSettingsTile(
-          icon: Icons.privacy_tip,
-          title: 'private_account'.tr(),
-          subtitle: 'private_account_subtitle'.tr(),
-          trailing: Switch(
-            value: false,
-            onChanged: (bool value) {
-              // Handle private account toggle
-            },
-            activeColor: const Color(0xFF1DB954),
-          ),
-        ),
-
-        // Block Users
-        _buildSettingsTile(
-          icon: Icons.block,
-          title: 'blocked_users'.tr(),
-          subtitle: 'manage_blocked_users'.tr(),
-          onTap: () {
-            // Navigate to blocked users
-          },
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
-
-        // Privacy Policy
-        _buildSettingsTile(
-          icon: Icons.description,
-          title: 'privacy_policy'.tr(),
-          subtitle: 'read_our_privacy_policy'.tr(),
-          onTap: () {
-            // Open privacy policy
-          },
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
-          ),
         ),
       ],
     );

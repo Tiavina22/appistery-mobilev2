@@ -163,5 +163,9 @@
   "explore_stories": "Explore stories",
   "reading": "Reading",
   "completed": "Completed",
-  "recent_activity": "Recent activity"
+  "recent_activity": "Recent activity",
+  "comments": "Comments",
+  "no_comments_yet": "No comments yet",
+  "be_first_to_comment": "Be the first to comment",
+  "add_comment": "Add a comment..."
 }
