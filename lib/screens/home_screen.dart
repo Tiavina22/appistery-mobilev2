@@ -12,6 +12,7 @@ import 'story_detail_screen.dart';
 import 'author_profile_screen.dart';
 import 'genre_stories_screen.dart';
 import 'my_stories_screen.dart';
+import 'user_profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -152,6 +153,13 @@ class _HomeScreenState extends State<HomeScreen> {
           currentIndex: _selectedIndex,
           onTap: (int index) {
             setState(() => _selectedIndex = index);
+            // Load favorites when favorites tab is selected
+            if (index == 2) {
+              Provider.of<StoryProvider>(
+                context,
+                listen: false,
+              ).loadFavorites();
+            }
           },
           type: BottomNavigationBarType.fixed,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -552,19 +560,39 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        return GridView.builder(
-          padding: const EdgeInsets.all(16),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 0.7,
-          ),
-          itemCount: storyProvider.favorites.length,
-          itemBuilder: (context, index) {
-            final story = storyProvider.favorites[index];
-            return _buildStoryGridItem(story);
-          },
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Titre de la page
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              child: Text(
+                'my_favorites'.tr(),
+                style:
+                    Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ) ??
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            // Grid des favoris
+            Expanded(
+              child: GridView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 16,
+                  crossAxisSpacing: 16,
+                  childAspectRatio: 0.7,
+                ),
+                itemCount: storyProvider.favorites.length,
+                itemBuilder: (context, index) {
+                  final story = storyProvider.favorites[index];
+                  return _buildStoryGridItem(story);
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -733,50 +761,118 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 12),
             // Account Settings
             Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'account'.tr(),
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserProfileScreen(),
                     ),
-                    const SizedBox(height: 8),
-                    if (authProvider.user != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Email: ${authProvider.user!['email'] ?? 'N/A'}',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Username: ${authProvider.user!['username'] ?? 'N/A'}',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                      ),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _logout(context),
-                        icon: const Icon(Icons.logout, size: 18),
-                        label: Text('logout'.tr()),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          textStyle: const TextStyle(fontSize: 14),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'account'.tr(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 12),
+                      if (authProvider.user != null)
+                        Row(
+                          children: [
+                            // Avatar
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFF1DB954),
+                                  width: 2,
+                                ),
+                                image: authProvider.user!['avatar'] != null &&
+                                    authProvider.user!['avatar']!.isNotEmpty
+                                    ? DecorationImage(
+                                        image: MemoryImage(
+                                          base64Decode(
+                                            authProvider.user!['avatar'] ?? '',
+                                          ),
+                                        ),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: authProvider.user!['avatar'] == null ||
+                                  authProvider.user!['avatar']!.isEmpty
+                                  ? const Icon(
+                                      Icons.person,
+                                      color: Color(0xFF1DB954),
+                                      size: 28,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    authProvider.user!['pseudo'] ??
+                                        authProvider.user!['username'] ?? 'N/A',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    authProvider.user!['email'] ?? 'N/A',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.arrow_forward_ios,
+                              size: 16,
+                              color: Color(0xFF1DB954),
+                            ),
+                          ],
+                        ),
+                      const SizedBox(height: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Logout Button
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _logout(context),
+                    icon: const Icon(Icons.logout, size: 18),
+                    label: Text('logout'.tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      textStyle: const TextStyle(fontSize: 14),
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -1273,7 +1369,29 @@ class _HomeScreenState extends State<HomeScreen> {
         // Profile Info
         if (authProvider.user != null)
           _buildSettingsTile(
-            icon: Icons.person,
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey.withOpacity(0.2),
+                image:
+                    authProvider.user!['avatar'] != null &&
+                        authProvider.user!['avatar']!.isNotEmpty
+                    ? DecorationImage(
+                        image: MemoryImage(
+                          base64Decode(authProvider.user!['avatar']),
+                        ),
+                        fit: BoxFit.cover,
+                      )
+                    : null,
+              ),
+              child:
+                  authProvider.user!['avatar'] == null ||
+                      authProvider.user!['avatar']!.isEmpty
+                  ? const Icon(Icons.person, color: Color(0xFF1DB954))
+                  : null,
+            ),
             title: authProvider.user!['username'] ?? 'User',
             subtitle: authProvider.user!['email'] ?? 'No email',
             trailing: Icon(
@@ -1281,7 +1399,12 @@ class _HomeScreenState extends State<HomeScreen> {
               color: isDark ? Colors.white : Colors.black,
             ),
             onTap: () {
-              // Navigate to profile edit
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UserProfileScreen(),
+                ),
+              );
             },
           ),
 
@@ -1361,7 +1484,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSettingsTile({
-    required IconData icon,
+    IconData? icon,
+    Widget? leading,
     required String title,
     required String subtitle,
     Widget? trailing,
@@ -1378,11 +1502,14 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: titleColor ?? (isDark ? Colors.white : Colors.black),
-                size: 24,
-              ),
+              if (leading != null)
+                leading
+              else
+                Icon(
+                  icon,
+                  color: titleColor ?? (isDark ? Colors.white : Colors.black),
+                  size: 24,
+                ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(

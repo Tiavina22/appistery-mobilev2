@@ -47,12 +47,17 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Map<String, dynamic>? _lastReadingPosition;
   bool _hasStartedReading = false;
 
+  // États pour les favoris
+  bool _isFavorite = false;
+  bool _isLoadingFavorite = false;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _authorService = AuthorService();
     _reactionService = ReactionService();
+    _isFavorite = widget.story.isFavorite;
     _loadFollowingStatus();
     _loadReadingStats();
     _loadLastReadingPosition();
@@ -286,6 +291,54 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     } finally {
       if (mounted) {
         setState(() => _isLoadingFollow = false);
+      }
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_isLoadingFavorite) return;
+
+    setState(() => _isLoadingFavorite = true);
+    try {
+      final storyService = StoryService();
+      final wasFavorite = _isFavorite;
+
+      if (_isFavorite) {
+        await storyService.removeFavorite(widget.story.id);
+      } else {
+        await storyService.addFavorite(widget.story.id);
+      }
+
+      if (mounted) {
+        setState(() {
+          _isFavorite = !_isFavorite;
+        });
+
+        // Afficher une notification
+        NotificationOverlay.show(
+          context,
+          message: _isFavorite ? 'Ajouté à Ma liste' : 'Retiré de Ma liste',
+          icon: _isFavorite ? Icons.check : Icons.remove,
+          backgroundColor: _isFavorite
+              ? Colors.green[600]!
+              : Colors.orange[600]!,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } catch (e) {
+      print('❌ Erreur _toggleFavorite: $e');
+      if (mounted) {
+        NotificationOverlay.show(
+          context,
+          message: 'Erreur: ${e.toString()}',
+          icon: Icons.error_outline,
+          backgroundColor: Colors.red[600]!,
+          duration: const Duration(seconds: 2),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingFavorite = false);
       }
     }
   }
@@ -634,18 +687,15 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       // Bouton Favoris
                       Expanded(
                         child: OutlinedButton.icon(
-                          onPressed: () {
-                            Provider.of<StoryProvider>(
-                              context,
-                              listen: false,
-                            ).toggleFavorite(widget.story.id);
-                          },
+                          onPressed: _isLoadingFavorite
+                              ? null
+                              : _toggleFavorite,
                           icon: Icon(
-                            widget.story.isFavorite ? Icons.check : Icons.add,
+                            _isFavorite ? Icons.check : Icons.add,
                             size: 24,
                           ),
                           label: Text(
-                            widget.story.isFavorite ? 'Ajouté' : 'Ma liste',
+                            _isFavorite ? 'Ajouté' : 'Ma liste',
                             style: const TextStyle(fontSize: 14),
                           ),
                           style: OutlinedButton.styleFrom(

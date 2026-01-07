@@ -46,7 +46,7 @@ class _NotificationBottomSheetState extends State<NotificationBottomSheet> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       constraints: BoxConstraints(
-        minHeight: MediaQuery.of(context).size.height * 0.18,
+        minHeight: MediaQuery.of(context).size.height * 0.15,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
