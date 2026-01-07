@@ -155,5 +155,13 @@
   "later": "Plus tard",
   "maintenance_mode": "Mode de maintenance",
   "no_active_version_message": "L'application est actuellement en maintenance. Veuillez réessayer dans quelques instants.",
-  "please_contact_support": "Si le problème persiste, veuillez contacter le support."
+  "please_contact_support": "Si le problème persiste, veuillez contacter le support.",
+  "my_reading": "Ma Lecture",
+  "my_stories": "Mes Histoires",
+  "view_read_stories": "Voir les histoires que vous avez lues",
+  "no_stories_read": "Vous n'avez pas encore lu d'histoires",
+  "explore_stories": "Explorer les histoires",
+  "reading": "En cours de lecture",
+  "completed": "Complétée",
+  "recent_activity": "Activité récente"
 }

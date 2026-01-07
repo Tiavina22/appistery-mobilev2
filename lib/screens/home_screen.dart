@@ -11,6 +11,7 @@ import 'login_screen.dart';
 import 'story_detail_screen.dart';
 import 'author_profile_screen.dart';
 import 'genre_stories_screen.dart';
+import 'my_stories_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1161,6 +1162,11 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildDisplaySection(context),
             const SizedBox(height: 16),
 
+            // My Reading Section
+            _buildSectionTitle('my_reading'.tr()),
+            _buildMyReadingSection(context),
+            const SizedBox(height: 16),
+
             // Account Section
             _buildSectionTitle('account'.tr()),
             _buildAccountSection(context),
@@ -1203,6 +1209,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildDisplaySection(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
 
     return Column(
       children: [
@@ -1228,7 +1235,36 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'language'.tr(),
           subtitle: _getLanguageLabel(context.locale),
           onTap: () => _showLanguageDialog(context),
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMyReadingSection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
+    return Column(
+      children: [
+        // My Stories
+        _buildSettingsTile(
+          icon: Icons.library_books,
+          title: 'my_stories'.tr(),
+          subtitle: 'view_read_stories'.tr(),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const MyStoriesScreen()),
+            );
+          },
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
       ],
     );
@@ -1236,6 +1272,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildAccountSection(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
 
     return Column(
       children: [
@@ -1245,7 +1283,10 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.person,
             title: authProvider.user!['username'] ?? 'User',
             subtitle: authProvider.user!['email'] ?? 'No email',
-            trailing: const Icon(Icons.chevron_right),
+            trailing: Icon(
+              Icons.chevron_right,
+              color: isDark ? Colors.white : Colors.black,
+            ),
             onTap: () {
               // Navigate to profile edit
             },
@@ -1259,7 +1300,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             // Navigate to change password screen
           },
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
 
         // Logout
@@ -1313,6 +1357,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildPrivacySection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Column(
       children: [
         // Private Account
@@ -1337,7 +1384,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             // Navigate to blocked users
           },
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
 
         // Privacy Policy
@@ -1348,13 +1398,19 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             // Open privacy policy
           },
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
       ],
     );
   }
 
   Widget _buildAboutSection(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Column(
       children: [
         // Version
@@ -1373,7 +1429,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             // Open terms
           },
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
 
         // Contact Support
@@ -1384,7 +1443,10 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             // Open support
           },
-          trailing: const Icon(Icons.chevron_right),
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
       ],
     );
@@ -1398,6 +1460,9 @@ class _HomeScreenState extends State<HomeScreen> {
     VoidCallback? onTap,
     Color? titleColor,
   }) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDark = themeProvider.themeMode == ThemeMode.dark;
+
     return Material(
       child: InkWell(
         onTap: onTap,
@@ -1407,7 +1472,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Icon(
                 icon,
-                color: titleColor ?? const Color(0xFF1DB954),
+                color: titleColor ?? (isDark ? Colors.white : Colors.black),
                 size: 24,
               ),
               const SizedBox(width: 16),

@@ -19,18 +19,107 @@ class StoryDetailScreen extends StatefulWidget {
   State<StoryDetailScreen> createState() => _StoryDetailScreenState();
 }
 
-class _StoryDetailScreenState extends State<StoryDetailScreen> {
+class _StoryDetailScreenState extends State<StoryDetailScreen>
+    with WidgetsBindingObserver {
   bool _isExpanded = false;
   bool _isLoadingStory = false;
   bool _isFollowing = false;
   bool _isLoadingFollow = false;
   late AuthorService _authorService;
 
+  // Nouveaux états pour le suivi de lecture
+  bool _isCompleted = false;
+  Map<String, dynamic>? _completionInfo;
+  Map<String, dynamic>? _readingStats;
+  bool _isLoadingStats = false;
+
+  // États pour le statut de lecture
+  Map<String, dynamic>? _lastReadingPosition;
+  bool _hasStartedReading = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _authorService = AuthorService();
     _loadFollowingStatus();
+    _loadReadingStats();
+    _loadLastReadingPosition();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> _loadLastReadingPosition() async {
+    try {
+      print(
+        '📍 [StoryDetailScreen._loadLastReadingPosition] Chargement dernière position...',
+      );
+      final readingService = ReadingService();
+      final lastPosition = await readingService.getLastPosition(
+        widget.story.id,
+      );
+
+      if (mounted) {
+        setState(() {
+          _lastReadingPosition = lastPosition;
+          _hasStartedReading = lastPosition != null;
+        });
+        if (lastPosition != null) {
+          print(
+            '   ✅ Dernière position trouvée: chapitre ${lastPosition['chapter_id']}',
+          );
+        } else {
+          print('   ℹ️ Aucune lecture antérieure');
+        }
+      }
+    } catch (e) {
+      print('   ❌ Erreur: $e');
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Rafraîchir les stats quand on revient à cette page
+      _loadReadingStats();
+    }
+  }
+
+  Future<void> _loadReadingStats() async {
+    setState(() => _isLoadingStats = true);
+    try {
+      print(
+        '📊 [StoryDetailScreen._loadReadingStats] story=${widget.story.id}',
+      );
+      final readingService = ReadingService();
+
+      // Charger les stats publiques
+      final stats = await readingService.getReadingStats(widget.story.id);
+
+      // Charger la completion info
+      final completionInfo = await readingService.getCompletionInfo(
+        widget.story.id,
+      );
+
+      if (mounted) {
+        setState(() {
+          _readingStats = stats;
+          _completionInfo = completionInfo;
+          _isCompleted =
+              completionInfo != null && completionInfo['is_completed'] == true;
+        });
+      }
+    } catch (e) {
+      print('❌ Erreur _loadReadingStats: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingStats = false);
+      }
+    }
   }
 
   Future<void> _loadFollowingStatus() async {
@@ -333,7 +422,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                     }
 
                                     if (mounted) {
-                                      Navigator.push(
+                                      print(
+                                        '🚀 [StoryDetailScreen] Navigation vers ReaderScreen',
+                                      );
+                                      await Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) => ReaderScreen(
@@ -342,6 +434,12 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                           ),
                                         ),
                                       );
+                                      // Rafraîchir les stats quand on revient
+                                      print(
+                                        '↩️ [StoryDetailScreen] Retour du ReaderScreen - Rafraîchissement',
+                                      );
+                                      await _loadReadingStats();
+                                      await _loadLastReadingPosition();
                                     }
                                   } catch (e) {
                                     if (mounted) {
@@ -371,17 +469,30 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                                     ),
                                   ),
                                 )
-                              : const Icon(Icons.play_arrow, size: 28),
+                              : Icon(
+                                  _hasStartedReading
+                                      ? Icons.play_arrow
+                                      : Icons.play_arrow,
+                                  size: 28,
+                                ),
                           label: Text(
-                            _isLoadingStory ? 'Chargement...' : 'Lire',
+                            _isLoadingStory
+                                ? 'Chargement...'
+                                : _hasStartedReading
+                                ? 'Continuer'
+                                : 'Lire',
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: Colors.black,
+                            backgroundColor: _hasStartedReading
+                                ? Colors.orange
+                                : Colors.white,
+                            foregroundColor: _hasStartedReading
+                                ? Colors.white
+                                : Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -475,6 +586,11 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
                         ),
                     ],
                   ),
+                  const SizedBox(height: 24),
+
+                  // Section stats et completion
+                  _buildStatsSection(),
+
                   const SizedBox(height: 32),
 
                   // Liste des chapitres
@@ -771,6 +887,107 @@ class _StoryDetailScreenState extends State<StoryDetailScreen> {
     return Container(
       color: Colors.grey.withOpacity(0.3),
       child: const Icon(Icons.person, color: Colors.white70, size: 24),
+    );
+  }
+
+  // Section pour afficher les stats et le statut de completion
+  Widget _buildStatsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Statut de lecture
+        if (_isCompleted)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.2),
+              border: Border.all(color: Colors.green, width: 1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Vous avez complété cette histoire',
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                      if (_completionInfo != null)
+                        Text(
+                          'Temps de lecture: ${_completionInfo!['total_reading_time_hours']} h',
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 12,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 16),
+
+        // Stats publiques
+        if (_readingStats != null && !_isLoadingStats)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.05),
+              border: Border.all(color: Colors.white24),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatItem('${_readingStats!['total_views'] ?? 0}', 'Vues'),
+                Container(height: 40, width: 1, color: Colors.white12),
+                _buildStatItem(
+                  '${_readingStats!['unique_readers'] ?? 0}',
+                  'Lecteurs',
+                ),
+                Container(height: 40, width: 1, color: Colors.white12),
+                _buildStatItem(
+                  '${_readingStats!['completed_reads'] ?? 0}',
+                  'Complétées',
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildStatItem(String value, String label) {
+    return Expanded(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

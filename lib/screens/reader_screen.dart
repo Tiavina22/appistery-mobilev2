@@ -169,6 +169,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final readingTime = DateTime.now().difference(_readingStartTime!).inSeconds;
     final isCompleted = _scrollPosition >= 95.0;
 
+    print(
+      '💾 [ReaderScreen._saveProgress] storyId=${widget.story.id}, chapterId=${_currentChapter!['id']}, scrollPos=${_scrollPosition.toStringAsFixed(1)}%, completed=$isCompleted',
+    );
+
     await _readingService.saveProgress(
       storyId: widget.story.id,
       chapterId: _currentChapter!['id'],
@@ -176,6 +180,15 @@ class _ReaderScreenState extends State<ReaderScreen> {
       isCompleted: isCompleted,
       readingTimeSeconds: readingTime,
     );
+
+    // Si c'est le dernier chapitre et qu'il est complété, marquer l'histoire comme complète
+    if (isCompleted &&
+        _currentChapterIndex == widget.story.chaptersList.length - 1) {
+      print(
+        '🏆 [ReaderScreen._saveProgress] Dernier chapitre complété -> markStoryCompleted',
+      );
+      await _readingService.markStoryCompleted(widget.story.id);
+    }
   }
 
   void _goToPreviousChapter() {
@@ -193,6 +206,77 @@ class _ReaderScreenState extends State<ReaderScreen> {
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+    } else {
+      // Si c'est le dernier chapitre et qu'il est complété, marquer l'histoire comme complète
+      _checkAndMarkStoryCompletion();
+    }
+  }
+
+  Future<void> _checkAndMarkStoryCompletion() async {
+    if (_scrollPosition >= 95.0 &&
+        _currentChapterIndex == widget.story.chaptersList.length - 1) {
+      final success = await _readingService.markStoryCompleted(widget.story.id);
+      if (success && mounted) {
+        _showCompletionDialog();
+      }
+    }
+  }
+
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: _getBackgroundColor(),
+        title: Text(
+          '🎉 Félicitations!',
+          style: TextStyle(color: _getTextColor(), fontSize: 24),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Vous avez terminé cette histoire!',
+              style: TextStyle(color: _getTextColor(), fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            if (_readingStartTime != null)
+              Text(
+                'Temps de lecture: ${_formatReadingTime(DateTime.now().difference(_readingStartTime!).inSeconds)}',
+                style: TextStyle(
+                  color: _getTextColor().withOpacity(0.7),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Retour'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text('Voir autres histoires'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatReadingTime(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+
+    if (hours > 0) {
+      return '$hours h $minutes min';
+    } else {
+      return '$minutes min';
     }
   }
 
