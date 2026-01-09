@@ -7,6 +7,7 @@ import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/story_provider.dart';
 import '../providers/websocket_provider.dart';
+import '../providers/notification_provider.dart';
 import '../services/story_service.dart';
 import 'login_screen.dart';
 import 'story_detail_screen.dart';
@@ -15,6 +16,7 @@ import 'genre_stories_screen.dart';
 import 'my_stories_screen.dart';
 import 'user_profile_screen.dart';
 import 'cgu_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -33,7 +35,72 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     Future.microtask(() {
       if (mounted) {
+        // Charger les histoires
         Provider.of<StoryProvider>(context, listen: false).loadStories();
+
+        // Charger les notifications
+        Provider.of<NotificationProvider>(
+          context,
+          listen: false,
+        ).loadNotifications();
+
+        // Configurer les listeners WebSocket pour les notifications
+        _setupNotificationListeners();
+      }
+    });
+  }
+
+  void _setupNotificationListeners() {
+    final wsProvider = Provider.of<WebSocketProvider>(context, listen: false);
+    final notificationProvider = Provider.of<NotificationProvider>(
+      context,
+      listen: false,
+    );
+
+    // Écouter les nouvelles notifications
+    wsProvider.on('notification:newWithBadge', (data) {
+      print('🔔 Nouvelle notification reçue: $data');
+
+      final notification = AppNotification(
+        id: data['notification']['id'],
+        user_id: 0, // Sera rempli par le serveur
+        type: data['notification']['type'],
+        title: data['notification']['title'],
+        message: data['notification']['message'],
+        actor_id: data['notification']['actor_id'],
+        related_story_id: data['notification']['related_story_id'],
+        related_chapter_id: data['notification']['related_chapter_id'],
+        is_read: false,
+        created_at: DateTime.parse(data['notification']['timestamp']),
+      );
+
+      // Ajouter la notification à la liste
+      notificationProvider.addNotification(notification);
+
+      // Afficher une snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(data['notification']['title']),
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Voir',
+              onPressed: () {
+                Navigator.of(context).pushNamed('/notifications');
+              },
+            ),
+          ),
+        );
+      }
+    });
+
+    // Écouter les notifications génériques
+    wsProvider.on('notification:received', (data) {
+      print('🔔 Notification générique reçue: $data');
+
+      if (mounted) {
+        // Recharger le compte de non-lues
+        notificationProvider.loadUnreadCount();
       }
     });
   }
@@ -108,14 +175,51 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             // Icône notifications
-            IconButton(
-              icon: const Icon(
-                Icons.notifications_none,
-                color: Colors.white,
-                size: 26,
-              ),
-              onPressed: () {
-                // TODO: Notifications
+            Consumer<NotificationProvider>(
+              builder: (context, notificationProvider, _) {
+                return Stack(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.notifications_none,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pushNamed('/notifications');
+                      },
+                    ),
+                    if (notificationProvider.unreadCount > 0)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 20,
+                            minHeight: 20,
+                          ),
+                          child: Center(
+                            child: Text(
+                              notificationProvider.unreadCount > 99
+                                  ? '99+'
+                                  : notificationProvider.unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                );
               },
             ),
             const SizedBox(width: 8),

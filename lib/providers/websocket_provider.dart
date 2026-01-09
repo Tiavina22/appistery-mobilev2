@@ -99,6 +99,11 @@ class WebSocketProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // Ajouter un listener pour un événement spécifique
+  void on(String event, Function(dynamic) callback) {
+    _wsService.socket?.on(event, callback);
+  }
+
   // Reconnecter
   Future<void> reconnect() async {
     _wsService.disconnect();
