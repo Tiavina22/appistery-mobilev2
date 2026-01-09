@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Configuration pour HTTPS (certificats valides) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Autoriser mistery.pro en HTTPS -->
+        <domain includeSubdomains="true">mistery.pro</domain>
+        <!-- Certificats de confiance par défaut -->
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </domain-config>
+
+    <!-- Configuration pour HTTP local (développement seulement) -->
+    <!-- Décommenter pour développement avec HTTP local -->
+    <!--
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">192.168.1.0</domain>
+        <domain includeSubdomains="true">10.0.0.0</domain>
+    </domain-config>
+    -->
+
+    <!-- Configuration par défaut pour tous les autres domaines -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">.</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

@@ -37,13 +37,32 @@ class WebSocketService {
 
     final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
 
+    // Convertir l'API_URL en WebSocket URL appropriée
+    String wsUrl = apiUrl;
+    if (apiUrl.startsWith('https://')) {
+      // Utiliser WSS pour HTTPS
+      wsUrl = apiUrl.replaceFirst('https://', 'wss://');
+    } else if (apiUrl.startsWith('http://')) {
+      // Utiliser WS pour HTTP
+      wsUrl = apiUrl.replaceFirst('http://', 'ws://');
+    }
+
+    print('📡 WebSocket: Connecting to $wsUrl');
+
     try {
       _socket = IO.io(
-        apiUrl,
+        wsUrl,
         IO.OptionBuilder()
-            .setTransports(['websocket'])
+            .setTransports([
+              'websocket',
+              'polling',
+            ]) // Try websocket first, then polling
             .disableAutoConnect()
             .setAuth({'token': token})
+            .enableForceNew()
+            .setReconnectionDelay(1000)
+            .setReconnectionDelayMax(5000)
+            .setReconnectionAttempts(5)
             .build(),
       );
 
