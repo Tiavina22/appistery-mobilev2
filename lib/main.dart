@@ -8,12 +8,14 @@ import 'screens/theme_selection_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/subscription_offers_screen.dart';
 import 'providers/theme_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/story_provider.dart';
 import 'providers/websocket_provider.dart';
 import 'providers/version_provider.dart';
 import 'providers/notification_provider.dart';
+import 'providers/subscription_offer_provider.dart';
 import 'widgets/force_update_dialog.dart';
 import 'widgets/home_with_version_check.dart';
 
@@ -35,6 +37,7 @@ void main() async {
           ChangeNotifierProvider(create: (_) => WebSocketProvider()),
           ChangeNotifierProvider(create: (_) => VersionProvider()),
           ChangeNotifierProvider(create: (_) => NotificationProvider()),
+          ChangeNotifierProvider(create: (_) => SubscriptionOfferProvider()),
         ],
         child: const MainApp(),
       ),
@@ -102,7 +105,10 @@ class MainApp extends StatelessWidget {
       theme: themeProvider.lightTheme,
       darkTheme: themeProvider.darkTheme,
       themeMode: themeProvider.themeMode,
-      routes: {'/notifications': (context) => const NotificationsScreen()},
+      routes: {
+        '/notifications': (context) => const NotificationsScreen(),
+        '/subscription-offers': (context) => const SubscriptionOffersScreen(),
+      },
       home: FutureBuilder<Widget>(
         future: _getInitialScreen(context),
         builder: (context, snapshot) {

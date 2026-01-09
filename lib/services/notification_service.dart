@@ -18,7 +18,7 @@ class NotificationService {
       }
 
       final response = await _dio.get(
-        '/notifications',
+        '/api/notifications',
         queryParameters: {'limit': limit, 'offset': offset},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
@@ -44,7 +44,7 @@ class NotificationService {
       }
 
       final response = await _dio.get(
-        '/notifications/unread-count',
+        '/api/notifications/unread-count',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -66,7 +66,7 @@ class NotificationService {
       }
 
       final response = await _dio.put(
-        '/notifications/$notificationId/read',
+        '/api/notifications/$notificationId/read',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -86,7 +86,7 @@ class NotificationService {
       }
 
       final response = await _dio.put(
-        '/notifications/mark-all-read',
+        '/api/notifications/mark-all-read',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
@@ -108,7 +108,7 @@ class NotificationService {
       }
 
       final response = await _dio.delete(
-        '/notifications/$notificationId',
+        '/api/notifications/$notificationId',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 

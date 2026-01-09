@@ -221,6 +221,7 @@ class Story {
   final int chapters;
   final double? rating;
   final bool isFavorite;
+  final bool isPremium;
   final String genre;
   final List<Map<String, dynamic>> chaptersList;
 
@@ -236,6 +237,7 @@ class Story {
     required this.chapters,
     this.rating,
     this.isFavorite = false,
+    this.isPremium = false,
     required this.genre,
     this.chaptersList = const [],
   });
@@ -321,6 +323,7 @@ class Story {
       chapters: json['chapters_count'] ?? json['chapters'] ?? 0,
       rating: json['rating']?.toDouble(),
       isFavorite: json['is_favorite'] ?? false,
+      isPremium: json['is_premium'] ?? false,
       genre: genre,
       chaptersList: chaptersList,
     );

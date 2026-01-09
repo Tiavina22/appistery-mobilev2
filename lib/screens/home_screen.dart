@@ -35,8 +35,17 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     Future.microtask(() {
       if (mounted) {
+        final storyProvider = Provider.of<StoryProvider>(
+          context,
+          listen: false,
+        );
+
         // Charger les histoires
-        Provider.of<StoryProvider>(context, listen: false).loadStories();
+        storyProvider.loadStories();
+
+        // Charger les genres et auteurs
+        storyProvider.loadGenres();
+        storyProvider.loadAuthors();
 
         // Charger les notifications
         Provider.of<NotificationProvider>(
@@ -391,12 +400,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSearchTab() {
     return Consumer<StoryProvider>(
       builder: (context, storyProvider, _) {
-        // Load genres and authors on first build
-        if (storyProvider.genres.isEmpty) {
-          storyProvider.loadGenres();
-          storyProvider.loadAuthors();
-        }
-
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1098,8 +1101,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStoryCard(Story story) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isUserPremium = authProvider.isPremium;
+    final isStoryPremium = story.isPremium;
+
     return GestureDetector(
       onTap: () {
+        // Si l'histoire est premium et l'utilisateur n'est pas premium
+        if (isStoryPremium && !isUserPremium) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Cette histoire est réservée aux abonnés premium',
+              ),
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'S\'abonner',
+                onPressed: () {
+                  if (mounted) {
+                    Navigator.of(context).pushNamed('/subscription-offers');
+                  }
+                },
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1107,44 +1136,137 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-      child: Container(
-        width: 140,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey.shade900,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: story.coverImage != null && story.coverImage!.isNotEmpty
-              ? _buildImageFromString(story.coverImage!)
-              : Container(
-                  width: 140,
-                  color: Colors.grey.shade900,
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey,
-                      size: 40,
+      child: Stack(
+        children: [
+          Container(
+            width: 140,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade900,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: story.coverImage != null && story.coverImage!.isNotEmpty
+                  ? _buildImageFromString(story.coverImage!)
+                  : Container(
+                      width: 140,
+                      color: Colors.grey.shade900,
+                      child: const Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                          size: 40,
+                        ),
+                      ),
                     ),
+            ),
+          ),
+          // Badge Premium
+          if (isStoryPremium)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  '👑 Premium',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-        ),
+              ),
+            ),
+          // Overlay bloquant pour histoires premium si non-premium
+          if (isStoryPremium && !isUserPremium)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  color: Colors.black.withOpacity(0.4),
+                  child: const Center(
+                    child: Icon(Icons.lock, color: Colors.amber, size: 32),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
 
   Widget _buildSearchResultTile(Story story) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isUserPremium = authProvider.isPremium;
+    final isStoryPremium = story.isPremium;
+
     return ListTile(
-      leading: story.coverImage != null
-          ? SizedBox(
-              width: 50,
-              height: 70,
-              child: _buildImageFromString(story.coverImage!),
-            )
-          : const SizedBox(width: 50, child: Icon(Icons.image)),
+      leading: Stack(
+        children: [
+          story.coverImage != null
+              ? SizedBox(
+                  width: 50,
+                  height: 70,
+                  child: _buildImageFromString(story.coverImage!),
+                )
+              : const SizedBox(width: 50, child: Icon(Icons.image)),
+          if (isStoryPremium)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('👑', style: TextStyle(fontSize: 12)),
+              ),
+            ),
+          if (isStoryPremium && !isUserPremium)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withOpacity(0.4),
+                child: const Center(
+                  child: Icon(Icons.lock, color: Colors.amber, size: 20),
+                ),
+              ),
+            ),
+        ],
+      ),
       title: Text(story.title),
       subtitle: Text(story.author),
+      trailing: isStoryPremium && !isUserPremium
+          ? const Icon(Icons.lock, color: Colors.amber)
+          : null,
       onTap: () {
+        // Si l'histoire est premium et l'utilisateur n'est pas premium
+        if (isStoryPremium && !isUserPremium) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Cette histoire est réservée aux abonnés premium',
+              ),
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'S\'abonner',
+                onPressed: () {
+                  if (mounted) {
+                    Navigator.of(context).pushNamed('/subscription-offers');
+                  }
+                },
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1156,8 +1278,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStoryGridItem(Story story) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isUserPremium = authProvider.isPremium;
+    final isStoryPremium = story.isPremium;
+
     return GestureDetector(
       onTap: () {
+        // Si l'histoire est premium et l'utilisateur n'est pas premium
+        if (isStoryPremium && !isUserPremium) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text(
+                'Cette histoire est réservée aux abonnés premium',
+              ),
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'S\'abonner',
+                onPressed: () {
+                  if (mounted) {
+                    Navigator.of(context).pushNamed('/subscription-offers');
+                  }
+                },
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1165,29 +1313,67 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: Colors.grey.shade900,
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: story.coverImage != null && story.coverImage!.isNotEmpty
-              ? _buildImageFromString(story.coverImage!)
-              : Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey.shade900,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      Icons.image_not_supported,
-                      color: Colors.grey,
-                      size: 60,
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade900,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: story.coverImage != null && story.coverImage!.isNotEmpty
+                  ? _buildImageFromString(story.coverImage!)
+                  : Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        color: Colors.grey.shade900,
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.image_not_supported,
+                          color: Colors.grey,
+                          size: 60,
+                        ),
+                      ),
                     ),
+            ),
+          ),
+          // Badge Premium
+          if (isStoryPremium)
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.amber,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: const Text(
+                  '👑 Premium',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-        ),
+              ),
+            ),
+          // Overlay bloquant pour histoires premium si non-premium
+          if (isStoryPremium && !isUserPremium)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  color: Colors.black.withOpacity(0.4),
+                  child: const Center(
+                    child: Icon(Icons.lock, color: Colors.amber, size: 32),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

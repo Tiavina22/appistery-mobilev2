@@ -14,6 +14,29 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   String? get errorMessage => _errorMessage;
 
+  bool get isPremium {
+    if (_user == null) return false;
+    // Vérifier s'il existe un abonnement actif
+    return _user!['is_premium'] ?? _user!['isPremium'] ?? false;
+  }
+
+  // Obtenir le pays de l'utilisateur
+  String? get userCountry {
+    if (_user == null) return null;
+    // Vérifier si le pays est un objet avec un code ou juste le code
+    final country = _user!['country'];
+    if (country is Map) {
+      return country['code'] as String?;
+    }
+    return country as String?;
+  }
+
+  // Vérifier si l'utilisateur est de Madagascar
+  bool get isMadagascarUser {
+    final country = userCountry;
+    return country == 'MG' || country == 'mg' || country == 'Madagascar';
+  }
+
   AuthProvider() {
     _checkLoginStatus();
   }
