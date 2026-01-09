@@ -75,6 +75,65 @@ class StoryProvider extends ChangeNotifier {
       print('🔄 StoryProvider: Histoire mise à jour via WebSocket');
       loadStories(); // Recharger toutes les histoires
     });
+
+    // Écouter l'ajout d'un favori
+    _wsService.onFavoriteAdded((data) {
+      print('❤️ StoryProvider: Favori ajouté via WebSocket');
+      print('Data: $data');
+
+      try {
+        final storyId = data['story_id'] as int?;
+        if (storyId != null) {
+          // Ajouter à la liste des favoris
+          final story = _stories.firstWhere(
+            (s) => s.id == storyId,
+            orElse: () => Story(
+              id: storyId,
+              title: data['title'] ?? 'Unknown',
+              description: data['description'] ?? '',
+              author: data['author_name'] ?? 'Unknown',
+              genre: data['genre'] ?? '',
+              coverImage: data['cover_image'],
+              isFavorite: true,
+              chapters: 0,
+            ),
+          );
+
+          // Marquer comme favori
+          if (!_favorites.any((s) => s.id == storyId)) {
+            _favorites.add(story);
+            notifyListeners();
+            print('✅ Favori ajouté à la liste');
+          }
+        }
+      } catch (e) {
+        print('❌ Erreur lors de l\'ajout du favori: $e');
+      }
+    });
+
+    // Écouter la suppression d'un favori
+    _wsService.onFavoriteRemoved((data) {
+      print('💔 StoryProvider: Favori supprimé via WebSocket');
+      print('Data: $data');
+
+      try {
+        final storyId = data['story_id'] as int?;
+        if (storyId != null) {
+          // Retirer de la liste des favoris
+          _favorites.removeWhere((s) => s.id == storyId);
+          notifyListeners();
+          print('✅ Favori supprimé de la liste');
+        }
+      } catch (e) {
+        print('❌ Erreur lors de la suppression du favori: $e');
+      }
+    });
+
+    // Écouter les mises à jour globales des favoris
+    _wsService.onFavoritesUpdated((data) {
+      print('🔄 StoryProvider: Favoris mis à jour via WebSocket');
+      loadFavorites(); // Recharger tous les favoris
+    });
   }
 
   Future<void> loadStories() async {
