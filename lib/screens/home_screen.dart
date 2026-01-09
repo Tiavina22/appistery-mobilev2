@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
@@ -13,6 +14,7 @@ import 'author_profile_screen.dart';
 import 'genre_stories_screen.dart';
 import 'my_stories_screen.dart';
 import 'user_profile_screen.dart';
+import 'cgu_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1458,21 +1460,23 @@ class _HomeScreenState extends State<HomeScreen> {
           title: 'terms_of_service'.tr(),
           subtitle: 'read_our_terms'.tr(),
           onTap: () {
-            // Open terms
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const CguScreen()),
+            );
           },
           trailing: Icon(
             Icons.chevron_right,
             color: isDark ? Colors.white : Colors.black,
           ),
         ),
-
         // Contact Support
         _buildSettingsTile(
           icon: Icons.help,
           title: 'contact_support'.tr(),
           subtitle: 'get_help_support'.tr(),
           onTap: () {
-            // Open support
+            _openWhatsApp();
           },
           trailing: Icon(
             Icons.chevron_right,
@@ -1605,5 +1609,35 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  Future<void> _openWhatsApp() async {
+    final whatsappPhoneNumber = '+261345939753';
+    final whatsappUrl =
+        'https://wa.me/$whatsappPhoneNumber?text=Bonjour, je besoin d\'aide pour Appistery';
+
+    try {
+      if (await canLaunchUrl(Uri.parse(whatsappUrl))) {
+        await launchUrl(
+          Uri.parse(whatsappUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('WhatsApp n\'est pas installé sur ce téléphone'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de l\'ouverture de WhatsApp: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+      }
+    }
   }
 }
