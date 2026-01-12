@@ -118,42 +118,28 @@ class SubscriptionOfferProvider extends ChangeNotifier {
 
       print('📍 Chargement des offres pour: $location');
 
-      // Charger l'offre locale
+      // Charger UNIQUEMENT les offres du pays de l'utilisateur
       final localResult = await _service.getOffersByLocation(
         location: location,
       );
       if (localResult['success']) {
+        final offersList = (localResult['data'] as List)
+            .map((json) => SubscriptionOffer.fromJson(json))
+            .toList();
+
         if (isMadagascar) {
-          _madagascarOffers = (localResult['data'] as List)
-              .map((json) => SubscriptionOffer.fromJson(json))
-              .toList();
+          _madagascarOffers = offersList;
+          _internationalOffers = []; // Vider les offres internationales
         } else {
-          _internationalOffers = (localResult['data'] as List)
-              .map((json) => SubscriptionOffer.fromJson(json))
-              .toList();
+          _internationalOffers = offersList;
+          _madagascarOffers = []; // Vider les offres Madagascar
         }
+
+        // Mettre UNIQUEMENT les offres du pays de l'utilisateur
+        _offers = offersList;
       }
 
-      // Charger aussi l'autre location pour le toggle
-      final otherLocation = isMadagascar ? 'international' : 'madagascar';
-      final otherResult = await _service.getOffersByLocation(
-        location: otherLocation,
-      );
-      if (otherResult['success']) {
-        if (isMadagascar) {
-          _internationalOffers = (otherResult['data'] as List)
-              .map((json) => SubscriptionOffer.fromJson(json))
-              .toList();
-        } else {
-          _madagascarOffers = (otherResult['data'] as List)
-              .map((json) => SubscriptionOffer.fromJson(json))
-              .toList();
-        }
-      }
-
-      // Combiner les deux listes
-      _offers = [..._madagascarOffers, ..._internationalOffers];
-      print('✅ ${_offers.length} offres chargées');
+      print('✅ ${_offers.length} offres chargées pour $location');
     } catch (e) {
       _error = e.toString();
       print('❌ Erreur lors du chargement des offres par pays: $e');

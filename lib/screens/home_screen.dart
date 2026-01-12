@@ -17,6 +17,7 @@ import 'my_stories_screen.dart';
 import 'user_profile_screen.dart';
 import 'cgu_screen.dart';
 import 'notifications_screen.dart';
+import 'subscription_offers_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1654,6 +1655,25 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
           ),
+
+        // Subscription Plans
+        _buildSettingsTile(
+          icon: Icons.workspace_premium,
+          title: 'subscription_plans'.tr(),
+          subtitle: 'manage_premium_subtitle'.tr(),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SubscriptionOffersScreen(),
+              ),
+            );
+          },
+          trailing: Icon(
+            Icons.chevron_right,
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        ),
 
         // Change Password
         _buildSettingsTile(

@@ -4,6 +4,11 @@ import 'package:easy_localization/easy_localization.dart';
 import '../providers/subscription_offer_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
+import '../services/auth_service.dart';
+import '../config/api_config.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SubscriptionOffersScreen extends StatefulWidget {
   const SubscriptionOffersScreen({Key? key}) : super(key: key);
@@ -17,9 +22,11 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Charger les offres basées sur le pays de l'utilisateur
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Rafraîchir le profil utilisateur pour avoir les dernières données
       final authProvider = context.read<AuthProvider>();
+      print('🔄 Rafraîchissement du profil utilisateur...');
+      await authProvider.refreshLoginStatus();
 
       // Afficher le pays détecté
       print(
@@ -27,6 +34,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
       );
       print('📍 Country data: ${authProvider.userCountry}');
 
+      // Charger les offres basées sur le pays de l'utilisateur
       final offerProvider = context.read<SubscriptionOfferProvider>();
       offerProvider.loadOffersByUserCountry(authProvider);
     });
@@ -389,11 +397,11 @@ class _OfferCardState extends State<OfferCard>
                           elevation: 0,
                         ),
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('S\'abonner à $offerName'),
-                              duration: const Duration(seconds: 2),
-                            ),
+                          _showPaymentModeDialog(
+                            context,
+                            widget.offer.id,
+                            offerName,
+                            '${widget.offer.amount} ${widget.offer.currency}',
                           );
                         },
                         child: Text(
@@ -412,6 +420,272 @@ class _OfferCardState extends State<OfferCard>
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showPaymentModeDialog(
+    BuildContext context,
+    int offerId,
+    String planName,
+    String price,
+  ) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isMadagascar = authProvider.isMadagascarUser;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('payment_mode'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('${'plan'.tr()}: $planName'),
+            Text('${'price'.tr()}: $price'),
+            const SizedBox(height: 24),
+            if (isMadagascar)
+              ListTile(
+                leading: const Icon(Icons.phone_android, color: Colors.green),
+                title: Text('mobile_money'.tr()),
+                subtitle: Text('mobile_money_providers'.tr()),
+                onTap: () {
+                  Navigator.pop(context);
+                  _initiatePayment(context, offerId, 'mobile_money');
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.credit_card, color: Colors.blue),
+              title: Text('bank_card'.tr()),
+              subtitle: Text('card_types'.tr()),
+              onTap: () {
+                Navigator.pop(context);
+                _initiatePayment(context, offerId, 'international');
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _initiatePayment(
+    BuildContext context,
+    int offerId,
+    String paymentMode,
+  ) async {
+    // Save Navigator reference before async operations
+    final navigator = Navigator.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(child: CircularProgressIndicator()),
+    );
+
+    try {
+      final authService = AuthService();
+      final token = await authService.getToken();
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/api/subscriptions/upgrade'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: json.encode({'offer_id': offerId, 'payment_mode': paymentMode}),
+      );
+
+      navigator.pop(); // Close loading dialog
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success'] == true && data['payment_url'] != null) {
+          // Open payment URL in WebView
+          navigator.push(
+            MaterialPageRoute(
+              builder: (context) => PaymentWebView(
+                paymentUrl: data['payment_url'],
+                transactionId: data['transaction_id'],
+              ),
+            ),
+          );
+        } else {
+          _showError(context, data['error'] ?? 'payment_init_error'.tr());
+        }
+      } else {
+        _showError(context, '${'server_error'.tr()}: ${response.statusCode}');
+      }
+    } catch (e) {
+      navigator.pop(); // Close loading dialog
+      _showError(context, '${'error'.tr()}: $e');
+    }
+  }
+
+  void _showError(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('error'.tr()),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// WebView for Vanilla Pay payment
+class PaymentWebView extends StatefulWidget {
+  final String paymentUrl;
+  final int transactionId;
+
+  const PaymentWebView({
+    super.key,
+    required this.paymentUrl,
+    required this.transactionId,
+  });
+
+  @override
+  State<PaymentWebView> createState() => _PaymentWebViewState();
+}
+
+class _PaymentWebViewState extends State<PaymentWebView> {
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (url) {
+            print('🌐 Page started: $url');
+            setState(() => _isLoading = true);
+
+            // Check immediately when redirect URL is detected
+            if (url.contains('/payment-callback') ||
+                url.contains('/payment/success') ||
+                url.contains('transaction=')) {
+              print('🎉 Payment redirect detected in onPageStarted!');
+              Future.delayed(const Duration(seconds: 2), () {
+                _checkPaymentStatus();
+              });
+            }
+          },
+          onPageFinished: (url) {
+            print('✅ Page finished: $url');
+            setState(() => _isLoading = false);
+
+            // Check if payment completed - detect redirect URL from backend
+            if (url.contains('/payment-callback') ||
+                url.contains('/payment/success') ||
+                url.contains('transaction=')) {
+              print('🎉 Payment callback detected, checking status...');
+              _checkPaymentStatus();
+            }
+          },
+          onWebResourceError: (error) {
+            print('❌ WebView error: ${error.description}');
+            // Even on error, check payment status (404 on redirect is ok)
+            _checkPaymentStatus();
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.paymentUrl));
+  }
+
+  Future<void> _checkPaymentStatus() async {
+    try {
+      final authService = AuthService();
+      final token = await authService.getToken();
+
+      final response = await http.get(
+        Uri.parse(
+          '${ApiConfig.baseUrl}/api/payments/transaction/${widget.transactionId}',
+        ),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final transaction = data['transaction'];
+
+        if (transaction['etat'] == 'SUCCESS') {
+          _showSuccessAndGoBack();
+        } else if (transaction['etat'] == 'FAILED') {
+          _showError('payment_failed'.tr());
+        }
+      }
+    } catch (e) {
+      print('❌ Error checking payment status: $e');
+    }
+  }
+
+  void _showSuccessAndGoBack() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('payment_success'.tr()),
+        content: Text('premium_activated'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close WebView
+              Navigator.pop(context); // Close offers screen
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('error'.tr()),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('payment'.tr()),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _controller.reload(),
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          WebViewWidget(controller: _controller),
+          if (_isLoading) const Center(child: CircularProgressIndicator()),
+        ],
       ),
     );
   }
