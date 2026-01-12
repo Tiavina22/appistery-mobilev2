@@ -861,7 +861,14 @@ class _PaymentWebViewState extends State<PaymentWebView> {
     }
   }
 
-  void _showSuccessAndGoBack() {
+  void _showSuccessAndGoBack() async {
+    // Rafraîchir le profil utilisateur pour mettre à jour isPremium
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    await authProvider.refreshLoginStatus();
+    print('✅ Profile refreshed after payment success');
+
+    if (!mounted) return;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
