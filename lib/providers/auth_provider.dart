@@ -20,6 +20,39 @@ class AuthProvider extends ChangeNotifier {
     return _user!['is_premium'] ?? _user!['isPremium'] ?? false;
   }
 
+  // Obtenir le type d'abonnement
+  String? get subscriptionType {
+    if (_user == null) return null;
+    return _user!['subscription_type'] as String?;
+  }
+
+  // Obtenir le statut de l'abonnement
+  String? get subscriptionStatus {
+    if (_user == null) return null;
+    return _user!['subscription_status'] as String?;
+  }
+
+  // Obtenir la date d'expiration de l'abonnement
+  DateTime? get subscriptionExpiresAt {
+    if (_user == null) return null;
+    final expiresAt = _user!['subscription_expires_at'];
+    if (expiresAt == null) return null;
+    return DateTime.tryParse(expiresAt.toString());
+  }
+
+  // Vérifier si l'utilisateur a un abonnement actif
+  bool get hasActiveSubscription {
+    if (_user == null) return false;
+    final status = subscriptionStatus;
+    final expiresAt = subscriptionExpiresAt;
+
+    // Actif si status = 'active' et non expiré
+    if (status == 'active' && expiresAt != null) {
+      return expiresAt.isAfter(DateTime.now());
+    }
+    return false;
+  }
+
   // Obtenir le pays de l'utilisateur
   String? get userCountry {
     if (_user == null) {

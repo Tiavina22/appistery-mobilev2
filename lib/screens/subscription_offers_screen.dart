@@ -49,14 +49,23 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
         : 'International';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Plans d\'abonnement')),
+      appBar: AppBar(title: const Text('Mon abonnement')),
       body: Consumer<SubscriptionOfferProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // Sélectionner les offres : par défaut du pays de l'utilisateur
+          // Si l'utilisateur a un abonnement actif, afficher ses détails
+          if (authProvider.hasActiveSubscription) {
+            return _buildActiveSubscriptionView(
+              context,
+              authProvider,
+              isDarkMode,
+            );
+          }
+
+          // Sinon, afficher les offres disponibles
           final displayOffers = authProvider.isMadagascarUser
               ? provider.madagascarOffers
               : provider.internationalOffers;
@@ -134,6 +143,225 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  // Widget pour afficher l'abonnement actif
+  Widget _buildActiveSubscriptionView(
+    BuildContext context,
+    AuthProvider authProvider,
+    bool isDarkMode,
+  ) {
+    final expiresAt = authProvider.subscriptionExpiresAt;
+    final formattedDate = expiresAt != null
+        ? '${expiresAt.day.toString().padLeft(2, '0')}/${expiresAt.month.toString().padLeft(2, '0')}/${expiresAt.year}'
+        : 'N/A';
+
+    final daysRemaining = expiresAt != null
+        ? expiresAt.difference(DateTime.now()).inDays
+        : 0;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          // Badge Premium
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFFD700).withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.workspace_premium,
+                  size: 80,
+                  color: Colors.white,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '✨ Premium Actif ✨',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Profitez de tous les avantages',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withOpacity(0.9),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Détails de l'abonnement
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[850] : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                _buildInfoRow(
+                  context,
+                  icon: Icons.calendar_today,
+                  label: 'Expire le',
+                  value: formattedDate,
+                  isDarkMode: isDarkMode,
+                ),
+                const Divider(height: 24),
+                _buildInfoRow(
+                  context,
+                  icon: Icons.timer,
+                  label: 'Jours restants',
+                  value: '$daysRemaining jours',
+                  isDarkMode: isDarkMode,
+                  valueColor: daysRemaining <= 7 ? Colors.orange : Colors.green,
+                ),
+                const Divider(height: 24),
+                _buildInfoRow(
+                  context,
+                  icon: Icons.check_circle,
+                  label: 'Statut',
+                  value: 'Actif',
+                  isDarkMode: isDarkMode,
+                  valueColor: Colors.green,
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // Avantages Premium
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isDarkMode ? Colors.grey[850] : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Vos avantages Premium',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildBenefitItem('Accès à toutes les histoires', isDarkMode),
+                _buildBenefitItem('Lecture sans publicités', isDarkMode),
+                _buildBenefitItem('Téléchargement hors ligne', isDarkMode),
+                _buildBenefitItem('Contenu exclusif', isDarkMode),
+                _buildBenefitItem('Support prioritaire', isDarkMode),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Note d'annulation
+          Text(
+            'Pour changer d\'offre, attendez l\'expiration de votre abonnement actuel.',
+            style: TextStyle(
+              fontSize: 14,
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required bool isDarkMode,
+    Color? valueColor,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 24, color: const Color(0xFFFFD700)),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 16,
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? (isDarkMode ? Colors.white : Colors.black87),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBenefitItem(String text, bool isDarkMode) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          const Icon(Icons.check_circle, size: 20, color: Color(0xFFFFD700)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: 15,
+                color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
