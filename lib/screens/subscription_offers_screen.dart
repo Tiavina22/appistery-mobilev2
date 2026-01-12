@@ -707,8 +707,9 @@ class _OfferCardState extends State<OfferCard>
     int offerId,
     String paymentMode,
   ) async {
-    // Save Navigator reference before async operations
+    // Save references before async operations
     final navigator = Navigator.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     showDialog(
       context: context,
@@ -744,31 +745,30 @@ class _OfferCardState extends State<OfferCard>
             ),
           );
         } else {
-          _showError(context, data['error'] ?? 'payment_init_error'.tr());
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text(data['error'] ?? 'payment_init_error'.tr()),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
       } else {
-        _showError(context, '${'server_error'.tr()}: ${response.statusCode}');
+        scaffoldMessenger.showSnackBar(
+          SnackBar(
+            content: Text('${'server_error'.tr()}: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       navigator.pop(); // Close loading dialog
-      _showError(context, '${'error'.tr()}: $e');
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('${'error'.tr()}: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
-  }
-
-  void _showError(BuildContext context, String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('error'.tr()),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
-    );
   }
 }
 
