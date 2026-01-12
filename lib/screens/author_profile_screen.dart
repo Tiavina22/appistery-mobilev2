@@ -109,8 +109,14 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
+    final cardColor = isDarkMode ? Colors.grey[900] : Colors.grey[200];
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: backgroundColor,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : NestedScrollView(
@@ -120,7 +126,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                   SliverAppBar(
                     expandedHeight: 200,
                     pinned: true,
-                    backgroundColor: Colors.grey[900],
+                    backgroundColor: cardColor,
                     leading: IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
@@ -145,12 +151,14 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                               gradient: LinearGradient(
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
-                                colors: [Colors.grey[800]!, Colors.black],
+                                colors: isDarkMode
+                                    ? [Colors.grey[800]!, Colors.black]
+                                    : [Colors.grey[400]!, Colors.grey[200]!],
                               ),
                             ),
                           ),
                           // Avatar centré
-                          Center(child: _buildAvatar()),
+                          Center(child: _buildAvatar(isDarkMode: isDarkMode)),
                         ],
                       ),
                     ),
@@ -165,10 +173,10 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                           // Nom de l'auteur
                           Text(
                             widget.authorName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: textColor,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -180,7 +188,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                               _authorProfile!['speciality'],
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey[400],
+                                color: textColorSecondary,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -193,14 +201,17 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                               _buildStatItem(
                                 'Histoires',
                                 _stats['total_stories']?.toString() ?? '0',
+                                isDarkMode: isDarkMode,
                               ),
                               _buildStatItem(
                                 'Followers',
                                 _followersCount.toString(),
+                                isDarkMode: isDarkMode,
                               ),
                               _buildStatItem(
                                 'Vues',
                                 _stats['total_views']?.toString() ?? '0',
+                                isDarkMode: isDarkMode,
                               ),
                             ],
                           ),
@@ -223,11 +234,17 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                               ),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: _isFollowing
-                                    ? Colors.grey[800]
-                                    : Colors.white,
+                                    ? (isDarkMode
+                                          ? Colors.grey[800]
+                                          : Colors.grey[300])
+                                    : (isDarkMode
+                                          ? Colors.white
+                                          : Colors.black),
                                 foregroundColor: _isFollowing
-                                    ? Colors.white
-                                    : Colors.black,
+                                    ? textColor
+                                    : (isDarkMode
+                                          ? Colors.black
+                                          : Colors.white),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 14,
                                 ),
@@ -246,12 +263,12 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Biographie',
                                     style: TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: textColor,
                                     ),
                                   ),
                                   const SizedBox(height: 8),
@@ -259,7 +276,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                                     _authorProfile!['biography'],
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.grey[300],
+                                      color: textColorSecondary,
                                       height: 1.5,
                                     ),
                                   ),
@@ -271,9 +288,9 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                           // Tabs
                           TabBar(
                             controller: _tabController,
-                            indicatorColor: Colors.white,
-                            labelColor: Colors.white,
-                            unselectedLabelColor: Colors.grey,
+                            indicatorColor: textColor,
+                            labelColor: textColor,
+                            unselectedLabelColor: textColorSecondary,
                             tabs: const [
                               Tab(text: 'Histoires'),
                               Tab(text: 'À propos'),
@@ -287,22 +304,29 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
               },
               body: TabBarView(
                 controller: _tabController,
-                children: [_buildStoriesTab(), _buildAboutTab()],
+                children: [
+                  _buildStoriesTab(isDarkMode: isDarkMode),
+                  _buildAboutTab(isDarkMode: isDarkMode),
+                ],
               ),
             ),
     );
   }
 
-  Widget _buildAvatar() {
+  Widget _buildAvatar({required bool isDarkMode}) {
     final avatarData = _authorProfile?['avatar'] as String?;
+    final iconColor = isDarkMode ? Colors.white70 : Colors.black54;
+    final borderColor = isDarkMode ? Colors.white : Colors.black;
 
     return Container(
       width: 120,
       height: 120,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withOpacity(0.1),
-        border: Border.all(color: Colors.white, width: 3),
+        color: isDarkMode
+            ? Colors.white.withOpacity(0.1)
+            : Colors.black.withOpacity(0.05),
+        border: Border.all(color: borderColor, width: 3),
       ),
       child: ClipOval(
         child: avatarData != null && avatarData.isNotEmpty
@@ -310,41 +334,47 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                 base64Decode(avatarData.split(',').last),
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
-                  return const Icon(
-                    Icons.person,
-                    size: 60,
-                    color: Colors.white70,
-                  );
+                  return Icon(Icons.person, size: 60, color: iconColor);
                 },
               )
-            : const Icon(Icons.person, size: 60, color: Colors.white70),
+            : Icon(Icons.person, size: 60, color: iconColor),
       ),
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+  Widget _buildStatItem(
+    String label,
+    String value, {
+    required bool isDarkMode,
+  }) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorSecondary = isDarkMode ? Colors.grey[400] : Colors.grey[600];
+
     return Column(
       children: [
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
         const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[400])),
+        Text(label, style: TextStyle(fontSize: 14, color: textColorSecondary)),
       ],
     );
   }
 
-  Widget _buildStoriesTab() {
+  Widget _buildStoriesTab({required bool isDarkMode}) {
+    final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
+    final cardColor = isDarkMode ? Colors.grey.shade900 : Colors.grey.shade200;
+
     if (_authorStories.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'Aucune histoire publiée',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: textColorSecondary),
         ),
       );
     }
@@ -372,7 +402,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.shade900,
+              color: cardColor,
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
@@ -396,32 +426,35 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
     );
   }
 
-  Widget _buildAboutTab() {
+  Widget _buildAboutTab({required bool isDarkMode}) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorSecondary = isDarkMode ? Colors.grey[300] : Colors.grey[700];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Email',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             _authorProfile?['email'] ?? 'Non disponible',
-            style: TextStyle(fontSize: 14, color: Colors.grey[300]),
+            style: TextStyle(fontSize: 14, color: textColorSecondary),
           ),
           const SizedBox(height: 20),
-          const Text(
+          Text(
             'Membre depuis',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 4),
@@ -431,7 +464,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                     'dd MMMM yyyy',
                   ).format(DateTime.parse(_authorProfile!['created_at']))
                 : 'Non disponible',
-            style: TextStyle(fontSize: 14, color: Colors.grey[300]),
+            style: TextStyle(fontSize: 14, color: textColorSecondary),
           ),
         ],
       ),

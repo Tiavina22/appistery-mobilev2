@@ -71,14 +71,37 @@ class SubscriptionOfferProvider extends ChangeNotifier {
   List<SubscriptionOffer> _offers = [];
   List<SubscriptionOffer> _madagascarOffers = [];
   List<SubscriptionOffer> _internationalOffers = [];
+  Map<String, dynamic>? _activeSubscription;
   bool _isLoading = false;
   String? _error;
 
   List<SubscriptionOffer> get offers => _offers;
   List<SubscriptionOffer> get madagascarOffers => _madagascarOffers;
   List<SubscriptionOffer> get internationalOffers => _internationalOffers;
+  Map<String, dynamic>? get activeSubscription => _activeSubscription;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  // Charger l'abonnement actif de l'utilisateur
+  Future<void> loadActiveSubscription() async {
+    try {
+      final result = await _service.getActiveSubscription();
+      print('📊 [loadActiveSubscription] Result: $result');
+      if (result['success'] == true &&
+          result['hasActiveSubscription'] == true) {
+        _activeSubscription = result['subscription'];
+        print(
+          '📊 [loadActiveSubscription] Subscription loaded: $_activeSubscription',
+        );
+      } else {
+        _activeSubscription = null;
+      }
+      notifyListeners();
+    } catch (e) {
+      print('❌ Erreur lors du chargement de l\'abonnement actif: $e');
+      _activeSubscription = null;
+    }
+  }
 
   // Charger toutes les offres actives
   Future<void> loadOffers() async {

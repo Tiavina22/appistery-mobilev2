@@ -82,6 +82,21 @@ class AuthService {
         'message': response.data['message'] ?? 'Erreur de connexion',
       };
     } on DioException catch (e) {
+      // Vérifier si c'est une erreur de device déjà connecté
+      final errorCode = e.response?.data['error_code'];
+      final deviceName = e.response?.data['device_name'];
+
+      if (errorCode == 'DEVICE_ALREADY_CONNECTED') {
+        return {
+          'success': false,
+          'message':
+              e.response?.data['message'] ??
+              'Ce compte est déjà connecté sur un autre appareil.',
+          'error_code': 'DEVICE_ALREADY_CONNECTED',
+          'device_name': deviceName ?? 'Appareil inconnu',
+        };
+      }
+
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur de connexion',

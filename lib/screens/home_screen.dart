@@ -146,9 +146,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 return Stack(
                   children: [
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.notifications_none,
-                        color: Colors.white,
+                        color: Theme.of(context).iconTheme.color,
                         size: 26,
                       ),
                       onPressed: () {
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           selectedItemColor: Theme.of(context).brightness == Brightness.dark
               ? Colors.white
-              : const Color(0xFF1DB954),
+              : Colors.black,
           unselectedItemColor: Colors.grey,
           selectedFontSize: 12,
           unselectedFontSize: 12,
@@ -649,7 +649,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisCount: 2,
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  childAspectRatio: 0.7,
+                  childAspectRatio: 0.65,
                 ),
                 itemCount: storyProvider.favorites.length,
                 itemBuilder: (context, index) {
@@ -1128,7 +1128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: const Text(
-                  '👑 Premium',
+                  'Premium',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 10,
@@ -1234,6 +1234,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isUserPremium = authProvider.isPremium;
     final isStoryPremium = story.isPremium;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -1264,67 +1265,147 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-      child: Stack(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.shade900,
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.3)
+                  : Colors.grey.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: story.coverImage != null && story.coverImage!.isNotEmpty
-                  ? _buildImageFromString(story.coverImage!)
-                  : Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: Colors.grey.shade900,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                          size: 60,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image de couverture
+            Expanded(
+              flex: 4,
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: double.infinity,
+                      child:
+                          story.coverImage != null &&
+                              story.coverImage!.isNotEmpty
+                          ? _buildImageFromString(story.coverImage!)
+                          : Container(
+                              color: isDarkMode
+                                  ? Colors.grey.shade800
+                                  : Colors.grey.shade200,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: Colors.grey.shade500,
+                                  size: 40,
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
+                  // Badge Premium
+                  if (isStoryPremium)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Premium',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
+                  // Overlay bloquant pour histoires premium si non-premium
+                  if (isStoryPremium && !isUserPremium)
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(12),
+                        ),
+                        child: Container(
+                          color: Colors.black.withOpacity(0.4),
+                          child: const Center(
+                            child: Icon(
+                              Icons.lock,
+                              color: Colors.amber,
+                              size: 32,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          // Badge Premium
-          if (isStoryPremium)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  '👑 Premium',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
+            // Infos de l'histoire
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Titre
+                    Text(
+                      story.title,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    // Auteur
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            story.author,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey.shade500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ),
-          // Overlay bloquant pour histoires premium si non-premium
-          if (isStoryPremium && !isUserPremium)
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  color: Colors.black.withOpacity(0.4),
-                  child: const Center(
-                    child: Icon(Icons.lock, color: Colors.amber, size: 32),
-                  ),
-                ),
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1849,21 +1930,33 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _confirmLogout(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: Text('confirm_logout'.tr()),
           content: Text('logout_confirmation_message'.tr()),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text('cancel'.tr()),
             ),
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _logout(context);
+              onPressed: () async {
+                Navigator.pop(dialogContext);
+                print('🔴 _confirmLogout: Déconnexion...');
+                await authProvider.logout();
+                print(
+                  '🔴 _confirmLogout: Déconnexion terminée, navigation vers login...',
+                );
+                navigator.pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                  (route) => false,
+                );
+                print('✅ Navigation vers login effectuée');
               },
               child: Text(
                 'logout'.tr(),

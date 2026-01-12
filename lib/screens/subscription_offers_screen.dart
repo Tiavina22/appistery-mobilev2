@@ -37,6 +37,11 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
       // Charger les offres basées sur le pays de l'utilisateur
       final offerProvider = context.read<SubscriptionOfferProvider>();
       offerProvider.loadOffersByUserCountry(authProvider);
+
+      // Charger l'abonnement actif si l'utilisateur est premium
+      if (authProvider.hasActiveSubscription) {
+        await offerProvider.loadActiveSubscription();
+      }
     });
   }
 
@@ -44,6 +49,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
   Widget build(BuildContext context) {
     final isDarkMode = Provider.of<ThemeProvider>(context).isDarkMode;
     final authProvider = Provider.of<AuthProvider>(context);
+    final offerProvider = Provider.of<SubscriptionOfferProvider>(context);
     final userCountryName = authProvider.isMadagascarUser
         ? 'Madagascar'
         : 'International';
@@ -61,6 +67,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
             return _buildActiveSubscriptionView(
               context,
               authProvider,
+              offerProvider,
               isDarkMode,
             );
           }
@@ -151,6 +158,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
   Widget _buildActiveSubscriptionView(
     BuildContext context,
     AuthProvider authProvider,
+    SubscriptionOfferProvider offerProvider,
     bool isDarkMode,
   ) {
     final expiresAt = authProvider.subscriptionExpiresAt;
@@ -162,11 +170,24 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
         ? expiresAt.difference(DateTime.now()).inDays
         : 0;
 
+    // Récupérer les détails de l'offre active
+    final subscription = offerProvider.activeSubscription;
+    final offerName = subscription?['offer_name'] ?? 'Premium';
+    final offerDuration = subscription?['offer_duration'] ?? 1;
+    final offerAmount = subscription?['amount'];
+    final offerCurrency = subscription?['currency'] ?? 'MGA';
+    final startedAt = subscription?['started_at'] != null
+        ? DateTime.tryParse(subscription!['started_at'].toString())
+        : null;
+    final formattedStartDate = startedAt != null
+        ? '${startedAt.day.toString().padLeft(2, '0')}/${startedAt.month.toString().padLeft(2, '0')}/${startedAt.year}'
+        : 'N/A';
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Badge Premium
+          // Badge Premium avec nom de l'offre
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(32),
@@ -193,9 +214,9 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
                   color: Colors.white,
                 ),
                 const SizedBox(height: 16),
-                const Text(
-                  '✨ Premium Actif ✨',
-                  style: TextStyle(
+                Text(
+                  '✨ $offerName ✨',
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -203,12 +224,23 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Profitez de tous les avantages',
+                  '$offerDuration mois',
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withOpacity(0.9),
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withOpacity(0.95),
                   ),
                 ),
+                if (offerAmount != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    '$offerAmount $offerCurrency',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -234,6 +266,14 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
               children: [
                 _buildInfoRow(
                   context,
+                  icon: Icons.play_arrow,
+                  label: 'Début',
+                  value: formattedStartDate,
+                  isDarkMode: isDarkMode,
+                ),
+                const Divider(height: 24),
+                _buildInfoRow(
+                  context,
                   icon: Icons.calendar_today,
                   label: 'Expire le',
                   value: formattedDate,
@@ -257,41 +297,6 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
                   isDarkMode: isDarkMode,
                   valueColor: Colors.green,
                 ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // Avantages Premium
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[850] : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: const Color(0xFFFFD700).withOpacity(0.3),
-                width: 2,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Vos avantages Premium',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildBenefitItem('Accès à toutes les histoires', isDarkMode),
-                _buildBenefitItem('Lecture sans publicités', isDarkMode),
-                _buildBenefitItem('Téléchargement hors ligne', isDarkMode),
-                _buildBenefitItem('Contenu exclusif', isDarkMode),
-                _buildBenefitItem('Support prioritaire', isDarkMode),
               ],
             ),
           ),
@@ -671,6 +676,7 @@ class _OfferCardState extends State<OfferCard>
             Text('${'plan'.tr()}: $planName'),
             Text('${'price'.tr()}: $price'),
             const SizedBox(height: 24),
+            // Madagascar: show only Mobile Money
             if (isMadagascar)
               ListTile(
                 leading: const Icon(Icons.phone_android, color: Colors.green),
@@ -681,15 +687,17 @@ class _OfferCardState extends State<OfferCard>
                   _initiatePayment(context, offerId, 'mobile_money');
                 },
               ),
-            ListTile(
-              leading: const Icon(Icons.credit_card, color: Colors.blue),
-              title: Text('bank_card'.tr()),
-              subtitle: Text('card_types'.tr()),
-              onTap: () {
-                Navigator.pop(context);
-                _initiatePayment(context, offerId, 'international');
-              },
-            ),
+            // International: show only Bank Card
+            if (!isMadagascar)
+              ListTile(
+                leading: const Icon(Icons.credit_card, color: Colors.blue),
+                title: Text('bank_card'.tr()),
+                subtitle: Text('card_types'.tr()),
+                onTap: () {
+                  Navigator.pop(context);
+                  _initiatePayment(context, offerId, 'international');
+                },
+              ),
           ],
         ),
         actions: [

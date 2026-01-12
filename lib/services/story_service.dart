@@ -224,6 +224,7 @@ class Story {
   final bool isPremium;
   final String genre;
   final List<Map<String, dynamic>> chaptersList;
+  final DateTime? createdAt;
 
   Story({
     required this.id,
@@ -240,6 +241,7 @@ class Story {
     this.isPremium = false,
     required this.genre,
     this.chaptersList = const [],
+    this.createdAt,
   });
 
   factory Story.fromJson(Map<String, dynamic> json) {
@@ -326,6 +328,9 @@ class Story {
       isPremium: json['is_premium'] ?? false,
       genre: genre,
       chaptersList: chaptersList,
+      createdAt: json['created_at'] != null || json['createdAt'] != null
+          ? DateTime.tryParse(json['created_at'] ?? json['createdAt'])
+          : null,
     );
   }
 }

@@ -181,4 +181,31 @@ class SubscriptionOfferService {
       return {'success': false, 'error': e.message};
     }
   }
+
+  // Récupérer l'abonnement actif de l'utilisateur
+  Future<Map<String, dynamic>> getActiveSubscription() async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) {
+        return {'success': false, 'error': 'Non authentifié'};
+      }
+
+      final response = await _dio.get(
+        '/api/subscriptions/active',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      return {
+        'success': response.data['success'] ?? true,
+        'hasActiveSubscription':
+            response.data['hasActiveSubscription'] ?? false,
+        'subscription': response.data['subscription'],
+      };
+    } on DioException catch (e) {
+      print(
+        '❌ Erreur lors de la récupération de l\'abonnement actif: ${e.message}',
+      );
+      return {'success': false, 'error': e.message};
+    }
+  }
 }

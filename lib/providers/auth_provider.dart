@@ -16,8 +16,20 @@ class AuthProvider extends ChangeNotifier {
 
   bool get isPremium {
     if (_user == null) return false;
-    // Vérifier s'il existe un abonnement actif
-    return _user!['is_premium'] ?? _user!['isPremium'] ?? false;
+    // Vérifier is_premium directement
+    if (_user!['is_premium'] == true || _user!['isPremium'] == true) {
+      return true;
+    }
+    // Fallback: si subscription est active et non expirée, considérer comme premium
+    final status = _user!['subscription_status'] as String?;
+    final expiresAt = _user!['subscription_expires_at'];
+    if (status == 'active' && expiresAt != null) {
+      final expiry = DateTime.tryParse(expiresAt.toString());
+      if (expiry != null && expiry.isAfter(DateTime.now())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Obtenir le type d'abonnement
@@ -93,8 +105,26 @@ class AuthProvider extends ChangeNotifier {
       print(
         '👤 _checkLoginStatus: user data loaded, country=${_user?['country']}',
       );
+      _logSubscriptionDetails('_checkLoginStatus');
     }
     notifyListeners();
+  }
+
+  // Log des détails de l'abonnement
+  void _logSubscriptionDetails(String source) {
+    print('═══════════════════════════════════════════════════════════');
+    print('📊 [$source] SUBSCRIPTION DETAILS:');
+    print('   👤 User ID: ${_user?['id']}');
+    print('   📧 Email: ${_user?['email']}');
+    print('   ⭐ is_premium: ${_user?['is_premium']}');
+    print('   📦 subscription_type: ${_user?['subscription_type']}');
+    print('   📋 subscription_status: ${_user?['subscription_status']}');
+    print(
+      '   📅 subscription_expires_at: ${_user?['subscription_expires_at']}',
+    );
+    print('   🔓 isPremium (getter): $isPremium');
+    print('   ✅ hasActiveSubscription (getter): $hasActiveSubscription');
+    print('═══════════════════════════════════════════════════════════');
   }
 
   // Connexion
@@ -111,6 +141,7 @@ class AuthProvider extends ChangeNotifier {
         _user = result['user'];
         _errorMessage = null;
         _isLoading = false;
+        _logSubscriptionDetails('login');
         notifyListeners();
         return true;
       } else {

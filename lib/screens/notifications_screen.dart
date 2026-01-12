@@ -51,12 +51,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
         elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
+        backgroundColor:
+            theme.appBarTheme.backgroundColor ?? theme.scaffoldBackgroundColor,
+        foregroundColor:
+            theme.appBarTheme.foregroundColor ?? theme.colorScheme.onSurface,
         actions: [
           Consumer<NotificationProvider>(
             builder: (context, provider, _) {

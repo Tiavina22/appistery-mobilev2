@@ -87,7 +87,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             countryName = _countries[user['country_id'].toString()] ?? '—';
           }
 
-          final isPremium = user['premium'] == true;
+          final isPremium = authProvider.isPremium;
 
           return SingleChildScrollView(
             child: Column(
