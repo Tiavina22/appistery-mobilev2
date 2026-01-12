@@ -83,10 +83,12 @@ class AuthProvider extends ChangeNotifier {
 
   // Déconnexion
   Future<void> logout() async {
+    print('🔴 AuthProvider: Déconnexion en cours...');
     await _authService.logout();
     _isLoggedIn = false;
     _user = null;
     _errorMessage = null;
+    print('🔴 AuthProvider: Déconnexion terminée. isLoggedIn=$_isLoggedIn');
     notifyListeners();
   }
 

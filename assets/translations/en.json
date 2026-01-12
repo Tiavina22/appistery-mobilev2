@@ -98,6 +98,7 @@
   "confirm_logout": "Confirm Logout",
   "logout_warning": "Are you sure you want to logout?",
   "profile_feature": "Profile page - Coming soon",
+  "profile_details": "Profile Details",
   "favorite": "Add to favorites",
   "unfavorite": "Remove from favorites",
   "forgot_password_title": "Forgot Password",
@@ -169,5 +170,7 @@
   "comments": "Comments",
   "no_comments_yet": "No comments yet",
   "be_first_to_comment": "Be the first to comment",
-  "add_comment": "Add a comment..."
+  "add_comment": "Add a comment...",
+  "premium_story_message": "This story is reserved for premium subscribers",
+  "subscribe": "Subscribe"
 }

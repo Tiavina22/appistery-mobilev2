@@ -98,6 +98,7 @@
   "confirm_logout": "Confirmer la déconnexion",
   "logout_warning": "Êtes-vous sûr de vouloir vous déconnecter ?",
   "profile_feature": "Page de profil - Bientôt disponible",
+  "profile_details": "Détails du profil",
   "favorite": "Favori",
   "unfavorite": "Retirer des favoris",
   "forgot_password_title": "Mot de passe oublié",
@@ -169,5 +170,7 @@
   "comments": "Commentaires",
   "no_comments_yet": "Aucun commentaire pour le moment",
   "be_first_to_comment": "Soyez le premier à commenter",
-  "add_comment": "Ajouter un commentaire..."
+  "add_comment": "Ajouter un commentaire...",
+  "premium_story_message": "Cette histoire est réservée aux abonnés premium",
+  "subscribe": "S'abonner"
 }

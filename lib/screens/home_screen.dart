@@ -139,50 +139,6 @@ class _HomeScreenState extends State<HomeScreen> {
           toolbarHeight: 60,
           title: Image.asset('assets/logo/logo-appistery-no.png', height: 28),
           actions: [
-            // Indicateur WebSocket
-            Consumer<WebSocketProvider>(
-              builder: (context, wsProvider, _) {
-                return Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: wsProvider.isConnected
-                        ? Colors.green.withOpacity(0.2)
-                        : Colors.red.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: wsProvider.isConnected
-                              ? Colors.green
-                              : Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        wsProvider.isConnected ? 'En ligne' : 'Hors ligne',
-                        style: TextStyle(
-                          color: wsProvider.isConnected
-                              ? Colors.green
-                              : Colors.red,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
             // Icône notifications
             Consumer<NotificationProvider>(
               builder: (context, notificationProvider, _) {
@@ -1111,12 +1067,10 @@ class _HomeScreenState extends State<HomeScreen> {
         if (isStoryPremium && !isUserPremium) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                'Cette histoire est réservée aux abonnés premium',
-              ),
+              content: Text('premium_story_message'.tr()),
               backgroundColor: Colors.orange,
               action: SnackBarAction(
-                label: 'S\'abonner',
+                label: 'subscribe'.tr(),
                 onPressed: () {
                   if (mounted) {
                     Navigator.of(context).pushNamed('/subscription-offers');
@@ -1249,12 +1203,10 @@ class _HomeScreenState extends State<HomeScreen> {
         if (isStoryPremium && !isUserPremium) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                'Cette histoire est réservée aux abonnés premium',
-              ),
+              content: Text('premium_story_message'.tr()),
               backgroundColor: Colors.orange,
               action: SnackBarAction(
-                label: 'S\'abonner',
+                label: 'subscribe'.tr(),
                 onPressed: () {
                   if (mounted) {
                     Navigator.of(context).pushNamed('/subscription-offers');
@@ -1288,12 +1240,10 @@ class _HomeScreenState extends State<HomeScreen> {
         if (isStoryPremium && !isUserPremium) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                'Cette histoire est réservée aux abonnés premium',
-              ),
+              content: Text('premium_story_message'.tr()),
               backgroundColor: Colors.orange,
               action: SnackBarAction(
-                label: 'S\'abonner',
+                label: 'subscribe'.tr(),
                 onPressed: () {
                   if (mounted) {
                     Navigator.of(context).pushNamed('/subscription-offers');
@@ -1504,6 +1454,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _logout(BuildContext context) async {
+    // Récupérer le provider ET le navigator AVANT le dialog
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final navigator = Navigator.of(context);
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1522,16 +1476,17 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (confirmed == true && mounted) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (confirmed == true) {
+      print('🔴 _logout: Confirmation reçue, déconnexion...');
       await authProvider.logout();
-      if (context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
-      }
+      print('🔴 _logout: Déconnexion terminée, navigation vers login...');
+
+      // Utiliser le navigator sauvegardé
+      navigator.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+      print('✅ Navigation vers login effectuée');
     }
   }
 

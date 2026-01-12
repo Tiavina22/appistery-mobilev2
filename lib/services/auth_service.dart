@@ -26,7 +26,10 @@ class AuthService {
 
   // Supprimer le token
   Future<void> deleteToken() async {
+    print('🔴 AuthService: Suppression du token...');
     await _storage.delete(key: 'auth_token');
+    final check = await _storage.read(key: 'auth_token');
+    print('🔴 AuthService: Token après suppression: ${check ?? "null (OK)"}');
   }
 
   // Vérifier si l'utilisateur est connecté
