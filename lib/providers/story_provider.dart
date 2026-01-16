@@ -11,7 +11,8 @@ class StoryProvider extends ChangeNotifier {
   List<Story> _searchResults = [];
   List<Map<String, dynamic>> _genres = [];
   List<Author> _authors = [];
-  bool _isLoading = false;
+  bool _isLoading =
+      true; // Commencer à true pour éviter l'affichage "no_data" avant le chargement
   String? _error;
 
   // Getters
