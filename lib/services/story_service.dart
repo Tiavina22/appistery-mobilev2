@@ -61,6 +61,38 @@ class StoryService {
     }
   }
 
+  Future<List<Story>> getAllStoriesPaginated({
+    required int limit,
+    required int offset,
+  }) async {
+    try {
+      print(
+        'DEBUG: Fetching stories with pagination (limit: $limit, offset: $offset)',
+      );
+      final response = await _dio.get(
+        '/api/stories/all',
+        queryParameters: {'limit': limit, 'offset': offset},
+      );
+      print('DEBUG: Response status: ${response.statusCode}');
+
+      if (response.statusCode == 200) {
+        final data = response.data['data'] as List? ?? response.data as List;
+        final stories = data
+            .map((story) => Story.fromJson(story as Map<String, dynamic>))
+            .toList();
+        print('DEBUG: Parsed ${stories.length} stories');
+        return stories;
+      }
+      throw Exception('Failed to load stories: ${response.statusCode}');
+    } on DioException catch (e) {
+      print('DEBUG: DioException - ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      print('DEBUG: Unknown error - $e');
+      throw Exception('Error loading stories: $e');
+    }
+  }
+
   Future<List<Story>> searchStories(String query) async {
     try {
       print('DEBUG: Searching stories with query: $query');

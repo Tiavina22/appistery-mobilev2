@@ -13,6 +13,10 @@ class StoryProvider extends ChangeNotifier {
   List<Author> _authors = [];
   bool _isLoading =
       true; // Commencer à true pour éviter l'affichage "no_data" avant le chargement
+  bool _isLoadingMore = false;
+  bool _hasMoreStories = true;
+  int _currentPage = 0;
+  final int _pageSize = 20;
   String? _error;
 
   // Getters
@@ -22,6 +26,8 @@ class StoryProvider extends ChangeNotifier {
   List<Map<String, dynamic>> get genres => _genres;
   List<Author> get authors => _authors;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMoreStories => _hasMoreStories;
   String? get error => _error;
 
   StoryProvider() {
@@ -141,14 +147,21 @@ class StoryProvider extends ChangeNotifier {
     print('📚 StoryProvider.loadStories: Début du chargement...');
     _isLoading = true;
     _error = null;
+    _currentPage = 0;
+    _hasMoreStories = true;
     notifyListeners();
 
     try {
-      _stories = await _storyService.getAllStories();
+      _stories = await _storyService.getAllStoriesPaginated(
+        limit: _pageSize,
+        offset: 0,
+      );
       print(
         '📚 StoryProvider.loadStories: ${_stories.length} histoires chargées',
       );
       _error = null;
+      _hasMoreStories = _stories.length >= _pageSize;
+      _currentPage = 1;
     } catch (e) {
       print('❌ StoryProvider.loadStories: Erreur - $e');
       _error = e.toString();
@@ -160,6 +173,39 @@ class StoryProvider extends ChangeNotifier {
     print(
       '📚 StoryProvider.loadStories: Terminé (${_stories.length} histoires)',
     );
+  }
+
+  Future<void> loadMoreStories() async {
+    if (_isLoadingMore || !_hasMoreStories) return;
+
+    print('📚 StoryProvider.loadMoreStories: Chargement page $_currentPage...');
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      final offset = _currentPage * _pageSize;
+      final newStories = await _storyService.getAllStoriesPaginated(
+        limit: _pageSize,
+        offset: offset,
+      );
+
+      if (newStories.isNotEmpty) {
+        _stories.addAll(newStories);
+        _currentPage++;
+        _hasMoreStories = newStories.length >= _pageSize;
+        print(
+          '✅ ${newStories.length} histoires ajoutées (Total: ${_stories.length})',
+        );
+      } else {
+        _hasMoreStories = false;
+        print('🚫 Plus d\'histoires à charger');
+      }
+    } catch (e) {
+      print('❌ StoryProvider.loadMoreStories: Erreur - $e');
+    }
+
+    _isLoadingMore = false;
+    notifyListeners();
   }
 
   Future<void> loadFavorites() async {

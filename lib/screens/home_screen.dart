@@ -30,11 +30,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String? _selectedGenre; // Pour tracker le genre sélectionné
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+
     Future.microtask(() async {
       if (mounted) {
         final storyProvider = Provider.of<StoryProvider>(
@@ -59,6 +62,17 @@ class _HomeScreenState extends State<HomeScreen> {
         ]);
       }
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Charger plus d'histoires quand on est à 200px de la fin
+      final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+      if (!storyProvider.isLoadingMore && storyProvider.hasMoreStories) {
+        storyProvider.loadMoreStories();
+      }
+    }
   }
 
   void _setupNotificationListeners() {
@@ -119,6 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -328,27 +343,29 @@ class _HomeScreenState extends State<HomeScreen> {
           );
         }
 
-        if (storyProvider.stories.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.library_books,
-                  size: 60,
-                  color: Colors.grey.shade500,
-                ),
-                const SizedBox(height: 16),
-                Text('no_data'.tr()),
-              ],
-            ),
-          );
-        }
-
         return SingleChildScrollView(
+          controller: _scrollController,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: _buildGenreSections(storyProvider),
+            children: [
+              ..._buildGenreSections(storyProvider),
+              if (storyProvider.isLoadingMore)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              if (!storyProvider.hasMoreStories &&
+                  storyProvider.stories.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Center(
+                    child: Text(
+                      'no_more_data'.tr(),
+                      style: TextStyle(color: Colors.grey.shade600),
+                    ),
+                  ),
+                ),
+            ],
           ),
         );
       },

@@ -18,6 +18,7 @@
   "error": "Error",
   "success": "Success",
   "no_data": "No data",
+  "no_more_data": "No more stories to load",
   "retry": "Retry",
   "settings": "Settings",
   "language": "Language",
