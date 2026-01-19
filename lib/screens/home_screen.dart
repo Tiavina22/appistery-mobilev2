@@ -35,28 +35,28 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    Future.microtask(() async {
       if (mounted) {
         final storyProvider = Provider.of<StoryProvider>(
           context,
           listen: false,
         );
 
-        // Charger les histoires
-        storyProvider.loadStories();
-
-        // Charger les genres et auteurs
-        storyProvider.loadGenres();
-        storyProvider.loadAuthors();
-
-        // Charger les notifications
-        Provider.of<NotificationProvider>(
-          context,
-          listen: false,
-        ).loadNotifications();
-
-        // Configurer les listeners WebSocket pour les notifications
+        // Configurer les listeners WebSocket en premier (non bloquant)
         _setupNotificationListeners();
+
+        // Charger les histoires en priorité (contenu principal)
+        await storyProvider.loadStories();
+
+        // Charger genres et auteurs en parallèle (moins critique)
+        Future.wait([
+          storyProvider.loadGenres(),
+          storyProvider.loadAuthors(),
+          Provider.of<NotificationProvider>(
+            context,
+            listen: false,
+          ).loadNotifications(),
+        ]);
       }
     });
   }

@@ -613,7 +613,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         .getLastPosition(fullStory.id);
 
                                     int startChapter = 0;
-                                    if (lastPosition != null &&
+                                    // Si l'histoire est complétée, recommencer depuis le début
+                                    // Sinon, continuer depuis la dernière position
+                                    if (!_isCompleted &&
+                                        lastPosition != null &&
                                         lastPosition['chapter_id'] != null) {
                                       // Trouver l'index du chapitre
                                       final chapterIndex = fullStory
@@ -677,29 +680,39 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                   ),
                                 )
                               : Icon(
-                                  _hasStartedReading
-                                      ? Icons.play_arrow
-                                      : Icons.play_arrow,
+                                  _isCompleted
+                                      ? Icons.replay
+                                      : (_hasStartedReading
+                                            ? Icons.play_arrow
+                                            : Icons.play_arrow),
                                   size: 28,
                                 ),
                           label: Text(
                             _isLoadingStory
                                 ? 'Chargement...'
-                                : _hasStartedReading
-                                ? 'Continuer'
-                                : 'Lire',
+                                : _isCompleted
+                                ? 'Relire'
+                                : (_hasStartedReading ? 'Continuer' : 'Lire'),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: _hasStartedReading
-                                ? Colors.orange
-                                : (isDarkMode ? Colors.white : Colors.black),
-                            foregroundColor: _hasStartedReading
+                            backgroundColor: _isCompleted
+                                ? Colors.green
+                                : (_hasStartedReading
+                                      ? Colors.orange
+                                      : (isDarkMode
+                                            ? Colors.white
+                                            : Colors.black)),
+                            foregroundColor: _isCompleted
                                 ? Colors.white
-                                : (isDarkMode ? Colors.black : Colors.white),
+                                : (_hasStartedReading
+                                      ? Colors.white
+                                      : (isDarkMode
+                                            ? Colors.black
+                                            : Colors.white)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
@@ -871,7 +884,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 4),
                   _buildChaptersList(isDarkMode: isDarkMode),
 
                   const SizedBox(height: 32),
