@@ -48,7 +48,45 @@ void main() async {
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
-  Future<Widget> _getInitialScreen(BuildContext context) async {
+  @override
+  Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
+    return MaterialApp(
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
+      debugShowCheckedModeBanner: false,
+      theme: themeProvider.lightTheme,
+      darkTheme: themeProvider.darkTheme,
+      themeMode: themeProvider.themeMode,
+      routes: {
+        '/notifications': (context) => const NotificationsScreen(),
+        '/subscription-offers': (context) => const SubscriptionOffersScreen(),
+      },
+      home: const InitialScreenLoader(),
+    );
+  }
+}
+
+class InitialScreenLoader extends StatefulWidget {
+  const InitialScreenLoader({super.key});
+
+  @override
+  State<InitialScreenLoader> createState() => _InitialScreenLoaderState();
+}
+
+class _InitialScreenLoaderState extends State<InitialScreenLoader> {
+  Widget? _initialScreen;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadInitialScreen();
+  }
+
+  Future<void> _loadInitialScreen() async {
     final prefs = await SharedPreferences.getInstance();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final versionProvider = Provider.of<VersionProvider>(
@@ -63,63 +101,42 @@ class MainApp extends StatelessWidget {
     final themeSelected = prefs.getBool('theme_selected') ?? false;
     final onboardingCompleted = prefs.getBool('onboarding_completed') ?? false;
 
+    Widget screen;
+
     // Vérifier d'abord les étapes d'onboarding
     if (!languageSelected) {
-      return const LanguageSelectionScreen();
+      screen = const LanguageSelectionScreen();
     } else if (!themeSelected) {
-      return const ThemeSelectionScreen();
-    }
-
-    // Si onboarding non complété, aller au login
-    if (!onboardingCompleted) {
-      return const LoginScreen();
-    }
-
-    // Onboarding complété, vérifier si l'utilisateur est connecté
-    // Rafraîchir le statut de connexion au démarrage
-    await authProvider.refreshLoginStatus();
-
-    if (authProvider.isLoggedIn) {
-      return const HomeWithVersionCheck();
+      screen = const ThemeSelectionScreen();
+    } else if (!onboardingCompleted) {
+      // Si onboarding non complété, aller au login
+      screen = const LoginScreen();
     } else {
-      return const LoginScreen();
+      // Onboarding complété, vérifier si l'utilisateur est connecté
+      // Rafraîchir le statut de connexion au démarrage
+      await authProvider.refreshLoginStatus();
+
+      if (authProvider.isLoggedIn) {
+        screen = const HomeWithVersionCheck();
+      } else {
+        screen = const LoginScreen();
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _initialScreen = screen;
+        _isLoading = false;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-
-    if (!themeProvider.isInitialized) {
-      return const MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
-      );
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return MaterialApp(
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
-      debugShowCheckedModeBanner: false,
-      theme: themeProvider.lightTheme,
-      darkTheme: themeProvider.darkTheme,
-      themeMode: themeProvider.themeMode,
-      routes: {
-        '/notifications': (context) => const NotificationsScreen(),
-        '/subscription-offers': (context) => const SubscriptionOffersScreen(),
-      },
-      home: FutureBuilder<Widget>(
-        future: _getInitialScreen(context),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
-            );
-          }
-          return snapshot.data ?? const LanguageSelectionScreen();
-        },
-      ),
-    );
+    return _initialScreen ?? const LanguageSelectionScreen();
   }
 }

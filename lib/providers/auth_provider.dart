@@ -14,6 +14,11 @@ class AuthProvider extends ChangeNotifier {
   Map<String, dynamic>? get user => _user;
   String? get errorMessage => _errorMessage;
 
+  // Getter pour accéder au token
+  Future<String?> getToken() async {
+    return await _authService.getToken();
+  }
+
   bool get isPremium {
     if (_user == null) return false;
     // Vérifier is_premium directement

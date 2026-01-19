@@ -18,6 +18,7 @@ import 'user_profile_screen.dart';
 import 'cgu_screen.dart';
 import 'notifications_screen.dart';
 import 'subscription_offers_screen.dart';
+import 'change_password_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1763,6 +1764,11 @@ class _HomeScreenState extends State<HomeScreen> {
           subtitle: 'update_password_subtitle'.tr(),
           onTap: () {
             // Navigate to change password screen
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const ChangePasswordScreen(),
+              ),
+            );
           },
           trailing: Icon(
             Icons.chevron_right,
