@@ -66,6 +66,7 @@ class StoryService {
     required int offset,
   }) async {
     try {
+      final startTime = DateTime.now();
       print(
         'DEBUG: Fetching stories with pagination (limit: $limit, offset: $offset)',
       );
@@ -73,19 +74,27 @@ class StoryService {
         '/api/stories/all',
         queryParameters: {'limit': limit, 'offset': offset},
       );
-      print('DEBUG: Response status: ${response.statusCode}');
+      final networkDuration = DateTime.now().difference(startTime);
+      print(
+        'DEBUG: Response status: ${response.statusCode} (${networkDuration.inMilliseconds}ms)',
+      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final stories = data
             .map((story) => Story.fromJson(story as Map<String, dynamic>))
             .toList();
-        print('DEBUG: Parsed ${stories.length} stories');
+        final totalDuration = DateTime.now().difference(startTime);
+        print(
+          'DEBUG: Parsed ${stories.length} stories (Total: ${totalDuration.inMilliseconds}ms)',
+        );
         return stories;
       }
       throw Exception('Failed to load stories: ${response.statusCode}');
     } on DioException catch (e) {
       print('DEBUG: DioException - ${e.message}');
+      print('DEBUG: Error type: ${e.type}');
+      print('DEBUG: Response status: ${e.response?.statusCode}');
       throw Exception('Network error: ${e.message}');
     } catch (e) {
       print('DEBUG: Unknown error - $e');

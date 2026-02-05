@@ -18,6 +18,7 @@ class StoryProvider extends ChangeNotifier {
   int _currentPage = 0;
   final int _pageSize = 20;
   String? _error;
+  Map<String, List<Story>>? _storiesByGenreCache;
 
   // Getters
   List<Story> get stories => _stories;
@@ -145,10 +146,12 @@ class StoryProvider extends ChangeNotifier {
 
   Future<void> loadStories() async {
     print('📚 StoryProvider.loadStories: Début du chargement...');
+    final startTime = DateTime.now();
     _isLoading = true;
     _error = null;
     _currentPage = 0;
     _hasMoreStories = true;
+    _storiesByGenreCache = null; // Invalider le cache
     notifyListeners();
 
     try {
@@ -156,8 +159,9 @@ class StoryProvider extends ChangeNotifier {
         limit: _pageSize,
         offset: 0,
       );
+      final duration = DateTime.now().difference(startTime);
       print(
-        '📚 StoryProvider.loadStories: ${_stories.length} histoires chargées',
+        '📚 StoryProvider.loadStories: ${_stories.length} histoires chargées en ${duration.inMilliseconds}ms',
       );
       _error = null;
       _hasMoreStories = _stories.length >= _pageSize;
@@ -191,6 +195,7 @@ class StoryProvider extends ChangeNotifier {
 
       if (newStories.isNotEmpty) {
         _stories.addAll(newStories);
+        _storiesByGenreCache = null; // Invalider le cache
         _currentPage++;
         _hasMoreStories = newStories.length >= _pageSize;
         print(
@@ -267,6 +272,11 @@ class StoryProvider extends ChangeNotifier {
 
   // Grouper les histoires par genre
   Map<String, List<Story>> getStoriesByGenre() {
+    // Retourner le cache si disponible
+    if (_storiesByGenreCache != null) {
+      return _storiesByGenreCache!;
+    }
+
     final Map<String, List<Story>> grouped = {};
 
     for (final story in _stories) {
@@ -276,6 +286,7 @@ class StoryProvider extends ChangeNotifier {
       grouped[story.genre]!.add(story);
     }
 
+    _storiesByGenreCache = grouped; // Mettre en cache
     return grouped;
   }
 
