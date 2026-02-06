@@ -348,6 +348,10 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Section Hero Netflix - Dernière histoire
+              if (storyProvider.stories.isNotEmpty)
+                _buildHeroSection(storyProvider.stories.first),
+              const SizedBox(height: 24),
               ..._buildGenreSections(storyProvider),
               if (storyProvider.isLoadingMore)
                 const Padding(
@@ -373,29 +377,67 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSearchTab() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Consumer<StoryProvider>(
       builder: (context, storyProvider, _) {
         return SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search TextField
+              const SizedBox(height: 8),
+              // Search TextField - iOS style
               Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: (value) {
-                    storyProvider.searchStories(value);
-                  },
-                  decoration: InputDecoration(
-                    hintText: 'search_stories'.tr(),
-                    prefixIcon: const Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(24),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? Colors.grey.shade900
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      storyProvider.searchStories(value);
+                    },
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 12,
+                    decoration: InputDecoration(
+                      hintText: 'search_stories'.tr(),
+                      hintStyle: TextStyle(
+                        color: isDarkMode
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600,
+                      ),
+                      prefixIcon: Icon(
+                        Icons.search,
+                        color: isDarkMode
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600,
+                      ),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(
+                                Icons.clear,
+                                color: isDarkMode
+                                    ? Colors.grey.shade500
+                                    : Colors.grey.shade600,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                storyProvider.searchStories('');
+                                setState(() {});
+                              },
+                            )
+                          : null,
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                     ),
                   ),
                 ),
@@ -403,16 +445,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
               // Si recherche vide, afficher les genres et auteurs
               if (_searchController.text.isEmpty) ...[
+                const SizedBox(height: 8),
                 // Section Auteurs
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16.0,
-                    vertical: 12.0,
+                    vertical: 8.0,
                   ),
                   child: Text(
                     'Featured creators',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: TextStyle(
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                 ),
@@ -448,17 +494,20 @@ class _HomeScreenState extends State<HomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16.0,
-                    vertical: 12.0,
+                    vertical: 8.0,
                   ),
                   child: Text(
                     'Browse all',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    style: TextStyle(
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                 ),
 
-                // Genres Grid (Spotify style)
+                // Genres Grid (Apple style)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: storyProvider.genres.isEmpty
@@ -472,9 +521,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           gridDelegate:
                               const SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: 2,
-                                mainAxisSpacing: 12,
-                                crossAxisSpacing: 12,
-                                childAspectRatio: 1.5,
+                                mainAxisSpacing: 16,
+                                crossAxisSpacing: 16,
+                                childAspectRatio: 1.0,
                               ),
                           itemCount: storyProvider.genres.length,
                           itemBuilder: (context, index) {
@@ -489,24 +538,82 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Résultats de recherche
                 if (storyProvider.isLoading)
                   const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
+                    padding: EdgeInsets.symmetric(vertical: 60.0),
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (storyProvider.searchResults.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24.0),
-                    child: Center(child: Text('no_results'.tr())),
+                    padding: const EdgeInsets.symmetric(vertical: 60.0, horizontal: 32.0),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 80,
+                            color: isDarkMode
+                                ? Colors.grey.shade700
+                                : Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'no_results'.tr(),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                              color: isDarkMode
+                                  ? Colors.grey.shade500
+                                  : Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Essayez avec d\'autres mots-clés',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDarkMode
+                                  ? Colors.grey.shade600
+                                  : Colors.grey.shade500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
                   )
-                else
-                  ListView.builder(
-                    physics: const NeverScrollableScrollPhysics(),
-                    shrinkWrap: true,
-                    itemCount: storyProvider.searchResults.length,
-                    itemBuilder: (context, index) {
-                      final story = storyProvider.searchResults[index];
-                      return _buildSearchResultTile(story);
-                    },
+                else ...[
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      '${storyProvider.searchResults.length} résultat${storyProvider.searchResults.length > 1 ? 's' : ''}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600,
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 20,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 0.65,
+                      ),
+                      itemCount: storyProvider.searchResults.length,
+                      itemBuilder: (context, index) {
+                        final story = storyProvider.searchResults[index];
+                        return _buildStoryGridItem(story);
+                      },
+                    ),
+                  ),
+                ],
               ],
             ],
           ),
@@ -515,18 +622,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Genre Card (Spotify style - colorful background)
+  // Genre Card (Apple style - elegant and uniform)
   Widget _buildGenreCard(Map<String, dynamic> genre, BuildContext context) {
-    final colors = [
-      const Color(0xFF1DB954), // Green
-      const Color(0xFFE61828), // Red
-      const Color(0xFF007FD5), // Blue
-      const Color(0xFFA239CA), // Purple
-      const Color(0xFFF39C12), // Orange
-      const Color(0xFF1ABC9C), // Teal
-    ];
-
-    final randomColor = colors[(genre['id'] as int) % colors.length];
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -542,24 +640,108 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: randomColor,
-          borderRadius: BorderRadius.circular(8),
+          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode
+                  ? Colors.black.withOpacity(0.4)
+                  : Colors.grey.withOpacity(0.12),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
             children: [
-              Text(
-                genre['title'] ?? 'Unknown',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              // Pattern background très subtil
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _GenrePatternPainter(
+                    color: isDarkMode
+                        ? Colors.white.withOpacity(0.03)
+                        : Colors.black.withOpacity(0.02),
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              ),
+              // Contenu
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icône en haut à droite
+                    Align(
+                      alignment: Alignment.topRight,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.white.withOpacity(0.08)
+                              : Colors.black.withOpacity(0.04),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.auto_stories_rounded,
+                          size: 20,
+                          color: isDarkMode
+                              ? Colors.white.withOpacity(0.7)
+                              : Colors.black.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                    // Titre en bas
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          genre['title'] ?? 'Unknown',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? Colors.white : Colors.black87,
+                            letterSpacing: -0.3,
+                            height: 1.2,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Text(
+                              'Explorer',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: isDarkMode
+                                    ? Colors.grey.shade400
+                                    : Colors.grey.shade600,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 12,
+                              color: isDarkMode
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade600,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -568,8 +750,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Author Card
+  // Author Card - Compact design
   Widget _buildAuthorCard(Author author) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -582,32 +766,50 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         );
       },
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.grey.withOpacity(0.3),
+      child: Container(
+        width: 90,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isDarkMode
+                    ? Colors.grey.shade800
+                    : Colors.grey.shade200,
+                border: Border.all(
+                  color: isDarkMode
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.black.withOpacity(0.05),
+                  width: 2,
+                ),
+              ),
+              child: author.avatar != null && author.avatar!.isNotEmpty
+                  ? ClipOval(child: _buildAvatarImage(author.avatar!))
+                  : Icon(
+                      Icons.person_rounded,
+                      size: 40,
+                      color: isDarkMode
+                          ? Colors.grey.shade600
+                          : Colors.grey.shade500,
+                    ),
             ),
-            child: author.avatar != null && author.avatar!.isNotEmpty
-                ? ClipOval(child: _buildAvatarImage(author.avatar!))
-                : Icon(Icons.person, size: 60, color: Colors.grey.shade500),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: 120,
-            child: Text(
+            const SizedBox(height: 8),
+            Text(
               author.pseudo,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isDarkMode ? Colors.white : Colors.black87,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -968,6 +1170,267 @@ class _HomeScreenState extends State<HomeScreen> {
   */
 
   // Construire dynamiquement les sections par genre
+  // Section Hero Netflix Style
+  Widget _buildHeroSection(Story story) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isUserPremium = authProvider.isPremium;
+    final isStoryPremium = story.isPremium;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return GestureDetector(
+      onTap: () {
+        if (isStoryPremium && !isUserPremium) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('premium_story_message'.tr()),
+              backgroundColor: Colors.orange,
+              action: SnackBarAction(
+                label: 'subscribe'.tr(),
+                onPressed: () {
+                  if (mounted) {
+                    Navigator.of(context).pushNamed('/subscription-offers');
+                  }
+                },
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+          return;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StoryDetailScreen(story: story),
+          ),
+        );
+      },
+      child: Container(
+        height: 500,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.black : Colors.grey.shade900,
+        ),
+        child: Stack(
+          children: [
+            // Image de fond avec gradient
+            if (story.coverImage != null && story.coverImage!.isNotEmpty)
+              Positioned.fill(
+                child: Stack(
+                  children: [
+                    _buildHeroImageFromString(story.coverImage!),
+                    // Gradient overlay
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                            Colors.black.withOpacity(0.95),
+                          ],
+                          stops: const [0.3, 0.7, 1.0],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Contenu en bas
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Badge Premium
+                    if (isStoryPremium)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Premium',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 12),
+
+                    // Titre
+                    Text(
+                      story.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        height: 1.2,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Genre et auteur
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            story.genre,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(
+                          Icons.person_outline,
+                          color: Colors.white70,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            story.author,
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Description
+                    Text(
+                      story.description,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.4,
+                      ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Boutons d'action
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              if (isStoryPremium && !isUserPremium) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('premium_story_message'.tr()),
+                                    backgroundColor: Colors.orange,
+                                    action: SnackBarAction(
+                                      label: 'subscribe'.tr(),
+                                      onPressed: () {
+                                        if (mounted) {
+                                          Navigator.of(context)
+                                              .pushNamed('/subscription-offers');
+                                        }
+                                      },
+                                    ),
+                                    duration: const Duration(seconds: 5),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      StoryDetailScreen(story: story),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.play_arrow, size: 28),
+                            label: Text(
+                              'Lire maintenant',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                                horizontal: 24,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      StoryDetailScreen(story: story),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.info_outline,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   List<Widget> _buildGenreSections(StoryProvider storyProvider) {
     final storiesByGenre = storyProvider.getStoriesByGenre();
     final sections = <Widget>[];
@@ -978,7 +1441,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (stories.isNotEmpty) {
         return [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -989,15 +1452,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+                // Apple Grid System: 2 colonnes, espacement uniforme
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
-                    mainAxisSpacing: 16,
+                    mainAxisSpacing: 20,
                     crossAxisSpacing: 16,
-                    childAspectRatio: 0.7,
+                    childAspectRatio: 0.65,
                   ),
                   itemCount: stories.length,
                   itemBuilder: (context, index) {
@@ -1012,12 +1476,12 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // Sinon afficher tous les genres
+    // Sinon afficher tous les genres avec Apple Grid System
     storiesByGenre.forEach((genre, stories) {
       if (stories.isNotEmpty) {
         sections.add(
           Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1028,33 +1492,41 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       genre,
                       style: const TextStyle(
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
                       ),
                     ),
                     TextButton(
                       onPressed: () {
                         setState(() => _selectedGenre = genre);
                       },
-                      child: const Text('See All'),
+                      child: const Text(
+                        'Voir tout',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                // Stories in horizontal list
-                SizedBox(
-                  height: 180,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: stories.length,
-                    itemBuilder: (context, index) {
-                      final story = stories[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12.0),
-                        child: _buildStoryCard(story),
-                      );
-                    },
+                // Apple Grid System: Grille de 2 colonnes
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 20,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 0.65,
                   ),
+                  itemCount: stories.length > 6 ? 6 : stories.length,
+                  itemBuilder: (context, index) {
+                    final story = stories[index];
+                    return _buildStoryGridItem(story);
+                  },
                 ),
               ],
             ),
@@ -1426,6 +1898,69 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+  }
+
+  // Helper method for hero images (full width)
+  Widget _buildHeroImageFromString(String imageData) {
+    try {
+      // Check if it's a base64 string
+      if (imageData.startsWith('data:image') || !imageData.startsWith('http')) {
+        // It's likely base64
+        String base64String = imageData;
+
+        // Remove data URI prefix if present (e.g., 'data:image/png;base64,')
+        if (imageData.startsWith('data:image')) {
+          base64String = imageData.split(',').last;
+        }
+
+        return Image.memory(
+          const Base64Decoder().convert(base64String),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('DEBUG Hero: Error decoding base64 image: $error');
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
+            );
+          },
+        );
+      } else {
+        // It's a URL
+        return Image.network(
+          imageData,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            print('DEBUG Hero: Error loading network image: $error');
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              ),
+            );
+          },
+        );
+      }
+    } catch (e) {
+      print('DEBUG Hero: Exception in _buildHeroImageFromString: $e');
+      return Container(
+        color: Colors.grey.shade800,
+        child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 60),
+      );
+    }
   }
 
   // Helper method to detect and build image from base64 or URL
@@ -2021,4 +2556,47 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
+}
+
+// Custom painter pour le pattern de fond des cartes de genres
+class _GenrePatternPainter extends CustomPainter {
+  final Color color;
+
+  _GenrePatternPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    // Dessiner des cercles décoratifs
+    canvas.drawCircle(
+      Offset(size.width * 0.8, size.height * 0.2),
+      30,
+      paint,
+    );
+    
+    canvas.drawCircle(
+      Offset(size.width * 0.2, size.height * 0.7),
+      20,
+      paint,
+    );
+    
+    // Dessiner quelques lignes décoratives
+    final linePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    
+    canvas.drawLine(
+      Offset(size.width * 0.6, size.height * 0.8),
+      Offset(size.width * 0.9, size.height * 0.9),
+      linePaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
