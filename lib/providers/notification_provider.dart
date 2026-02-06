@@ -96,7 +96,6 @@ class NotificationProvider extends ChangeNotifier {
       _unreadCount = await _service.getUnreadCount();
       notifyListeners();
     } catch (e) {
-      print('❌ Erreur lors du chargement du compte non lues: $e');
     }
   }
 
@@ -131,7 +130,6 @@ class NotificationProvider extends ChangeNotifier {
         }
       }
     } catch (e) {
-      print('❌ Erreur lors du marquage de la notification: $e');
     }
   }
 
@@ -187,7 +185,7 @@ class NotificationProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('❌ Erreur lors de la suppression de la notification: $e');
+      print('Erreur lors de la suppression de la notification: $e');
     }
   }
 }
