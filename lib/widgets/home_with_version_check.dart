@@ -32,16 +32,16 @@ class _HomeWithVersionCheckState extends State<HomeWithVersionCheck> {
       listen: false,
     );
 
-    print('🔍 Version Check:');
-    print('   isUpdateRequired: ${versionProvider.isUpdateRequired}');
-    print('   downloadUrl: ${versionProvider.downloadUrl}');
-    print('   isVersionExpired: ${versionProvider.isVersionExpired}');
-    print('   noActiveVersion: ${versionProvider.noActiveVersion}');
+    print('Version Check:');
+    print('isUpdateRequired: ${versionProvider.isUpdateRequired}');
+    print('downloadUrl: ${versionProvider.downloadUrl}');
+    print('isVersionExpired: ${versionProvider.isVersionExpired}');
+    print('noActiveVersion: ${versionProvider.noActiveVersion}');
 
     // Check if no active version is available - block the app
     if (versionProvider.noActiveVersion) {
       _dialogShown = true;
-      print('❌ No active version - blocking app access');
+      print('No active version - blocking app access');
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (context) =>
@@ -58,9 +58,6 @@ class _HomeWithVersionCheckState extends State<HomeWithVersionCheck> {
       // If version is expired, prevent app closure
       final canDismiss = !versionProvider.isVersionExpired;
 
-      print('✅ Affichage du dialog de mise à jour');
-      print('   canDismiss: $canDismiss');
-
       showForceUpdateDialog(
         context,
         downloadUrl: versionProvider.downloadUrl!,
@@ -69,7 +66,7 @@ class _HomeWithVersionCheckState extends State<HomeWithVersionCheck> {
         canDismiss: canDismiss,
       );
     } else {
-      print('⏭️ Pas de mise à jour requise');
+      print('Pas de mise à jour requise');
     }
   }
 

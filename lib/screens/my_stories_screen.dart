@@ -68,98 +68,181 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('my_stories'.tr()),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-      ),
-      body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF1DB954)),
-            )
-          : _readStories.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark
+          ? const Color(0xFF000000)
+          : const Color(0xFFF8F9FA),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Large title with back button
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 20, 16),
+              child: Row(
                 children: [
-                  const Icon(Icons.library_books, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  Text(
-                    'no_stories_read'.tr(),
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back_ios),
                     onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1DB954),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: Text(
-                      'explore_stories'.tr(),
-                      style: const TextStyle(color: Colors.white),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'my_stories'.tr(),
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
               ),
-            )
-          : Column(
-              children: [
-                // Filter tabs
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterTab(
-                          label: 'all_stories'.tr(),
-                          filter: 'all',
-                          count: _readStories.length,
-                        ),
-                        _buildFilterTab(
-                          label: 'reading'.tr(),
-                          filter: 'reading',
-                          count: _readStories
-                              .where((s) => s['is_completed'] != true)
-                              .length,
-                        ),
-                        _buildFilterTab(
-                          label: 'completed'.tr(),
-                          filter: 'completed',
-                          count: _readStories
-                              .where((s) => s['is_completed'] == true)
-                              .length,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Stories list
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _loadReadStories,
-                    child: ListView.separated(
-                      itemCount: _filteredStories.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        thickness: 0.3,
-                        color: Colors.grey[300],
-                        indent: 0,
-                      ),
-                      itemBuilder: (context, index) {
-                        final story = _filteredStories[index];
-                        return _buildStoryCard(context, story);
-                      },
-                    ),
-                  ),
-                ),
-              ],
             ),
+            // Filter tabs with iOS pill style
+            if (!_isLoading && _readStories.isNotEmpty) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildFilterTab(
+                        label: 'all_stories'.tr(),
+                        filter: 'all',
+                        count: _readStories.length,
+                      ),
+                      const SizedBox(width: 12),
+                      _buildFilterTab(
+                        label: 'reading'.tr(),
+                        filter: 'reading',
+                        count: _readStories
+                            .where((s) => s['is_completed'] != true)
+                            .length,
+                      ),
+                      const SizedBox(width: 12),
+                      _buildFilterTab(
+                        label: 'completed'.tr(),
+                        filter: 'completed',
+                        count: _readStories
+                            .where((s) => s['is_completed'] == true)
+                            .length,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+            // Content
+            if (_isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (_readStories.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.auto_stories_outlined,
+                        size: 80,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'no_stories_read'.tr(),
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 48),
+                        child: Text(
+                          'Commencez à lire pour voir vos histoires ici',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1DB954),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 16,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'explore_stories'.tr(),
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (_filteredStories.isEmpty)
+              Expanded(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.filter_list_off,
+                        size: 80,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        'Aucune histoire',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Aucune histoire dans cette catégorie',
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: _loadReadStories,
+                  child: GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 20,
+                          crossAxisSpacing: 16,
+                          childAspectRatio: 0.65,
+                        ),
+                    itemCount: _filteredStories.length,
+                    itemBuilder: (context, index) {
+                      final story = _filteredStories[index];
+                      return _buildStoryCard(context, story);
+                    },
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -169,6 +252,8 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     required int count,
   }) {
     final isSelected = _selectedFilter == filter;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -176,14 +261,12 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? const Color(0xFF1DB954) : Colors.transparent,
-              width: 3,
-            ),
-          ),
+          color: isSelected
+              ? (isDark ? Colors.white : Colors.black)
+              : (isDark ? Colors.grey[800] : Colors.grey[200]),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -191,15 +274,26 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
             Text(
               label,
               style: TextStyle(
-                fontSize: 15,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w400,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: isSelected
-                    ? (Theme.of(context).brightness == Brightness.dark
-                          ? Colors.white
-                          : Colors.black)
-                    : Colors.grey[600],
+                    ? (isDark ? Colors.black : Colors.white)
+                    : (isDark ? Colors.grey[400] : Colors.grey[700]),
               ),
             ),
+            if (count > 0) ...[
+              const SizedBox(width: 6),
+              Text(
+                '($count)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected
+                      ? (isDark ? Colors.black54 : Colors.white70)
+                      : Colors.grey[500],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -211,7 +305,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     final completedAt = story['completed_at'];
     final formattedDate = completedAt != null
         ? DateFormat(
-            'dd MMM yyyy',
+            'dd MMM',
             'fr_FR',
           ).format(DateTime.parse(completedAt.toString()))
         : null;
@@ -226,15 +320,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
           titleMap['gasy'] ?? titleMap['fr'] ?? titleMap['en'] ?? 'Sans titre';
     }
 
-    // Extraire le synopsis
-    String synopsis = '';
-    if (story['synopsis'] is String) {
-      synopsis = story['synopsis'];
-    } else if (story['synopsis'] is Map) {
-      final synopsisMap = story['synopsis'] as Map;
-      synopsis =
-          synopsisMap['gasy'] ?? synopsisMap['fr'] ?? synopsisMap['en'] ?? '';
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () async {
@@ -251,81 +337,91 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         _loadReadStories();
       },
       child: Container(
-        color: Colors.transparent,
-        padding: const EdgeInsets.all(16),
-        child: Row(
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 0.5,
+          ),
+        ),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Cover image circulaire (style Twitter/X)
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey[200],
-              ),
-              child: ClipOval(child: _buildCoverImage(story, size: 48)),
-            ),
-            const SizedBox(width: 12),
-            // Story content
+            // Cover image
             Expanded(
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(12),
+                    ),
+                    child: _buildCoverImage(story),
+                  ),
+                  // Status badge
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isCompleted
+                            ? Colors.green.withOpacity(0.9)
+                            : Colors.blue.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isCompleted
+                                ? Icons.check_circle
+                                : Icons.auto_stories,
+                            size: 12,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isCompleted ? 'Terminé' : 'En cours',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Title and date
+            Padding(
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header row (Title + Status + Time)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      // Status indicator
-                      if (isCompleted)
-                        Icon(
-                          Icons.check_circle,
-                          size: 16,
-                          color: Colors.green[600],
-                        )
-                      else
-                        Icon(
-                          Icons.auto_stories,
-                          size: 16,
-                          color: Colors.blue[600],
-                        ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '·',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 14),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        formattedDate ?? 'Récent',
-                        style: TextStyle(fontSize: 13, color: Colors.grey[500]),
-                      ),
-                    ],
+                  Text(
+                    title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3,
+                    ),
                   ),
-                  if (synopsis.isNotEmpty) ...[
+                  if (formattedDate != null) ...[
                     const SizedBox(height: 4),
-                    // Synopsis preview
                     Text(
-                      synopsis,
-                      maxLines: 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        height: 1.4,
-                        color: Theme.of(context).brightness == Brightness.dark
-                            ? Colors.white
-                            : Colors.black,
-                      ),
+                      formattedDate,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
                     ),
                   ],
                 ],
@@ -337,15 +433,15 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     );
   }
 
-  Widget _buildCoverImage(Map<String, dynamic> story, {double size = 48}) {
+  Widget _buildCoverImage(Map<String, dynamic> story) {
     final coverUrl = story['cover_url'] ?? story['cover_image'];
 
     if (coverUrl == null || coverUrl.isEmpty) {
       return Container(
-        width: size,
-        height: size,
+        width: double.infinity,
+        height: double.infinity,
         color: Colors.grey[300],
-        child: Icon(Icons.book, color: Colors.grey[600], size: size * 0.5),
+        child: Icon(Icons.book, color: Colors.grey[600], size: 48),
       );
     }
 
@@ -356,28 +452,24 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         final bytes = base64Decode(base64String);
         return Image.memory(
           bytes,
-          width: size,
-          height: size,
+          width: double.infinity,
+          height: double.infinity,
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) {
             return Container(
-              width: size,
-              height: size,
+              width: double.infinity,
+              height: double.infinity,
               color: Colors.grey[300],
-              child: Icon(
-                Icons.book,
-                color: Colors.grey[600],
-                size: size * 0.5,
-              ),
+              child: Icon(Icons.book, color: Colors.grey[600], size: 48),
             );
           },
         );
       } catch (e) {
         return Container(
-          width: size,
-          height: size,
+          width: double.infinity,
+          height: double.infinity,
           color: Colors.grey[300],
-          child: Icon(Icons.book, color: Colors.grey[600], size: size * 0.5),
+          child: Icon(Icons.book, color: Colors.grey[600], size: 48),
         );
       }
     }
@@ -385,15 +477,15 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
     // Sinon, c'est une URL normale
     return Image.network(
       coverUrl,
-      width: size,
-      height: size,
+      width: double.infinity,
+      height: double.infinity,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) {
         return Container(
-          width: size,
-          height: size,
+          width: double.infinity,
+          height: double.infinity,
           color: Colors.grey[300],
-          child: Icon(Icons.book, color: Colors.grey[600], size: size * 0.5),
+          child: Icon(Icons.book, color: Colors.grey[600], size: 48),
         );
       },
     );

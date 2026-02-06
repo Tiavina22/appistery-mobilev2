@@ -815,6 +815,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildFavoritesTab() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Consumer<StoryProvider>(
       builder: (context, storyProvider, _) {
         if (storyProvider.isLoading && storyProvider.favorites.isEmpty) {
@@ -823,25 +825,59 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (storyProvider.favorites.isEmpty) {
           return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.favorite_border,
-                  size: 60,
-                  color: Colors.grey.shade500,
-                ),
-                const SizedBox(height: 16),
-                Text('no_favorites'.tr()),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() => _selectedIndex = 0);
-                  },
-                  icon: const Icon(Icons.explore),
-                  label: Text('discover'.tr()),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.favorite_border_rounded,
+                    size: 80,
+                    color: isDarkMode
+                        ? Colors.grey.shade700
+                        : Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'no_favorites'.tr(),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode
+                          ? Colors.grey.shade500
+                          : Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Vos histoires préférées apparaîtront ici',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode
+                          ? Colors.grey.shade600
+                          : Colors.grey.shade500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() => _selectedIndex = 0);
+                    },
+                    icon: const Icon(Icons.explore_rounded),
+                    label: Text('discover'.tr()),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
@@ -849,25 +885,26 @@ class _HomeScreenState extends State<HomeScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titre de la page
+            // Titre de la page - Apple style
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Text(
                 'my_favorites'.tr(),
-                style:
-                    Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ) ??
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
               ),
             ),
-            // Grid des favoris
+            // Grid des favoris - Apple Grid System
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  mainAxisSpacing: 16,
+                  mainAxisSpacing: 20,
                   crossAxisSpacing: 16,
                   childAspectRatio: 0.65,
                 ),
@@ -2128,51 +2165,64 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSettingsTab() {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Display Section
-            _buildSectionTitle('display'.tr()),
-            _buildDisplaySection(context),
-            const SizedBox(height: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Grand titre Apple style
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Text(
+              'Paramètres',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
 
-            // My Reading Section
-            _buildSectionTitle('my_reading'.tr()),
-            _buildMyReadingSection(context),
-            const SizedBox(height: 16),
+          // Display Section
+          _buildSectionTitle('display'.tr()),
+          _buildDisplaySection(context),
+          const SizedBox(height: 24),
 
-            // Account Section
-            _buildSectionTitle('account'.tr()),
-            _buildAccountSection(context),
-            const SizedBox(height: 16),
+          // My Reading Section
+          _buildSectionTitle('my_reading'.tr()),
+          _buildMyReadingSection(context),
+          const SizedBox(height: 24),
 
-            // About Section
-            _buildSectionTitle('about'.tr()),
-            _buildAboutSection(context),
-            const SizedBox(height: 24),
-          ],
-        ),
+          // Account Section
+          _buildSectionTitle('account'.tr()),
+          _buildAccountSection(context),
+          const SizedBox(height: 24),
+
+          // About Section
+          _buildSectionTitle('about'.tr()),
+          _buildAboutSection(context),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Text(
-        title,
+        title.toUpperCase(),
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: isDark ? Colors.white : Colors.black,
-          letterSpacing: 0.5,
+          color: isDarkMode
+              ? Colors.grey.shade500
+              : Colors.grey.shade600,
+          letterSpacing: 0.8,
         ),
       ),
     );
@@ -2182,48 +2232,74 @@ class _HomeScreenState extends State<HomeScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDark = themeProvider.themeMode == ThemeMode.dark;
 
-    return Column(
-      children: [
-        // Theme Toggle
-        _buildSettingsTile(
-          icon: Icons.brightness_4,
-          title: 'theme'.tr(),
-          subtitle: themeProvider.themeMode == ThemeMode.dark
-              ? 'dark_mode'.tr()
-              : 'light_mode'.tr(),
-          trailing: Switch(
-            value: themeProvider.themeMode == ThemeMode.dark,
-            onChanged: (bool value) {
-              themeProvider.setTheme(value ? ThemeMode.dark : ThemeMode.light);
-            },
-            activeColor: const Color(0xFF1DB954),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDark ? Colors.grey.shade900 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
           ),
         ),
+        child: Column(
+          children: [
+            // Theme Toggle
+            _buildSettingsTile(
+              icon: Icons.brightness_4_rounded,
+              title: 'theme'.tr(),
+              subtitle: themeProvider.themeMode == ThemeMode.dark
+                  ? 'dark_mode'.tr()
+                  : 'light_mode'.tr(),
+              trailing: Switch(
+                value: themeProvider.themeMode == ThemeMode.dark,
+                onChanged: (bool value) {
+                  themeProvider.setTheme(value ? ThemeMode.dark : ThemeMode.light);
+                },
+                activeColor: const Color(0xFF1DB954),
+              ),
+              isFirst: true,
+            ),
 
-        // Language Selection
-        _buildSettingsTile(
-          icon: Icons.language,
-          title: 'language'.tr(),
-          subtitle: _getLanguageLabel(context.locale),
-          onTap: () => _showLanguageDialog(context),
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
-          ),
+            // Language Selection
+            _buildSettingsTile(
+              icon: Icons.language_rounded,
+              title: 'language'.tr(),
+              subtitle: _getLanguageLabel(context.locale),
+              onTap: () => _showLanguageDialog(context),
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+              ),
+              isLast: true,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildMyReadingSection(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        // My Stories
-        _buildSettingsTile(
-          icon: Icons.library_books,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
+        ),
+        child: _buildSettingsTile(
+          icon: Icons.library_books_rounded,
           title: 'my_stories'.tr(),
           subtitle: 'view_read_stories'.tr(),
           onTap: () {
@@ -2233,161 +2309,195 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
           trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
+            Icons.chevron_right_rounded,
+            color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
           ),
+          isFirst: true,
+          isLast: true,
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildAccountSection(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        // Profile Info
-        if (authProvider.user != null)
-          _buildSettingsTile(
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey.withOpacity(0.2),
-                image:
-                    authProvider.user!['avatar'] != null &&
-                        authProvider.user!['avatar']!.isNotEmpty
-                    ? DecorationImage(
-                        image: MemoryImage(
-                          base64Decode(authProvider.user!['avatar']),
-                        ),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child:
-                  authProvider.user!['avatar'] == null ||
-                      authProvider.user!['avatar']!.isEmpty
-                  ? const Icon(Icons.person, color: Color(0xFF1DB954))
-                  : null,
-            ),
-            title: authProvider.user!['username'] ?? 'User',
-            subtitle: authProvider.user!['email'] ?? 'No email',
-            trailing: Icon(
-              Icons.chevron_right,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserProfileScreen(),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            // Profile Info
+            if (authProvider.user != null)
+              _buildSettingsTile(
+                leading: Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.grey.withOpacity(0.2),
+                    image:
+                        authProvider.user!['avatar'] != null &&
+                            authProvider.user!['avatar']!.isNotEmpty
+                        ? DecorationImage(
+                            image: MemoryImage(
+                              base64Decode(authProvider.user!['avatar']),
+                            ),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                  ),
+                  child:
+                      authProvider.user!['avatar'] == null ||
+                          authProvider.user!['avatar']!.isEmpty
+                      ? Icon(Icons.person_rounded, color: const Color(0xFF1DB954), size: 24)
+                      : null,
                 ),
-              );
-            },
-          ),
-
-        // Subscription Plans
-        _buildSettingsTile(
-          icon: Icons.workspace_premium,
-          title: 'subscription_plans'.tr(),
-          subtitle: 'manage_premium_subtitle'.tr(),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SubscriptionOffersScreen(),
+                title: authProvider.user!['username'] ?? 'User',
+                subtitle: authProvider.user!['email'] ?? 'No email',
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const UserProfileScreen(),
+                    ),
+                  );
+                },
+                isFirst: true,
               ),
-            );
-          },
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
 
-        // Change Password
-        _buildSettingsTile(
-          icon: Icons.lock,
-          title: 'change_password'.tr(),
-          subtitle: 'update_password_subtitle'.tr(),
-          onTap: () {
-            // Navigate to change password screen
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (context) => const ChangePasswordScreen(),
+            // Subscription Plans
+            _buildSettingsTile(
+              icon: Icons.workspace_premium_rounded,
+              title: 'subscription_plans'.tr(),
+              subtitle: 'manage_premium_subtitle'.tr(),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubscriptionOffersScreen(),
+                  ),
+                );
+              },
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
               ),
-            );
-          },
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
+            ),
 
-        // Logout
-        _buildSettingsTile(
-          icon: Icons.logout,
-          title: 'logout'.tr(),
-          subtitle: 'logout_subtitle'.tr(),
-          onTap: () => _confirmLogout(context),
-          trailing: Icon(
-            Icons.chevron_right,
-            color: Colors.red.withOpacity(0.7),
-          ),
-          titleColor: Colors.red,
+            // Change Password
+            _buildSettingsTile(
+              icon: Icons.lock_rounded,
+              title: 'change_password'.tr(),
+              subtitle: 'update_password_subtitle'.tr(),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const ChangePasswordScreen(),
+                  ),
+                );
+              },
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+              ),
+            ),
+
+            // Logout
+            _buildSettingsTile(
+              icon: Icons.logout_rounded,
+              title: 'logout'.tr(),
+              subtitle: 'logout_subtitle'.tr(),
+              onTap: () => _confirmLogout(context),
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.red.withOpacity(0.5),
+              ),
+              titleColor: Colors.red,
+              isLast: true,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildAboutSection(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        // Version
-        _buildSettingsTile(
-          icon: Icons.info,
-          title: 'version'.tr(),
-          subtitle: 'v1.0.0',
-          trailing: const SizedBox.shrink(),
-        ),
-
-        // Terms of Service
-        _buildSettingsTile(
-          icon: Icons.assignment,
-          title: 'terms_of_service'.tr(),
-          subtitle: 'read_our_terms'.tr(),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const CguScreen()),
-            );
-          },
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode
+                ? Colors.white.withOpacity(0.08)
+                : Colors.black.withOpacity(0.06),
+            width: 1,
           ),
         ),
-        // Contact Support
-        _buildSettingsTile(
-          icon: Icons.help,
-          title: 'contact_support'.tr(),
-          subtitle: 'get_help_support'.tr(),
-          onTap: () {
-            _openWhatsApp();
-          },
-          trailing: Icon(
-            Icons.chevron_right,
-            color: isDark ? Colors.white : Colors.black,
-          ),
+        child: Column(
+          children: [
+            // Version
+            _buildSettingsTile(
+              icon: Icons.info_outline_rounded,
+              title: 'version'.tr(),
+              subtitle: 'v1.0.0',
+              trailing: const SizedBox.shrink(),
+              isFirst: true,
+            ),
+
+            // Terms of Service
+            _buildSettingsTile(
+              icon: Icons.assignment_outlined,
+              title: 'terms_of_service'.tr(),
+              subtitle: 'read_our_terms'.tr(),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const CguScreen()),
+                );
+              },
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+              ),
+            ),
+            
+            // Contact Support
+            _buildSettingsTile(
+              icon: Icons.help_outline_rounded,
+              title: 'contact_support'.tr(),
+              subtitle: 'get_help_support'.tr(),
+              onTap: () {
+                _openWhatsApp();
+              },
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+              ),
+              isLast: true,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
@@ -2399,26 +2509,56 @@ class _HomeScreenState extends State<HomeScreen> {
     Widget? trailing,
     VoidCallback? onTap,
     Color? titleColor,
+    bool isFirst = false,
+    bool isLast = false,
   }) {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    final isDark = themeProvider.themeMode == ThemeMode.dark;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(12) : Radius.zero,
+          bottom: isLast ? const Radius.circular(12) : Radius.zero,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            border: !isLast
+                ? Border(
+                    bottom: BorderSide(
+                      color: isDarkMode
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.06),
+                      width: 0.5,
+                    ),
+                  )
+                : null,
+          ),
           child: Row(
             children: [
               if (leading != null)
                 leading
-              else
-                Icon(
-                  icon,
-                  color: titleColor ?? (isDark ? Colors.white : Colors.black),
-                  size: 24,
+              else if (icon != null)
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: titleColor?.withOpacity(0.1) ??
+                        (isDarkMode
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.04)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: titleColor ??
+                        (isDarkMode ? Colors.white : Colors.black87),
+                    size: 20,
+                  ),
                 ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2426,15 +2566,20 @@ class _HomeScreenState extends State<HomeScreen> {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: titleColor,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDarkMode
+                            ? Colors.grey.shade500
+                            : Colors.grey.shade600,
+                      ),
                     ),
                   ],
                 ),

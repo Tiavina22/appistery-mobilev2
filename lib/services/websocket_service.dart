@@ -153,40 +153,40 @@ class WebSocketService {
 
       // Événements de favoris
       _socket!.on('favorite:added', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT favorite:added reçu!');
-        print('🔥🔥🔥 Data: $data');
+        print('WebSocket: EVENT favorite:added reçu!');
+        print('WebSocket: Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onFavoriteAddedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback favorite:added: $e');
+            print('Erreur dans callback favorite:added: $e');
           }
         }
       });
 
       _socket!.on('favorite:removed', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT favorite:removed reçu!');
-        print('🔥🔥🔥 Data: $data');
+        print('WebSocket: EVENT favorite:removed reçu!');
+        print('WebSocket: Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onFavoriteRemovedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback favorite:removed: $e');
+            print('Erreur dans callback favorite:removed: $e');
           }
         }
       });
 
       _socket!.on('favorites:updated', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT favorites:updated reçu!');
-        print('🔥🔥🔥 Data: $data');
+        print('WebSocket: EVENT favorites:updated reçu!');
+        print('WebSocket: Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onFavoritesUpdatedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback favorites:updated: $e');
+            print('Erreur dans callback favorites:updated: $e');
           }
         }
       });
@@ -212,43 +212,43 @@ class WebSocketService {
 
   // Écouter les notifications
   void onNotification(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback notification');
+    print('WebSocket: Enregistrement callback notification');
     _onNotificationCallbacks.add(callback);
   }
 
   // Écouter les nouvelles histoires
   void onNewStory(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback story:new');
+    print('WebSocket: Enregistrement callback story:new');
     _onNewStoryCallbacks.add(callback);
   }
 
   // Écouter les nouveaux chapitres
   void onNewChapter(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback chapter:new');
+    print('WebSocket: Enregistrement callback chapter:new');
     _onNewChapterCallbacks.add(callback);
   }
 
   // Écouter les mises à jour d'histoires
   void onStoryUpdated(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback story:updated');
+    print('WebSocket: Enregistrement callback story:updated');
     _onStoryUpdatedCallbacks.add(callback);
   }
 
   // Écouter l'ajout d'un favori
   void onFavoriteAdded(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback favorite:added');
+    print('WebSocket: Enregistrement callback favorite:added');
     _onFavoriteAddedCallbacks.add(callback);
   }
 
   // Écouter la suppression d'un favori
   void onFavoriteRemoved(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback favorite:removed');
+    print('WebSocket: Enregistrement callback favorite:removed');
     _onFavoriteRemovedCallbacks.add(callback);
   }
 
   // Écouter les mises à jour globales des favoris
   void onFavoritesUpdated(Function(dynamic) callback) {
-    print('📝 WebSocket: Enregistrement callback favorites:updated');
+    print('WebSocket: Enregistrement callback favorites:updated');
     _onFavoritesUpdatedCallbacks.add(callback);
   }
 

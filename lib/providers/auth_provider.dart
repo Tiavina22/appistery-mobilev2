@@ -73,18 +73,15 @@ class AuthProvider extends ChangeNotifier {
   // Obtenir le pays de l'utilisateur
   String? get userCountry {
     if (_user == null) {
-      print('🚨 userCountry: _user est null');
+      print('userCountry: _user est null');
       return null;
     }
     // Vérifier si le pays est un objet avec un code ou juste le code
     final country = _user!['country'];
-    print('🌍 userCountry: country data = $country');
     if (country is Map) {
       final code = country['code'] as String?;
-      print('🌍 userCountry: Map detected, code = $code');
       return code;
     }
-    print('🌍 userCountry: String/direct value = $country');
     return country as String?;
   }
 
@@ -92,7 +89,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isMadagascarUser {
     final country = userCountry;
     final isMG = country == 'MG' || country == 'mg' || country == 'Madagascar';
-    print('🏝️ isMadagascarUser: country=$country, isMG=$isMG');
+    print('isMadagascarUser: country=$country, isMG=$isMG');
     return isMG;
   }
 
@@ -103,7 +100,7 @@ class AuthProvider extends ChangeNotifier {
   // Vérifier le statut de connexion au démarrage
   Future<void> _checkLoginStatus() async {
     _isLoggedIn = await _authService.isLoggedIn();
-    print('🔐 _checkLoginStatus: isLoggedIn=$_isLoggedIn');
+    print('_checkLoginStatus: isLoggedIn=$_isLoggedIn');
     if (_isLoggedIn) {
       // Récupérer le profil complet depuis l'API
       _user = await _authService.getUserProfile();
