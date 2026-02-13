@@ -567,7 +567,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Essayez avec d\'autres mots-clés',
+                            'try_other_keywords'.tr(),
                             style: TextStyle(
                               fontSize: 14,
                               color: isDarkMode
@@ -585,7 +585,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
-                      '${storyProvider.searchResults.length} résultat${storyProvider.searchResults.length > 1 ? 's' : ''}',
+                      '${storyProvider.searchResults.length} ${storyProvider.searchResults.length > 1 ? 'results'.tr() : 'result'.tr()}',
                       style: TextStyle(
                         fontSize: 14,
                         color: isDarkMode
