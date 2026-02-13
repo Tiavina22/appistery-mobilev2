@@ -32,7 +32,7 @@ class _CguScreenState extends State<CguScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Conditions d\'Utilisation',
+          'terms_of_service'.tr(),
           style: Theme.of(
             context,
           ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -57,7 +57,7 @@ class _CguScreenState extends State<CguScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Erreur lors du chargement des CGU',
+                    'error_loading_cgu'.tr(),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
@@ -74,7 +74,7 @@ class _CguScreenState extends State<CguScreen> {
                       });
                     },
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Réessayer'),
+                    label: Text('retry'.tr()),
                   ),
                 ],
               ),
@@ -82,7 +82,7 @@ class _CguScreenState extends State<CguScreen> {
           }
 
           if (!snapshot.hasData) {
-            return Center(child: Text('Aucune donnée disponible'));
+            return Center(child: Text('no_data_available'.tr()));
           }
 
           final cgu = snapshot.data!;
@@ -100,7 +100,7 @@ class _CguScreenState extends State<CguScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: Text(
-                        'Dernière mise à jour: $lastUpdated',
+                        '${'last_updated'.tr()}: $lastUpdated',
                         style: Theme.of(
                           context,
                         ).textTheme.bodySmall?.copyWith(color: Colors.grey),
@@ -126,7 +126,7 @@ class _CguScreenState extends State<CguScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'En utilisant Appistery, vous acceptez ces conditions.',
+                            'cgu_acceptance_message'.tr(),
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
