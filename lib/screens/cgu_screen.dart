@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../services/cgu_service.dart';
 
@@ -30,241 +29,179 @@ class _CguScreenState extends State<CguScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final brightness = MediaQuery.of(context).platformBrightness;
-    final isDark = brightness == Brightness.dark;
-
-    return CupertinoPageScaffold(
-      backgroundColor: isDark
-          ? CupertinoColors.black
-          : CupertinoColors.systemGroupedBackground,
-      navigationBar: CupertinoNavigationBar(
-        backgroundColor: isDark
-            ? CupertinoColors.black
-            : CupertinoColors.systemGroupedBackground,
-        border: null,
-        leading: CupertinoNavigationBarBackButton(
-          color: CupertinoColors.activeBlue,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        middle: Text(
+        title: Text(
           'terms_of_service'.tr(),
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
       ),
-      child: SafeArea(
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _cguFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CupertinoActivityIndicator(radius: 16),
-              );
-            }
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _cguFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        CupertinoIcons.exclamationmark_circle,
-                        size: 64,
-                        color: CupertinoColors.systemGrey,
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'error_loading_cgu'.tr(),
-                        style: CupertinoTheme.of(
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 60,
+                    color: Colors.grey.shade500,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'error_loading_cgu'.tr(),
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    snapshot.error.toString(),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        final locale = context.locale.languageCode;
+                        _cguFuture = _cguService.getCgu(language: locale);
+                      });
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: Text('retry'.tr()),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          if (!snapshot.hasData) {
+            return Center(child: Text('no_data_available'.tr()));
+          }
+
+          final cgu = snapshot.data!;
+          final content = cgu['content'] as String? ?? '';
+          final lastUpdated = cgu['lastUpdated'] as String? ?? '';
+
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Dernière mise à jour
+                  if (lastUpdated.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Text(
+                        '${'last_updated'.tr()}: $lastUpdated',
+                        style: Theme.of(
                           context,
-                        ).textTheme.navTitleTextStyle,
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        snapshot.error.toString(),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: CupertinoColors.systemGrey,
-                          fontSize: 14,
-                        ),
-                      ),
-                      const SizedBox(height: 32),
-                      CupertinoButton.filled(
-                        onPressed: () {
-                          setState(() {
-                            final locale = context.locale.languageCode;
-                            _cguFuture = _cguService.getCgu(language: locale);
-                          });
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(CupertinoIcons.refresh, size: 20),
-                            const SizedBox(width: 8),
-                            Text('retry'.tr()),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            if (!snapshot.hasData) {
-              return Center(
-                child: Text(
-                  'no_data_available'.tr(),
-                  style: TextStyle(
-                    color: CupertinoColors.systemGrey,
-                    fontSize: 16,
-                  ),
-                ),
-              );
-            }
-
-            final cgu = snapshot.data!;
-            final content = cgu['content'] as String? ?? '';
-            final lastUpdated = cgu['lastUpdated'] as String? ?? '';
-
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Dernière mise à jour
-                    if (lastUpdated.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 20.0),
-                        child: Text(
-                          '${'last_updated'.tr()}: $lastUpdated',
-                          style: TextStyle(
-                            color: CupertinoColors.systemGrey,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-
-                    // Contenu des CGU
-                    _buildCguContent(content, context, isDark),
-
-                    const SizedBox(height: 24),
-
-                    // Message d'acceptation (style iOS)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? CupertinoColors.systemGreen.darkColor.withOpacity(
-                                0.15,
-                              )
-                            : CupertinoColors.systemGreen.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            CupertinoIcons.check_mark_circled_solid,
-                            color: CupertinoColors.systemGreen,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'cgu_acceptance_message'.tr(),
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: isDark
-                                    ? CupertinoColors.white
-                                    : CupertinoColors.black,
-                              ),
-                            ),
-                          ),
-                        ],
+                        ).textTheme.bodySmall?.copyWith(color: Colors.grey),
                       ),
                     ),
 
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  // Contenu des CGU
+                  _buildCguContent(content, context),
+
+                  const SizedBox(height: 24),
+
+                  // Message d'acceptation
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.green.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.green,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'cgu_acceptance_message'.tr(),
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                ],
               ),
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildCguContent(String content, BuildContext context, bool isDark) {
-    // Parse le contenu Markdown basique avec style iOS
+  Widget _buildCguContent(String content, BuildContext context) {
+    // Parse le contenu Markdown basique
     final lines = content.split('\n');
     final widgets = <Widget>[];
 
     for (final line in lines) {
       if (line.startsWith('# ')) {
-        // Titre principal (iOS style - large title)
+        // Titre principal
         widgets.add(
           Padding(
-            padding: const EdgeInsets.only(top: 20.0, bottom: 12.0),
+            padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
             child: Text(
               line.replaceFirst('# ', ''),
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.35,
-                color: isDark ? CupertinoColors.white : CupertinoColors.black,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         );
       } else if (line.startsWith('## ')) {
-        // Sous-titre (iOS style - headline)
+        // Sous-titre
         widgets.add(
           Padding(
-            padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
+            padding: const EdgeInsets.only(top: 14.0, bottom: 6.0),
             child: Text(
               line.replaceFirst('## ', ''),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.38,
-                color: isDark ? CupertinoColors.white : CupertinoColors.black,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         );
       } else if (line.startsWith('- ')) {
-        // Bullet point (iOS style)
+        // Bullet point
         widgets.add(
           Padding(
-            padding: const EdgeInsets.only(left: 4.0, bottom: 6.0),
+            padding: const EdgeInsets.only(left: 8.0, bottom: 4.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2.0, right: 8.0),
-                  child: Container(
-                    width: 4,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: CupertinoColors.systemGrey,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
+                const Text('• ', style: TextStyle(fontSize: 16)),
                 Expanded(
                   child: Text(
                     line.replaceFirst('- ', ''),
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.5,
-                      color: isDark
-                          ? CupertinoColors.systemGrey6
-                          : CupertinoColors.black,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
               ],
@@ -272,37 +209,22 @@ class _CguScreenState extends State<CguScreen> {
           ),
         );
       } else if (line.startsWith('---')) {
-        // Séparateur (iOS style)
+        // Séparateur
         widgets.add(
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0),
-            child: Container(
-              height: 0.5,
-              color: isDark
-                  ? CupertinoColors.systemGrey4
-                  : CupertinoColors.systemGrey5,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 12.0),
+            child: Divider(color: Colors.grey.withOpacity(0.3)),
           ),
         );
       } else if (line.trim().isEmpty) {
         // Espace vide
-        widgets.add(const SizedBox(height: 8));
+        widgets.add(const SizedBox(height: 4));
       } else {
-        // Texte normal (iOS style - body)
+        // Texte normal
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 8.0),
-            child: Text(
-              line,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.5,
-                letterSpacing: -0.32,
-                color: isDark
-                    ? CupertinoColors.systemGrey6
-                    : CupertinoColors.black,
-              ),
-            ),
+            child: Text(line, style: Theme.of(context).textTheme.bodyMedium),
           ),
         );
       }
