@@ -12,17 +12,19 @@ class CguScreen extends StatefulWidget {
 class _CguScreenState extends State<CguScreen> {
   late Future<Map<String, dynamic>> _cguFuture;
   final CguService _cguService = CguService();
+  String? _currentLocale;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
     // Get current language from context
-    _cguFuture = _loadCgu();
-  }
-
-  Future<Map<String, dynamic>> _loadCgu() async {
     final locale = context.locale.languageCode;
-    return _cguService.getCgu(language: locale);
+    
+    // Only reload if locale changed or first time
+    if (_currentLocale != locale) {
+      _currentLocale = locale;
+      _cguFuture = _cguService.getCgu(language: locale);
+    }
   }
 
   @override
