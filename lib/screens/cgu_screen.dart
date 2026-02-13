@@ -16,7 +16,13 @@ class _CguScreenState extends State<CguScreen> {
   @override
   void initState() {
     super.initState();
-    _cguFuture = _cguService.getCgu();
+    // Get current language from context
+    _cguFuture = _loadCgu();
+  }
+
+  Future<Map<String, dynamic>> _loadCgu() async {
+    final locale = context.locale.languageCode;
+    return _cguService.getCgu(language: locale);
   }
 
   @override
