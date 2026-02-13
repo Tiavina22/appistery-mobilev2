@@ -601,10 +601,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       shrinkWrap: true,
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 20,
-                        crossAxisSpacing: 16,
-                        childAspectRatio: 0.65,
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 0.68,
                       ),
                       itemCount: storyProvider.searchResults.length,
                       itemBuilder: (context, index) {
@@ -903,10 +903,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: GridView.builder(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 20,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 0.65,
+                  crossAxisCount: 3,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 0.68,
                 ),
                 itemCount: storyProvider.favorites.length,
                 itemBuilder: (context, index) {
@@ -1495,10 +1495,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.65,
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.68,
                   ),
                   itemCount: stories.length,
                   itemBuilder: (context, index) {
@@ -1549,15 +1549,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // Apple Grid System: Grille de 2 colonnes
+                // Apple Grid System: Grille de 3 colonnes
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 16,
-                    childAspectRatio: 0.65,
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: 0.68,
                   ),
                   itemCount: stories.length > 6 ? 6 : stories.length,
                   itemBuilder: (context, index) {
@@ -1806,131 +1806,73 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
             // Image de couverture
-            Expanded(
-              flex: 4,
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: double.infinity,
-                      child:
-                          story.coverImage != null &&
-                              story.coverImage!.isNotEmpty
-                          ? _buildImageFromString(story.coverImage!)
-                          : Container(
-                              color: isDarkMode
-                                  ? Colors.grey.shade800
-                                  : Colors.grey.shade200,
-                              child: Center(
-                                child: Icon(
-                                  Icons.image_not_supported,
-                                  color: Colors.grey.shade500,
-                                  size: 40,
-                                ),
-                              ),
-                            ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: double.infinity,
+                height: double.infinity,
+                child:
+                    story.coverImage != null &&
+                        story.coverImage!.isNotEmpty
+                    ? _buildImageFromString(story.coverImage!)
+                    : Container(
+                        color: isDarkMode
+                            ? Colors.grey.shade800
+                            : Colors.grey.shade200,
+                        child: Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.grey.shade500,
+                            size: 40,
+                          ),
+                        ),
+                      ),
+              ),
+            ),
+            // Badge Premium
+            if (isStoryPremium)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.amber,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Premium',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  // Badge Premium
-                  if (isStoryPremium)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amber,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Text(
-                          'Premium',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  // Overlay bloquant pour histoires premium si non-premium
-                  if (isStoryPremium && !isUserPremium)
-                    Positioned.fill(
-                      child: ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(12),
-                        ),
-                        child: Container(
-                          color: Colors.black.withOpacity(0.4),
-                          child: const Center(
-                            child: Icon(
-                              Icons.lock,
-                              color: Colors.amber,
-                              size: 32,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            // Infos de l'histoire
-            Expanded(
-              flex: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    // Titre
-                    Text(
-                      story.title,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: isDarkMode ? Colors.white : Colors.black87,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    // Auteur
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.person_outline,
-                          size: 12,
-                          color: Colors.grey.shade500,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            story.author,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Colors.grey.shade500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
               ),
-            ),
+            // Overlay bloquant pour histoires premium si non-premium
+            if (isStoryPremium && !isUserPremium)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.4),
+                    child: const Center(
+                      child: Icon(
+                        Icons.lock,
+                        color: Colors.amber,
+                        size: 32,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
