@@ -142,6 +142,50 @@ class StoryProvider extends ChangeNotifier {
       print('🔄 StoryProvider: Favoris mis à jour via WebSocket');
       loadFavorites(); // Recharger tous les favoris
     });
+
+    // Écouter la liste des genres
+    _wsService.onGenresList((data) {
+      print('🎭 StoryProvider: Liste des genres reçue via WebSocket');
+      print('Data: $data');
+      
+      try {
+        if (data is List) {
+          _genres = List<Map<String, dynamic>>.from(
+            data.map((genre) => Map<String, dynamic>.from(genre))
+          );
+          _isLoading = false;
+          print('✅ ${_genres.length} genres chargés via WebSocket');
+          notifyListeners();
+        }
+      } catch (e) {
+        print('❌ Erreur lors du traitement des genres: $e');
+        _error = 'Erreur lors du traitement des genres';
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
+
+    // Écouter la liste des auteurs
+    _wsService.onAuthorsList((data) {
+      print('✍️ StoryProvider: Liste des auteurs reçue via WebSocket');
+      print('Data: $data');
+      
+      try {
+        if (data is List) {
+          _authors = data
+            .map((author) => Author.fromJson(Map<String, dynamic>.from(author)))
+            .toList();
+          _isLoading = false;
+          print('✅ ${_authors.length} auteurs chargés via WebSocket');
+          notifyListeners();
+        }
+      } catch (e) {
+        print('❌ Erreur lors du traitement des auteurs: $e');
+        _error = 'Erreur lors du traitement des auteurs';
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
   }
 
   Future<void> loadStories() async {
@@ -295,38 +339,62 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Charger tous les genres
+  // Charger tous les genres via WebSocket avec fallback HTTP
   Future<void> loadGenres() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      _genres = await _storyService.getGenres();
-      print('✅ ${_genres.length} genres loaded');
+      // Demander les genres via WebSocket
+      _wsService.requestGenres();
+      print('📡 Demande des genres via WebSocket envoyée');
+      
+      // Attendre 2 secondes max pour la réponse WebSocket
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Si toujours vide après 2s, utiliser HTTP en fallback
+      if (_genres.isEmpty) {
+        print('⚠️ Pas de réponse WebSocket, utilisation HTTP fallback');
+        _genres = await _storyService.getGenres();
+        _isLoading = false;
+        print('✅ ${_genres.length} genres chargés via HTTP');
+        notifyListeners();
+      }
     } catch (e) {
       _error = e.toString();
-      print('❌ Error loading genres: $e');
-    } finally {
       _isLoading = false;
+      print('❌ Error loading genres: $e');
       notifyListeners();
     }
   }
 
-  // Charger tous les auteurs
+  // Charger tous les auteurs via WebSocket avec fallback HTTP
   Future<void> loadAuthors() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      _authors = await _storyService.getAuthors();
-      print('✅ ${_authors.length} authors loaded');
+      // Demander les auteurs via WebSocket
+      _wsService.requestAuthors();
+      print('📡 Demande des auteurs via WebSocket envoyée');
+      
+      // Attendre 2 secondes max pour la réponse WebSocket
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // Si toujours vide après 2s, utiliser HTTP en fallback
+      if (_authors.isEmpty) {
+        print('⚠️ Pas de réponse WebSocket, utilisation HTTP fallback');
+        _authors = await _storyService.getAuthors();
+        _isLoading = false;
+        print('✅ ${_authors.length} auteurs chargés via HTTP');
+        notifyListeners();
+      }
     } catch (e) {
       _error = e.toString();
-      print('❌ Error loading authors: $e');
-    } finally {
       _isLoading = false;
+      print('❌ Error loading authors: $e');
       notifyListeners();
     }
   }

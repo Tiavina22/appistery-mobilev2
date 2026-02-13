@@ -18,6 +18,8 @@ class WebSocketService {
   final List<Function(dynamic)> _onFavoriteAddedCallbacks = [];
   final List<Function(dynamic)> _onFavoriteRemovedCallbacks = [];
   final List<Function(dynamic)> _onFavoritesUpdatedCallbacks = [];
+  final List<Function(dynamic)> _onGenresListCallbacks = [];
+  final List<Function(dynamic)> _onAuthorsListCallbacks = [];
 
   bool get isConnected => _socket?.connected ?? false;
   IO.Socket? get socket => _socket;
@@ -177,7 +179,30 @@ class WebSocketService {
           }
         }
       });
+      // Événements pour genres et auteurs
+      _socket!.on('genres:list', (data) {
+        print('🔥 WebSocket: EVENT genres:list reçu!');
+        print('🔥 Data: $data');
+        for (var callback in _onGenresListCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+            print('❌ Erreur dans callback genres:list: $e');
+          }
+        }
+      });
 
+      _socket!.on('authors:list', (data) {
+        print('🔥 WebSocket: EVENT authors:list reçu!');
+        print('🔥 Data: $data');
+        for (var callback in _onAuthorsListCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+            print('❌ Erreur dans callback authors:list: $e');
+          }
+        }
+      });
       _socket!.on('favorites:updated', (data) {
         print('WebSocket: EVENT favorites:updated reçu!');
         print('WebSocket: Data: $data');
@@ -250,6 +275,34 @@ class WebSocketService {
   void onFavoritesUpdated(Function(dynamic) callback) {
     print('WebSocket: Enregistrement callback favorites:updated');
     _onFavoritesUpdatedCallbacks.add(callback);
+  }
+
+  // Écouter la liste des genres
+  void onGenresList(Function(dynamic) callback) {
+    print('WebSocket: Enregistrement callback genres:list');
+    _onGenresListCallbacks.add(callback);
+  }
+
+  // Écouter la liste des auteurs
+  void onAuthorsList(Function(dynamic) callback) {
+    print('WebSocket: Enregistrement callback authors:list');
+    _onAuthorsListCallbacks.add(callback);
+  }
+
+  // Demander la liste des genres
+  void requestGenres() {
+    if (_socket?.connected == true) {
+      print('📡 WebSocket: Demande de la liste des genres');
+      _socket!.emit('genres:request');
+    }
+  }
+
+  // Demander la liste des auteurs
+  void requestAuthors() {
+    if (_socket?.connected == true) {
+      print('📡 WebSocket: Demande de la liste des auteurs');
+      _socket!.emit('authors:request');
+    }
   }
 
   // Écouter les utilisateurs qui tapent
