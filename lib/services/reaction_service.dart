@@ -12,9 +12,6 @@ class ReactionService {
     String reactionType = 'like',
   }) async {
     try {
-      print(
-        '💚 [ReactionService.toggleReaction] storyId=$storyId, type=$reactionType',
-      );
       final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Non authentifié');
@@ -27,12 +24,10 @@ class ReactionService {
       );
 
       if (response.statusCode == 200 && response.data['success']) {
-        print('  ✅ Réaction toggle réussie');
         return response.data['data'];
       }
       throw Exception('Erreur lors de la réaction');
     } catch (e) {
-      print('  ❌ Erreur toggleReaction: $e');
       rethrow;
     }
   }
@@ -55,7 +50,6 @@ class ReactionService {
       }
       throw Exception('Erreur lors de la récupération des réactions');
     } catch (e) {
-      print('  ❌ Erreur getStoryReactions: $e');
       rethrow;
     }
   }
@@ -67,7 +61,6 @@ class ReactionService {
     int? parentCommentId,
   }) async {
     try {
-      print('💬 [ReactionService.addComment] storyId=$storyId');
       final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Non authentifié');
@@ -83,12 +76,10 @@ class ReactionService {
       );
 
       if (response.statusCode == 201 && response.data['success']) {
-        print('  ✅ Commentaire ajouté');
         return response.data['data'];
       }
       throw Exception('Erreur lors de l\'ajout du commentaire');
     } catch (e) {
-      print('  ❌ Erreur addComment: $e');
       rethrow;
     }
   }
@@ -100,23 +91,16 @@ class ReactionService {
     int limit = 20,
   }) async {
     try {
-      print(
-        '📖 [ReactionService.getStoryComments] storyId=$storyId, page=$page',
-      );
       final response = await _dio.get(
         '/api/stories/$storyId/comments',
         queryParameters: {'page': page, 'limit': limit},
       );
-
-      print('  📦 Response status: ${response.statusCode}');
-      print('  📦 Response data: ${response.data}');
 
       if (response.statusCode == 200 && response.data['success']) {
         return response.data['data'];
       }
       throw Exception('Erreur lors de la récupération des commentaires');
     } catch (e) {
-      print('  ❌ Erreur getStoryComments: $e');
       rethrow;
     }
   }
@@ -139,7 +123,6 @@ class ReactionService {
         throw Exception('Erreur lors de la modification du commentaire');
       }
     } catch (e) {
-      print('  ❌ Erreur updateComment: $e');
       rethrow;
     }
   }
@@ -161,7 +144,6 @@ class ReactionService {
         throw Exception('Erreur lors de la suppression du commentaire');
       }
     } catch (e) {
-      print('  ❌ Erreur deleteComment: $e');
       rethrow;
     }
   }

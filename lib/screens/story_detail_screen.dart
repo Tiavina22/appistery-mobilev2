@@ -73,9 +73,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
   Future<void> _loadLastReadingPosition() async {
     try {
-      print(
-        '📍 [StoryDetailScreen._loadLastReadingPosition] Chargement dernière position...',
-      );
       final readingService = ReadingService();
       final lastPosition = await readingService.getLastPosition(
         widget.story.id,
@@ -87,15 +84,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           _hasStartedReading = lastPosition != null;
         });
         if (lastPosition != null) {
-          print(
-            '   ✅ Dernière position trouvée: chapitre ${lastPosition['chapter_id']}',
-          );
         } else {
-          print('   ℹ️ Aucune lecture antérieure');
         }
       }
     } catch (e) {
-      print('   ❌ Erreur: $e');
     }
   }
 
@@ -110,9 +102,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Future<void> _loadReadingStats() async {
     setState(() => _isLoadingStats = true);
     try {
-      print(
-        '📊 [StoryDetailScreen._loadReadingStats] story=${widget.story.id}',
-      );
       final readingService = ReadingService();
 
       // Charger les stats publiques
@@ -132,7 +121,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         });
       }
     } catch (e) {
-      print('❌ Erreur _loadReadingStats: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoadingStats = false);
@@ -157,9 +145,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     try {
       setState(() => _isLoadingReactions = true);
       final data = await _reactionService.getStoryReactions(widget.story.id);
-      print('📊 [_loadReactions] Données reçues: $data');
-      print('   userReaction: ${data['userReaction']}');
-      print('   totalCount: ${data['totalCount']}');
 
       // Charger aussi le nombre de commentaires
       final commentsData = await _reactionService.getStoryComments(
@@ -176,12 +161,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               commentsData['pagination']?['total'] ?? comments.length;
           _isLoadingReactions = false;
         });
-        print('   _hasUserReacted mis à jour: $_hasUserReacted');
-        print('   _userReactionType mis à jour: $_userReactionType');
-        print('   _commentsCount mis à jour: $_commentsCount');
       }
     } catch (e) {
-      print('❌ Erreur _loadReactions: $e');
       if (mounted) {
         setState(() => _isLoadingReactions = false);
       }
@@ -219,7 +200,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         }
       }
     } catch (e) {
-      print('❌ Erreur _toggleReaction: $e');
       if (mounted) {
         NotificationOverlay.show(
           context,
@@ -327,7 +307,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         );
       }
     } catch (e) {
-      print('❌ Erreur _toggleFavorite: $e');
       if (mounted) {
         NotificationOverlay.show(
           context,
@@ -632,9 +611,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                     }
 
                                     if (mounted) {
-                                      print(
-                                        '🚀 [StoryDetailScreen] Navigation vers ReaderScreen',
-                                      );
                                       await Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -645,10 +621,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         ),
                                       );
                                       // Rafraîchir les stats quand on revient
-                                      print(
-                                        '↩️ [StoryDetailScreen] Retour du ReaderScreen - Rafraîchissement',
-                                      );
-                                      await _loadReadingStats();
+                                       await _loadReadingStats();
                                       await _loadLastReadingPosition();
                                     }
                                   } catch (e) {

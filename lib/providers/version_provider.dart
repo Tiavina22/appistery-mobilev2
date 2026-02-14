@@ -66,20 +66,12 @@ class VersionProvider extends ChangeNotifier {
       if (versionInfo['endDate'] != null) {
         _endDate = DateTime.parse(versionInfo['endDate']);
       }
-
-      print('📊 Version state updated:');
-      print('   isUpdateRequired: $_isUpdateRequired');
-      print('   isVersionExpired: $_isVersionExpired');
-      print('   downloadUrl: $_downloadUrl');
-      print('   versionName: $_versionName');
     } catch (e) {
       _errorMessage = 'Failed to check version: $e';
-      print('❌ Error checking version: $e');
 
       // Check if error is due to no active version (404/400)
       if (e.toString().contains('404') || e.toString().contains('400')) {
         _noActiveVersion = true;
-        print('⚠️ No active version found - app blocked');
       } else {
         // Don't block the app on other version check failures
         _noActiveVersion = false;

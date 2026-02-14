@@ -86,19 +86,14 @@ class SubscriptionOfferProvider extends ChangeNotifier {
   Future<void> loadActiveSubscription() async {
     try {
       final result = await _service.getActiveSubscription();
-      print('📊 [loadActiveSubscription] Result: $result');
       if (result['success'] == true &&
           result['hasActiveSubscription'] == true) {
         _activeSubscription = result['subscription'];
-        print(
-          '📊 [loadActiveSubscription] Subscription loaded: $_activeSubscription',
-        );
       } else {
         _activeSubscription = null;
       }
       notifyListeners();
     } catch (e) {
-      print('❌ Erreur lors du chargement de l\'abonnement actif: $e');
       _activeSubscription = null;
     }
   }
@@ -121,7 +116,6 @@ class SubscriptionOfferProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = e.toString();
-      print('❌ Erreur lors du chargement des offres: $e');
     }
 
     _isLoading = false;
@@ -138,8 +132,6 @@ class SubscriptionOfferProvider extends ChangeNotifier {
       // Déterminer si l'utilisateur est de Madagascar ou International
       final isMadagascar = authProvider.isMadagascarUser;
       final location = isMadagascar ? 'madagascar' : 'international';
-
-      print('📍 Chargement des offres pour: $location');
 
       // Charger UNIQUEMENT les offres du pays de l'utilisateur
       final localResult = await _service.getOffersByLocation(
@@ -161,11 +153,8 @@ class SubscriptionOfferProvider extends ChangeNotifier {
         // Mettre UNIQUEMENT les offres du pays de l'utilisateur
         _offers = offersList;
       }
-
-      print('✅ ${_offers.length} offres chargées pour $location');
     } catch (e) {
       _error = e.toString();
-      print('❌ Erreur lors du chargement des offres par pays: $e');
     }
 
     _isLoading = false;
@@ -203,7 +192,6 @@ class SubscriptionOfferProvider extends ChangeNotifier {
       _offers = [..._madagascarOffers, ..._internationalOffers];
     } catch (e) {
       _error = e.toString();
-      print('❌ Erreur lors du chargement des offres par localisation: $e');
     }
 
     _isLoading = false;

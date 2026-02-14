@@ -163,7 +163,6 @@ class NotificationProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('❌ Erreur lors du marquage de toutes les notifications: $e');
     }
   }
 
@@ -185,7 +184,6 @@ class NotificationProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      print('Erreur lors de la suppression de la notification: $e');
     }
   }
 }

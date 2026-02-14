@@ -25,14 +25,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Rafraîchir le profil utilisateur pour avoir les dernières données
       final authProvider = context.read<AuthProvider>();
-      print('🔄 Rafraîchissement du profil utilisateur...');
       await authProvider.refreshLoginStatus();
-
-      // Afficher le pays détecté
-      print(
-        '📍 Utilisateur détecté: ${authProvider.isMadagascarUser ? "Madagascar" : "International"}',
-      );
-      print('📍 Country data: ${authProvider.userCountry}');
 
       // Charger les offres basées sur le pays de l'utilisateur
       final offerProvider = context.read<SubscriptionOfferProvider>();
@@ -807,33 +800,28 @@ class _PaymentWebViewState extends State<PaymentWebView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            print('🌐 Page started: $url');
             setState(() => _isLoading = true);
 
             // Check immediately when redirect URL is detected
             if (url.contains('/payment-callback') ||
                 url.contains('/payment/success') ||
                 url.contains('transaction=')) {
-              print('🎉 Payment redirect detected in onPageStarted!');
               Future.delayed(const Duration(seconds: 2), () {
                 _checkPaymentStatus();
               });
             }
           },
           onPageFinished: (url) {
-            print('✅ Page finished: $url');
             setState(() => _isLoading = false);
 
             // Check if payment completed - detect redirect URL from backend
             if (url.contains('/payment-callback') ||
                 url.contains('/payment/success') ||
                 url.contains('transaction=')) {
-              print('🎉 Payment callback detected, checking status...');
               _checkPaymentStatus();
             }
           },
           onWebResourceError: (error) {
-            print('❌ WebView error: ${error.description}');
             // Even on error, check payment status (404 on redirect is ok)
             _checkPaymentStatus();
           },
@@ -865,7 +853,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
         }
       }
     } catch (e) {
-      print('❌ Error checking payment status: $e');
     }
   }
 
@@ -873,7 +860,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
     // Rafraîchir le profil utilisateur pour mettre à jour isPremium
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.refreshLoginStatus();
-    print('✅ Profile refreshed after payment success');
 
     if (!mounted) return;
 

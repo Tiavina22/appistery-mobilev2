@@ -119,15 +119,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
         chapter = widget.story.chaptersList[_currentChapterIndex];
       }
 
-      print('DEBUG: Chapter data: $chapter');
-      print('DEBUG: Chapter ID: ${chapter['id']}');
-
       // Load chapter content
       final chapterData = await _readingService.getChapter(
         chapter['id'] as int,
       );
-
-      print('DEBUG: Chapter data from API: $chapterData');
 
       setState(() {
         _currentChapter = chapterData is Map<String, dynamic>
@@ -152,7 +147,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
         );
       }
     } catch (e) {
-      print('DEBUG: Error in _loadChapterAndProgress: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -169,10 +163,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final readingTime = DateTime.now().difference(_readingStartTime!).inSeconds;
     final isCompleted = _scrollPosition >= 95.0;
 
-    print(
-      '💾 [ReaderScreen._saveProgress] storyId=${widget.story.id}, chapterId=${_currentChapter!['id']}, scrollPos=${_scrollPosition.toStringAsFixed(1)}%, completed=$isCompleted',
-    );
-
     await _readingService.saveProgress(
       storyId: widget.story.id,
       chapterId: _currentChapter!['id'],
@@ -184,9 +174,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     // Si c'est le dernier chapitre et qu'il est complété, marquer l'histoire comme complète
     if (isCompleted &&
         _currentChapterIndex == widget.story.chaptersList.length - 1) {
-      print(
-        '🏆 [ReaderScreen._saveProgress] Dernier chapitre complété -> markStoryCompleted',
-      );
       await _readingService.markStoryCompleted(widget.story.id);
     }
   }

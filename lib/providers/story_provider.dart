@@ -39,8 +39,6 @@ class StoryProvider extends ChangeNotifier {
   void _initializeWebSocketListeners() {
     // Écouter les nouvelles histoires en temps réel
     _wsService.onNewStory((data) {
-      print('📚 StoryProvider: Nouvelle histoire reçue via WebSocket');
-      print('Data: $data');
 
       try {
         // Créer une Story à partir des données WebSocket
@@ -51,18 +49,14 @@ class StoryProvider extends ChangeNotifier {
         if (!exists) {
           _stories.insert(0, newStory); // Ajouter au début de la liste
           notifyListeners();
-          print('✅ Histoire ajoutée à la liste');
         } else {
-          print('ℹ️ Histoire déjà présente dans la liste');
         }
       } catch (e) {
-        print('❌ Erreur lors de l\'ajout de la nouvelle histoire: $e');
       }
     });
 
     // Écouter les nouveaux chapitres
     _wsService.onNewChapter((data) {
-      print('📖 StoryProvider: Nouveau chapitre reçu via WebSocket');
       // Mettre à jour le nombre de chapitres de l'histoire concernée
       try {
         final storyId = data['story_id'] as int?;
@@ -74,20 +68,16 @@ class StoryProvider extends ChangeNotifier {
           }
         }
       } catch (e) {
-        print('❌ Erreur lors de la mise à jour des chapitres: $e');
       }
     });
 
     // Écouter les mises à jour d'histoires
     _wsService.onStoryUpdated((data) {
-      print('🔄 StoryProvider: Histoire mise à jour via WebSocket');
       loadStories(); // Recharger toutes les histoires
     });
 
     // Écouter l'ajout d'un favori
     _wsService.onFavoriteAdded((data) {
-      print('❤️ StoryProvider: Favori ajouté via WebSocket');
-      print('Data: $data');
 
       try {
         final storyId = data['story_id'] as int?;
@@ -111,42 +101,32 @@ class StoryProvider extends ChangeNotifier {
           if (!_favorites.any((s) => s.id == storyId)) {
             _favorites.add(story);
             notifyListeners();
-            print('✅ Favori ajouté à la liste');
           }
         }
       } catch (e) {
-        print('❌ Erreur lors de l\'ajout du favori: $e');
       }
     });
 
     // Écouter la suppression d'un favori
     _wsService.onFavoriteRemoved((data) {
-      print('💔 StoryProvider: Favori supprimé via WebSocket');
-      print('Data: $data');
-
       try {
         final storyId = data['story_id'] as int?;
         if (storyId != null) {
           // Retirer de la liste des favoris
           _favorites.removeWhere((s) => s.id == storyId);
           notifyListeners();
-          print('✅ Favori supprimé de la liste');
         }
       } catch (e) {
-        print('❌ Erreur lors de la suppression du favori: $e');
       }
     });
 
     // Écouter les mises à jour globales des favoris
     _wsService.onFavoritesUpdated((data) {
-      print('🔄 StoryProvider: Favoris mis à jour via WebSocket');
       loadFavorites(); // Recharger tous les favoris
     });
 
     // Écouter la liste des genres
     _wsService.onGenresList((data) {
-      print('🎭 StoryProvider: Liste des genres reçue via WebSocket');
-      print('Data: $data');
       
       try {
         if (data is List) {
@@ -154,11 +134,9 @@ class StoryProvider extends ChangeNotifier {
             data.map((genre) => Map<String, dynamic>.from(genre))
           );
           _isLoading = false;
-          print('✅ ${_genres.length} genres chargés via WebSocket');
           notifyListeners();
         }
       } catch (e) {
-        print('❌ Erreur lors du traitement des genres: $e');
         _error = 'Erreur lors du traitement des genres';
         _isLoading = false;
         notifyListeners();
@@ -167,20 +145,15 @@ class StoryProvider extends ChangeNotifier {
 
     // Écouter la liste des auteurs
     _wsService.onAuthorsList((data) {
-      print('✍️ StoryProvider: Liste des auteurs reçue via WebSocket');
-      print('Data: $data');
-      
       try {
         if (data is List) {
           _authors = data
             .map((author) => Author.fromJson(Map<String, dynamic>.from(author)))
             .toList();
           _isLoading = false;
-          print('✅ ${_authors.length} auteurs chargés via WebSocket');
           notifyListeners();
         }
       } catch (e) {
-        print('❌ Erreur lors du traitement des auteurs: $e');
         _error = 'Erreur lors du traitement des auteurs';
         _isLoading = false;
         notifyListeners();
@@ -189,7 +162,6 @@ class StoryProvider extends ChangeNotifier {
   }
 
   Future<void> loadStories() async {
-    print('📚 StoryProvider.loadStories: Début du chargement...');
     final startTime = DateTime.now();
     _isLoading = true;
     _error = null;
@@ -204,29 +176,20 @@ class StoryProvider extends ChangeNotifier {
         offset: 0,
       );
       final duration = DateTime.now().difference(startTime);
-      print(
-        '📚 StoryProvider.loadStories: ${_stories.length} histoires chargées en ${duration.inMilliseconds}ms',
-      );
       _error = null;
       _hasMoreStories = _stories.length >= _pageSize;
       _currentPage = 1;
     } catch (e) {
-      print('❌ StoryProvider.loadStories: Erreur - $e');
       _error = e.toString();
       _stories = [];
     }
 
     _isLoading = false;
     notifyListeners();
-    print(
-      '📚 StoryProvider.loadStories: Terminé (${_stories.length} histoires)',
-    );
   }
 
   Future<void> loadMoreStories() async {
     if (_isLoadingMore || !_hasMoreStories) return;
-
-    print('📚 StoryProvider.loadMoreStories: Chargement page $_currentPage...');
     _isLoadingMore = true;
     notifyListeners();
 
@@ -242,15 +205,10 @@ class StoryProvider extends ChangeNotifier {
         _storiesByGenreCache = null; // Invalider le cache
         _currentPage++;
         _hasMoreStories = newStories.length >= _pageSize;
-        print(
-          '✅ ${newStories.length} histoires ajoutées (Total: ${_stories.length})',
-        );
       } else {
         _hasMoreStories = false;
-        print('🚫 Plus d\'histoires à charger');
       }
     } catch (e) {
-      print('❌ StoryProvider.loadMoreStories: Erreur - $e');
     }
 
     _isLoadingMore = false;
@@ -348,23 +306,19 @@ class StoryProvider extends ChangeNotifier {
 
       // Demander les genres via WebSocket
       _wsService.requestGenres();
-      print('📡 Demande des genres via WebSocket envoyée');
       
       // Attendre 2 secondes max pour la réponse WebSocket
       await Future.delayed(const Duration(seconds: 2));
       
       // Si toujours vide après 2s, utiliser HTTP en fallback
       if (_genres.isEmpty) {
-        print('⚠️ Pas de réponse WebSocket, utilisation HTTP fallback');
         _genres = await _storyService.getGenres();
         _isLoading = false;
-        print('✅ ${_genres.length} genres chargés via HTTP');
         notifyListeners();
       }
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
-      print('❌ Error loading genres: $e');
       notifyListeners();
     }
   }
@@ -378,23 +332,19 @@ class StoryProvider extends ChangeNotifier {
 
       // Demander les auteurs via WebSocket
       _wsService.requestAuthors();
-      print('📡 Demande des auteurs via WebSocket envoyée');
       
       // Attendre 2 secondes max pour la réponse WebSocket
       await Future.delayed(const Duration(seconds: 2));
       
       // Si toujours vide après 2s, utiliser HTTP en fallback
       if (_authors.isEmpty) {
-        print('⚠️ Pas de réponse WebSocket, utilisation HTTP fallback');
         _authors = await _storyService.getAuthors();
         _isLoading = false;
-        print('✅ ${_authors.length} auteurs chargés via HTTP');
         notifyListeners();
       }
     } catch (e) {
       _error = e.toString();
       _isLoading = false;
-      print('❌ Error loading authors: $e');
       notifyListeners();
     }
   }

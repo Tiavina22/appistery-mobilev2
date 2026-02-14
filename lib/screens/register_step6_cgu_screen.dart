@@ -49,26 +49,18 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
         ? 'FR'
         : 'EN';
 
-    print('DEBUG: Loading CGU with language: $language');
-
     final result = await authService.getCGU(language);
-
-    print('DEBUG: getCGU result: $result');
 
     if (result['success'] == true && mounted) {
       setState(() {
         _cgu = result['data'];
-        print('DEBUG: CGU loaded successfully: $_cgu');
       });
     } else if (mounted) {
       // Fallback: si erreur, essayer avec FR
-      print('Erreur CGU: ${result['message']}');
       final fallbackResult = await authService.getCGU('FR');
-      print('DEBUG: Fallback result: $fallbackResult');
       if (fallbackResult['success'] == true && mounted) {
         setState(() {
           _cgu = fallbackResult['data'];
-          print('DEBUG: CGU loaded via fallback: $_cgu');
         });
       }
     }

@@ -40,10 +40,8 @@ class ReadingService {
   // Enregistrer une vue
   Future<void> recordView(int storyId) async {
     try {
-      print('📌 [ReadingService.recordView] storyId=$storyId');
       final token = await _authService.getToken();
       if (token == null) {
-        print('  ❌ Token non disponible');
         return;
       }
 
@@ -51,10 +49,7 @@ class ReadingService {
         '/api/stories/$storyId/view',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-
-      print('  ✅ Réponse: ${response.statusCode}');
     } on DioException catch (e) {
-      print('  ❌ Erreur: ${e.message}');
     }
   }
 
@@ -67,12 +62,8 @@ class ReadingService {
     required int readingTimeSeconds,
   }) async {
     try {
-      print(
-        '📖 [ReadingService.saveProgress] storyId=$storyId, chapterId=$chapterId, scrollPos=${scrollPosition.toStringAsFixed(1)}%, completed=$isCompleted',
-      );
       final token = await _authService.getToken();
       if (token == null) {
-        print('  ❌ Token non disponible');
         return;
       }
 
@@ -85,20 +76,15 @@ class ReadingService {
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-
-      print('  ✅ Réponse: ${response.statusCode}');
     } on DioException catch (e) {
-      print('  ❌ Erreur: ${e.message}');
     }
   }
 
   // Obtenir la progression de lecture
   Future<Map<String, dynamic>?> getProgress(int storyId) async {
     try {
-      print('📖 [ReadingService.getProgress] storyId=$storyId');
       final token = await _authService.getToken();
       if (token == null) {
-        print('  ❌ Token non disponible');
         return null;
       }
 
@@ -111,19 +97,14 @@ class ReadingService {
         final data = response.data['data'];
         // Si le backend retourne une liste, prendre le premier élément
         if (data is List && data.isNotEmpty) {
-          print('  ✅ Réponse: List avec ${data.length} items');
           return data[0] as Map<String, dynamic>;
         } else if (data is Map) {
-          print('  ✅ Réponse: Map');
           return data as Map<String, dynamic>;
         }
-        print('  ⚠️ Données vides');
         return null;
       }
-      print('  ⚠️ Réponse: success=false');
       return null;
     } on DioException catch (e) {
-      print('  ❌ Erreur: ${e.message}');
       return null;
     }
   }
@@ -144,9 +125,6 @@ class ReadingService {
       }
       return null;
     } on DioException catch (e) {
-      print(
-        'Erreur lors de la récupération de la dernière position: ${e.message}',
-      );
       return null;
     }
   }
@@ -154,10 +132,8 @@ class ReadingService {
   // Marquer une histoire comme complètement lue
   Future<bool> markStoryCompleted(int storyId) async {
     try {
-      print('🏆 [ReadingService.markStoryCompleted] storyId=$storyId');
       final token = await _authService.getToken();
       if (token == null) {
-        print('  ❌ Token non disponible');
         return false;
       }
 
@@ -167,13 +143,10 @@ class ReadingService {
       );
 
       if (response.statusCode == 200 && response.data['success']) {
-        print('  ✅ Réponse: success=true');
         return true;
       }
-      print('  ⚠️ Réponse: success=false');
       return false;
     } on DioException catch (e) {
-      print('  ❌ Erreur: ${e.message}');
       return false;
     }
   }
@@ -194,7 +167,6 @@ class ReadingService {
       }
       return false;
     } on DioException catch (e) {
-      print('Erreur lors de la vérification: ${e.message}');
       return false;
     }
   }
@@ -215,7 +187,6 @@ class ReadingService {
       }
       return null;
     } on DioException catch (e) {
-      print('Erreur lors de la récupération des infos: ${e.message}');
       return null;
     }
   }
@@ -230,7 +201,6 @@ class ReadingService {
       }
       return null;
     } on DioException catch (e) {
-      print('Erreur lors de la récupération des stats: ${e.message}');
       return null;
     }
   }
@@ -238,12 +208,8 @@ class ReadingService {
   // Récupérer les histoires lues par l'utilisateur
   Future<List<Map<String, dynamic>>> getUserReadStories() async {
     try {
-      print(
-        '📚 [ReadingService.getUserReadStories] Récupération histoires lues',
-      );
       final token = await _authService.getToken();
       if (token == null) {
-        print('  ❌ Token non disponible');
         return [];
       }
 
@@ -254,16 +220,12 @@ class ReadingService {
 
       if (response.statusCode == 200 && response.data['success']) {
         final List<dynamic> data = response.data['data'] ?? [];
-        print('  ✅ ${data.length} histoires récupérées');
         return List<Map<String, dynamic>>.from(
           data.map((story) => Map<String, dynamic>.from(story as Map)),
         );
       }
       return [];
     } on DioException catch (e) {
-      print(
-        '❌ Erreur lors de la récupération des histoires lues: ${e.message}',
-      );
       return [];
     }
   }

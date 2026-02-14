@@ -84,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Écouter les nouvelles notifications
     wsProvider.on('notification:newWithBadge', (data) {
-      print('🔔 Nouvelle notification reçue: $data');
 
       final notification = AppNotification(
         id: data['notification']['id'],
@@ -121,8 +120,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // Écouter les notifications génériques
     wsProvider.on('notification:received', (data) {
-      print('🔔 Notification générique reçue: $data');
-
       if (mounted) {
         // Recharger le compte de non-lues
         notificationProvider.loadUnreadCount();
@@ -1898,7 +1895,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            print('DEBUG Hero: Error decoding base64 image: $error');
             return Container(
               color: Colors.grey.shade800,
               child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
@@ -1913,7 +1909,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            print('DEBUG Hero: Error loading network image: $error');
             return Container(
               color: Colors.grey.shade800,
               child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
@@ -1934,7 +1929,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      print('DEBUG Hero: Exception in _buildHeroImageFromString: $e');
       return Container(
         color: Colors.grey.shade800,
         child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 60),
@@ -1961,7 +1955,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 140,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            print('DEBUG: Error decoding base64 image: $error');
             return Container(
               color: Colors.grey.shade800,
               child: const Icon(Icons.broken_image, color: Colors.grey),
@@ -1976,7 +1969,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 140,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            print('DEBUG: Error loading network image: $error');
             return Container(
               color: Colors.grey.shade800,
               child: const Icon(Icons.broken_image, color: Colors.grey),
@@ -1998,7 +1990,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      print('DEBUG: Exception in _buildImageFromString: $e');
       return Container(
         color: Colors.grey.shade800,
         child: const Icon(Icons.image_not_supported, color: Colors.grey),
@@ -2025,7 +2016,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 32,
           height: 32,
           errorBuilder: (context, error, stackTrace) {
-            print('DEBUG Avatar: Error decoding base64 image: $error');
             return const Icon(
               Icons.account_circle,
               color: Colors.white,
@@ -2041,7 +2031,6 @@ class _HomeScreenState extends State<HomeScreen> {
           width: 32,
           height: 32,
           errorBuilder: (context, error, stackTrace) {
-            print('DEBUG Avatar: Error loading network image: $error');
             return const Icon(
               Icons.account_circle,
               color: Colors.white,
@@ -2062,7 +2051,6 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       }
     } catch (e) {
-      print('DEBUG Avatar: Exception in _buildAvatarImage: $e');
       return const Icon(Icons.account_circle, color: Colors.white, size: 24);
     }
   }
@@ -2091,16 +2079,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     if (confirmed == true) {
-      print('🔴 _logout: Confirmation reçue, déconnexion...');
       await authProvider.logout();
-      print('🔴 _logout: Déconnexion terminée, navigation vers login...');
 
       // Utiliser le navigator sauvegardé
       navigator.pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const LoginScreen()),
         (route) => false,
       );
-      print('✅ Navigation vers login effectuée');
     }
   }
 
@@ -2592,16 +2577,11 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () async {
                 Navigator.pop(dialogContext);
-                print('🔴 _confirmLogout: Déconnexion...');
                 await authProvider.logout();
-                print(
-                  '🔴 _confirmLogout: Déconnexion terminée, navigation vers login...',
-                );
                 navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                   (route) => false,
                 );
-                print('✅ Navigation vers login effectuée');
               },
               child: Text(
                 'logout'.tr(),
@@ -2635,7 +2615,6 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       }
     } catch (e) {
-      print('Erreur lors de l\'ouverture de WhatsApp: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,

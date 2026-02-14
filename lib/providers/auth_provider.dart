@@ -73,7 +73,6 @@ class AuthProvider extends ChangeNotifier {
   // Obtenir le pays de l'utilisateur
   String? get userCountry {
     if (_user == null) {
-      print('userCountry: _user est null');
       return null;
     }
     // Vérifier si le pays est un objet avec un code ou juste le code
@@ -89,7 +88,6 @@ class AuthProvider extends ChangeNotifier {
   bool get isMadagascarUser {
     final country = userCountry;
     final isMG = country == 'MG' || country == 'mg' || country == 'Madagascar';
-    print('isMadagascarUser: country=$country, isMG=$isMG');
     return isMG;
   }
 
@@ -100,13 +98,9 @@ class AuthProvider extends ChangeNotifier {
   // Vérifier le statut de connexion au démarrage
   Future<void> _checkLoginStatus() async {
     _isLoggedIn = await _authService.isLoggedIn();
-    print('_checkLoginStatus: isLoggedIn=$_isLoggedIn');
     if (_isLoggedIn) {
       // Récupérer le profil complet depuis l'API
       _user = await _authService.getUserProfile();
-      print(
-        '👤 _checkLoginStatus: user data loaded, country=${_user?['country']}',
-      );
       _logSubscriptionDetails('_checkLoginStatus');
     }
     notifyListeners();
@@ -114,19 +108,7 @@ class AuthProvider extends ChangeNotifier {
 
   // Log des détails de l'abonnement
   void _logSubscriptionDetails(String source) {
-    print('═══════════════════════════════════════════════════════════');
-    print('📊 [$source] SUBSCRIPTION DETAILS:');
-    print('   👤 User ID: ${_user?['id']}');
-    print('   📧 Email: ${_user?['email']}');
-    print('   ⭐ is_premium: ${_user?['is_premium']}');
-    print('   📦 subscription_type: ${_user?['subscription_type']}');
-    print('   📋 subscription_status: ${_user?['subscription_status']}');
-    print(
-      '   📅 subscription_expires_at: ${_user?['subscription_expires_at']}',
-    );
-    print('   🔓 isPremium (getter): $isPremium');
-    print('   ✅ hasActiveSubscription (getter): $hasActiveSubscription');
-    print('═══════════════════════════════════════════════════════════');
+    
   }
 
   // Connexion
@@ -162,12 +144,10 @@ class AuthProvider extends ChangeNotifier {
 
   // Déconnexion
   Future<void> logout() async {
-    print('🔴 AuthProvider: Déconnexion en cours...');
     await _authService.logout();
     _isLoggedIn = false;
     _user = null;
     _errorMessage = null;
-    print('🔴 AuthProvider: Déconnexion terminée. isLoggedIn=$_isLoggedIn');
     notifyListeners();
   }
 

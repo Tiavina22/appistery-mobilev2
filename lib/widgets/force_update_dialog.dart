@@ -25,7 +25,6 @@ class ForceUpdateDialog extends StatelessWidget {
         throw 'Could not launch $downloadUrl';
       }
     } catch (e) {
-      print('Error launching URL: $e');
     }
   }
 

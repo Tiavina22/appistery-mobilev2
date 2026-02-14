@@ -27,7 +27,6 @@ class StoryService {
           return handler.next(options);
         },
         onError: (error, handler) {
-          print('Dio Error: ${error.message}');
           return handler.next(error);
         },
       ),
@@ -36,27 +35,19 @@ class StoryService {
 
   Future<List<Story>> getAllStories() async {
     try {
-      print('DEBUG: Fetching stories from $apiUrl/api/stories/all');
       final response = await _dio.get('/api/stories/all');
-      print('DEBUG: Response status: ${response.statusCode}');
-      print('DEBUG: Response data: ${response.data}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final stories = data
             .map((story) => Story.fromJson(story as Map<String, dynamic>))
             .toList();
-        print('DEBUG: Parsed ${stories.length} stories');
         return stories;
       }
       throw Exception('Failed to load stories: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException - ${e.message}');
-      print('DEBUG: Error type: ${e.type}');
-      print('DEBUG: Error response: ${e.response?.data}');
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      print('DEBUG: Unknown error - $e');
       throw Exception('Error loading stories: $e');
     }
   }
@@ -67,17 +58,11 @@ class StoryService {
   }) async {
     try {
       final startTime = DateTime.now();
-      print(
-        'DEBUG: Fetching stories with pagination (limit: $limit, offset: $offset)',
-      );
       final response = await _dio.get(
         '/api/stories/all',
         queryParameters: {'limit': limit, 'offset': offset},
       );
       final networkDuration = DateTime.now().difference(startTime);
-      print(
-        'DEBUG: Response status: ${response.statusCode} (${networkDuration.inMilliseconds}ms)',
-      );
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
@@ -85,43 +70,32 @@ class StoryService {
             .map((story) => Story.fromJson(story as Map<String, dynamic>))
             .toList();
         final totalDuration = DateTime.now().difference(startTime);
-        print(
-          'DEBUG: Parsed ${stories.length} stories (Total: ${totalDuration.inMilliseconds}ms)',
-        );
         return stories;
       }
       throw Exception('Failed to load stories: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException - ${e.message}');
-      print('DEBUG: Error type: ${e.type}');
-      print('DEBUG: Response status: ${e.response?.statusCode}');
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      print('DEBUG: Unknown error - $e');
       throw Exception('Error loading stories: $e');
     }
   }
 
   Future<List<Story>> searchStories(String query) async {
     try {
-      print('DEBUG: Searching stories with query: $query');
       final response = await _dio.get(
         '/api/stories/search',
         queryParameters: {'q': query},
       );
-      print('DEBUG: Search response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final stories = data
             .map((story) => Story.fromJson(story as Map<String, dynamic>))
             .toList();
-        print('DEBUG: Parsed ${stories.length} search results');
         return stories;
       }
       throw Exception('Failed to search stories: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException searching - ${e.message}');
       throw Exception('Error searching stories: ${e.message}');
     } catch (e) {
       throw Exception('Error searching stories: $e');
@@ -130,19 +104,15 @@ class StoryService {
 
   Future<Story> getStoryById(int id) async {
     try {
-      print('DEBUG: Fetching story with ID: $id');
       final response = await _dio.get('/api/stories/$id');
-      print('DEBUG: Story response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'] ?? response.data;
         final story = Story.fromJson(data as Map<String, dynamic>);
-        print('DEBUG: Parsed story: ${story.title}');
         return story;
       }
       throw Exception('Failed to load story: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException getting story - ${e.message}');
       throw Exception('Error loading story: ${e.message}');
     } catch (e) {
       throw Exception('Error loading story: $e');
@@ -151,14 +121,11 @@ class StoryService {
 
   Future<void> addFavorite(int storyId) async {
     try {
-      print('DEBUG: Adding favorite for story $storyId');
       final response = await _dio.post(
         '/api/stories/favorites/add',
         data: {'story_id': storyId},
       );
-      print('DEBUG: Add favorite response: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException adding favorite - ${e.message}');
       throw Exception('Error adding favorite: ${e.message}');
     } catch (e) {
       throw Exception('Error adding favorite: $e');
@@ -167,13 +134,10 @@ class StoryService {
 
   Future<void> removeFavorite(int storyId) async {
     try {
-      print('DEBUG: Removing favorite for story $storyId');
       final response = await _dio.delete(
         '/api/stories/favorites/remove/$storyId',
       );
-      print('DEBUG: Remove favorite response: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException removing favorite - ${e.message}');
       throw Exception('Error removing favorite: ${e.message}');
     } catch (e) {
       throw Exception('Error removing favorite: $e');
@@ -182,21 +146,17 @@ class StoryService {
 
   Future<List<Story>> getFavorites() async {
     try {
-      print('DEBUG: Fetching favorites from $apiUrl/api/stories/favorites');
       final response = await _dio.get('/api/stories/favorites');
-      print('DEBUG: Favorites response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final stories = data
             .map((story) => Story.fromJson(story as Map<String, dynamic>))
             .toList();
-        print('DEBUG: Parsed ${stories.length} favorite stories');
         return stories;
       }
       throw Exception('Failed to load favorites: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException getting favorites - ${e.message}');
       throw Exception('Error loading favorites: ${e.message}');
     } catch (e) {
       throw Exception('Error loading favorites: $e');
@@ -205,21 +165,17 @@ class StoryService {
 
   Future<List<Map<String, dynamic>>> getGenres() async {
     try {
-      print('DEBUG: Fetching genres from $apiUrl/api/stories/genres');
       final response = await _dio.get('/api/stories/genres');
-      print('DEBUG: Genres response status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final genres = data
             .map((genre) => Map<String, dynamic>.from(genre as Map))
             .toList();
-        print('DEBUG: Parsed ${genres.length} genres');
         return genres;
       }
       throw Exception('Failed to load genres: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException getting genres - ${e.message}');
       throw Exception('Error loading genres: ${e.message}');
     } catch (e) {
       throw Exception('Error loading genres: $e');
@@ -228,21 +184,21 @@ class StoryService {
 
   Future<List<Author>> getAuthors() async {
     try {
-      print('DEBUG: Fetching authors from $apiUrl/api/stories/authors');
+     
       final response = await _dio.get('/api/stories/authors');
-      print('DEBUG: Authors response status: ${response.statusCode}');
+    
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final authors = data
             .map((author) => Author.fromJson(author as Map<String, dynamic>))
             .toList();
-        print('DEBUG: Parsed ${authors.length} authors');
+        
         return authors;
       }
       throw Exception('Failed to load authors: ${response.statusCode}');
     } on DioException catch (e) {
-      print('DEBUG: DioException getting authors - ${e.message}');
+     
       throw Exception('Error loading authors: ${e.message}');
     } catch (e) {
       throw Exception('Error loading authors: $e');

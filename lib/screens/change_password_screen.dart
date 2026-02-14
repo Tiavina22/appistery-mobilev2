@@ -81,7 +81,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         _showError(data['message'] ?? 'error_changing_password'.tr());
       }
     } catch (e) {
-      print('Erreur changement mot de passe: $e');
       _showError('network_error'.tr());
     } finally {
       if (mounted) {

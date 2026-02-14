@@ -26,11 +26,9 @@ class AuthService {
 
   // Supprimer le token
   Future<void> deleteToken() async {
-    print('🔴 AuthService: Suppression du token...');
     await _storage.delete(key: 'auth_token');
     final check = await _storage.read(key: 'auth_token');
-    print('🔴 AuthService: Token après suppression: ${check ?? "null (OK)"}');
-  }
+     }
 
   // Vérifier si l'utilisateur est connecté
   Future<bool> isLoggedIn() async {
@@ -226,7 +224,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting user profile: $e');
       return null;
     }
   }
@@ -289,28 +286,21 @@ class AuthService {
   Future<Map<String, dynamic>> getCGU(String language) async {
     try {
       final url = '$apiUrl/api/auth/cgu?language=$language';
-      print('CGU Request URL: $url');
       final response = await _dio.get(url);
 
-      print('CGU Response status: ${response.statusCode}');
-      print('CGU Response data: ${response.data}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        print('CGU data extracted: $data');
         return {'success': true, 'data': data};
       }
 
       return {'success': false, 'message': 'Erreur lors du chargement des CGU'};
     } on DioException catch (e) {
-      print('CGU DioException: ${e.message}');
-      print('CGU Response error: ${e.response?.data}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur réseau: ${e.message}',
       };
     } catch (e) {
-      print('CGU Unexpected error: $e');
       return {'success': false, 'message': 'Erreur inattendue: $e'};
     }
   }

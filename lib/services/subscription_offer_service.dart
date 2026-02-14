@@ -30,7 +30,6 @@ class SubscriptionOfferService {
         'count': response.data['count'] ?? 0,
       };
     } on DioException catch (e) {
-      print('❌ Erreur lors de la récupération des offres: ${e.message}');
       return {'success': false, 'data': [], 'error': e.message};
     }
   }
@@ -53,9 +52,7 @@ class SubscriptionOfferService {
         'location': response.data['location'],
       };
     } on DioException catch (e) {
-      print(
-        '❌ Erreur lors de la récupération des offres par localisation: ${e.message}',
-      );
+    
       return {'success': false, 'data': [], 'error': e.message};
     }
   }
@@ -70,7 +67,6 @@ class SubscriptionOfferService {
         'data': response.data['data'],
       };
     } on DioException catch (e) {
-      print('❌ Erreur lors de la récupération de l\'offre: ${e.message}');
       return {'success': false, 'error': e.message};
     }
   }
@@ -111,7 +107,6 @@ class SubscriptionOfferService {
         'data': response.data['data'],
       };
     } on DioException catch (e) {
-      print('❌ Erreur lors de la création de l\'offre: ${e.message}');
       return {'success': false, 'error': e.message};
     }
   }
@@ -154,7 +149,6 @@ class SubscriptionOfferService {
         'data': response.data['data'],
       };
     } on DioException catch (e) {
-      print('❌ Erreur lors de la mise à jour de l\'offre: ${e.message}');
       return {'success': false, 'error': e.message};
     }
   }
@@ -177,7 +171,6 @@ class SubscriptionOfferService {
         'message': response.data['message'],
       };
     } on DioException catch (e) {
-      print('❌ Erreur lors de la suppression de l\'offre: ${e.message}');
       return {'success': false, 'error': e.message};
     }
   }
@@ -202,9 +195,6 @@ class SubscriptionOfferService {
         'subscription': response.data['subscription'],
       };
     } on DioException catch (e) {
-      print(
-        '❌ Erreur lors de la récupération de l\'abonnement actif: ${e.message}',
-      );
       return {'success': false, 'error': e.message};
     }
   }

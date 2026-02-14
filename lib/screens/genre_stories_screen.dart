@@ -57,7 +57,6 @@ class _GenreStoriesScreenState extends State<GenreStoriesScreen> {
         _error = e.toString();
         _isLoading = false;
       });
-      print('Error loading stories: $e');
     }
   }
 

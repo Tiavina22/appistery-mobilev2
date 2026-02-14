@@ -42,19 +42,13 @@ class _StoryCommentsScreenState extends State<StoryCommentsScreen> {
 
   Future<void> _loadComments() async {
     try {
-      print('🔄 [CommentsScreen._loadComments] Chargement des commentaires...');
       setState(() => _isLoading = true);
       final data = await _reactionService.getStoryComments(widget.storyId);
-      print('📦 [CommentsScreen._loadComments] Données reçues: $data');
       setState(() {
         _comments = data['comments'] ?? [];
         _isLoading = false;
       });
-      print(
-        '✅ [CommentsScreen._loadComments] ${_comments.length} commentaires chargés',
-      );
     } catch (e) {
-      print('❌ [CommentsScreen._loadComments] Erreur: $e');
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(

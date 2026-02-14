@@ -68,7 +68,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         _isLoading = false;
       });
     } catch (e) {
-      print('Erreur lors du chargement du profil: $e');
       setState(() => _isLoading = false);
     }
   }

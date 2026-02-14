@@ -26,7 +26,6 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
 
   Future<void> _loadReadStories() async {
     try {
-      print('📚 [MyStoriesScreen] Chargement des histoires lues');
       setState(() {
         _isLoading = true;
       });
@@ -37,10 +36,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         _readStories = stories;
         _isLoading = false;
       });
-
-      print('  ✅ ${stories.length} histoires chargées');
     } catch (error) {
-      print('  ❌ Erreur: $error');
       setState(() {
         _isLoading = false;
       });
