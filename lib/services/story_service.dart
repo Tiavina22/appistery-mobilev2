@@ -108,7 +108,11 @@ class StoryService {
 
       if (response.statusCode == 200) {
         final data = response.data['data'] ?? response.data;
+        print('DEBUG getStoryById: chapters in data: ${data['chapters']}');
+        print('DEBUG getStoryById: Chapters in data: ${data['Chapters']}');
+        print('DEBUG getStoryById: chaptersList in data: ${data['chaptersList']}');
         final story = Story.fromJson(data as Map<String, dynamic>);
+        print('DEBUG getStoryById: story.chaptersList.length: ${story.chaptersList.length}');
         return story;
       }
       throw Exception('Failed to load story: ${response.statusCode}');
@@ -314,6 +318,18 @@ class Story {
       );
     }
 
+    // Calculer le nombre de chapitres (chapters_count ou longueur de la liste)
+    int chaptersCount = 0;
+    if (json['chapters_count'] != null) {
+      chaptersCount = json['chapters_count'] is int 
+          ? json['chapters_count'] 
+          : int.tryParse(json['chapters_count'].toString()) ?? 0;
+    } else if (chaptersList.isNotEmpty) {
+      chaptersCount = chaptersList.length;
+    } else if (json['chapters'] is int) {
+      chaptersCount = json['chapters'];
+    }
+
     return Story(
       id: json['id'] ?? 0,
       title: title,
@@ -324,7 +340,7 @@ class Story {
       authorAvatar: authorAvatar,
       authorBio: authorBio,
       authorFollowers: authorFollowers,
-      chapters: json['chapters_count'] ?? json['chapters'] ?? 0,
+      chapters: chaptersCount,
       rating: json['rating']?.toDouble(),
       isFavorite: json['is_favorite'] ?? false,
       isPremium: json['is_premium'] ?? false,

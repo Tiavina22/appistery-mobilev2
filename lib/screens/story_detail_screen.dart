@@ -1009,13 +1009,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
     // Utiliser les chapitres réels de l'histoire (depuis _fullStory si disponible, sinon widget.story)
     final storyToUse = _fullStory ?? widget.story;
+    print('DEBUG: _fullStory is null: ${_fullStory == null}');
+    print('DEBUG: storyToUse.chaptersList.length: ${storyToUse.chaptersList.length}');
+    if (storyToUse.chaptersList.isNotEmpty) {
+      print('DEBUG: Premier chapitre: ${storyToUse.chaptersList[0]}');
+    }
     final chapters = storyToUse.chaptersList.isNotEmpty
         ? storyToUse.chaptersList
         : List.generate(
             storyToUse.chapters,
             (index) => {
-              'number': index + 1,
-              'title': 'Chapter ${index + 1}',
+              'chapter_number': index + 1,
+              'title': '${'chapter_title'.tr()} ${index + 1}',
               'duration': '${(index % 3 + 1) * 5} ${'min_read'.tr()}',
             },
           );
@@ -1031,65 +1036,86 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         // Gérer le titre du chapitre (peut être une map avec lang ou un string)
         String chapterTitle = '';
         final titleData = chapter['title'];
+        final currentLang = context.locale.languageCode; // 'fr' ou 'en'
         if (titleData is Map) {
-          chapterTitle = titleData['fr'] ?? titleData['en'] ?? 'Chapter ${index + 1}';
+          // Essayer d'abord la langue actuelle, puis les autres langues disponibles
+          chapterTitle = titleData[currentLang]?.toString() ?? 
+                        titleData['fr']?.toString() ?? 
+                        titleData['en']?.toString() ?? 
+                        titleData['gasy']?.toString() ??
+                        titleData.values.firstOrNull?.toString() ??
+                        '${'chapter_title'.tr()} ${index + 1}';
         } else if (titleData is String) {
           chapterTitle = titleData;
         } else {
-          chapterTitle = 'Chapter ${index + 1}';
+          chapterTitle = '${'chapter_title'.tr()} ${index + 1}';
         }
 
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                '${chapter['number'] ?? index + 1}',
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  chapterTitle,
-                  style: TextStyle(
-                    color: textColor,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
+        return InkWell(
+          onTap: () => navigateToChapter(index),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Numéro du chapitre
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${chapter['chapter_number'] ?? chapter['number'] ?? index + 1}',
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              // Afficher l'icône lock pour les histoires premium
-              if (isStoryPremium && !isUserPremium)
-                const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
-                  child: Icon(Icons.lock, color: Colors.amber, size: 16),
+                const SizedBox(width: 12),
+                // Titre du chapitre
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          chapterTitle,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // Afficher l'icône lock pour les histoires premium
+                      if (isStoryPremium && !isUserPremium)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: Icon(Icons.lock, color: Colors.amber, size: 16),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
+                const SizedBox(width: 8),
+                // Bouton play
+                IconButton(
+                  icon: Icon(Icons.play_circle_outline, color: textColorSecondary, size: 28),
+                  onPressed: () => navigateToChapter(index),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
+              ],
+            ),
           ),
-          subtitle: Text(
-            chapter['duration']?.toString() ?? '',
-            style: TextStyle(color: textColorSecondary, fontSize: 12),
-          ),
-          trailing: IconButton(
-            icon: Icon(Icons.play_circle_outline, color: textColorSecondary),
-            onPressed: () => navigateToChapter(index),
-          ),
-          onTap: () => navigateToChapter(index),
         );
       },
     );
