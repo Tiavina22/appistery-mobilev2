@@ -125,9 +125,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       );
 
       setState(() {
-        _currentChapter = chapterData is Map<String, dynamic>
-            ? chapterData
-            : {'content': chapterData.toString()};
+        _currentChapter = chapterData;
       });
 
       // Load last reading position for this chapter
@@ -536,108 +534,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     return content.toString();
   }
 
-  // Calculer les caractères par page en fonction de la hauteur réelle disponible
-  int _calculateCharsPerPage(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Espace réservé aux contrôles et marges
-    final topPadding = _showControls ? 120.0 : 60.0;
-    final bottomPadding = _showControls
-        ? 200.0
-        : 160.0; // Plus d'espace pour le numéro de page + buffer
-    final availableHeight = screenHeight - topPadding - bottomPadding;
-
-    // Calculer le nombre de lignes qui peuvent tenir avec buffer de sécurité
-    final lineHeight = _fontSize * 1.8; // height: 1.8
-    // Réduire à 80% pour buffer supplémentaire
-    final linesPerPage = ((availableHeight * 0.80) / lineHeight)
-        .floor(); // 80% pour buffer maximum
-
-    // Calcul des caractères par ligne (réduit pour plus de sécurité)
-    final availableWidth = screenWidth - 48; // padding 24 + 24
-    final charsPerLine = (availableWidth / (_fontSize * 0.65)).floor();
-    final charsPerPage = (linesPerPage * charsPerLine).round();
-
-    return charsPerPage > 150
-        ? charsPerPage
-        : 150; // Minimum 150 chars seulement
-  }
-
-  // Calculer le nombre de pages en fonction de la taille du texte ET de l'espace dispo
-  int _getPageCount(String content, BuildContext context) {
-    if (content.isEmpty) return 1;
-
-    final charsPerPage = _calculateCharsPerPage(context);
-    int totalPages = 0;
-    int currentIndex = 0;
-
-    while (currentIndex < content.length) {
-      int endIndex = (currentIndex + charsPerPage).clamp(0, content.length);
-
-      // Chercher le dernier espace si on n'est pas à la fin
-      if (endIndex < content.length) {
-        int lastSpace = content.lastIndexOf(' ', endIndex);
-        if (lastSpace > currentIndex + (charsPerPage * 0.7)) {
-          // 70% minimum
-          endIndex = lastSpace + 1;
-        }
-      }
-
-      currentIndex = endIndex;
-      totalPages++;
-    }
-
-    return totalPages > 0 ? totalPages : 1;
-  }
-
-  // Récupérer le contenu d'une page spécifique
-  String _getPageContent(
-    String fullContent,
-    int pageIndex,
-    BuildContext context,
-  ) {
-    if (fullContent.isEmpty) return '';
-
-    final charsPerPage = _calculateCharsPerPage(context);
-
-    // Calculer la position de départ réelle pour cette page
-    int currentIndex = 0;
-    int currentPage = 0;
-
-    // Parcourir jusqu'à la page demandée
-    while (currentPage < pageIndex && currentIndex < fullContent.length) {
-      int endIndex = (currentIndex + charsPerPage).clamp(0, fullContent.length);
-
-      if (endIndex < fullContent.length) {
-        int lastSpace = fullContent.lastIndexOf(' ', endIndex);
-        if (lastSpace > currentIndex + (charsPerPage * 0.7)) {
-          endIndex = lastSpace + 1;
-        }
-      }
-
-      currentIndex = endIndex;
-      currentPage++;
-    }
-
-    if (currentIndex >= fullContent.length) {
-      return '';
-    }
-
-    // Extraire le contenu de cette page
-    int endIndex = (currentIndex + charsPerPage).clamp(0, fullContent.length);
-
-    // Si ce n'est pas la dernière page, couper au dernier espace
-    if (endIndex < fullContent.length) {
-      int lastSpace = fullContent.lastIndexOf(' ', endIndex);
-      if (lastSpace > currentIndex + (charsPerPage * 0.7)) {
-        endIndex = lastSpace;
-      }
-    }
-
-    return fullContent.substring(currentIndex, endIndex).trim();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -646,7 +542,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         onTap: _toggleControls,
         child: Stack(
           children: [
-            // Page view pour swipe entre chapitres
+            // Page view pour swipe entre chapitres (horizontal, style livre)
             PageView.builder(
               controller: _pageController,
               itemCount: widget.story.chaptersList.length,
@@ -657,6 +553,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   _scrollPosition = 0.0;
                   _readingStartTime = DateTime.now();
                 });
+                // Réinitialiser le scroll au début du nouveau chapitre
+                if (_scrollController.hasClients) {
+                  _scrollController.jumpTo(0);
+                }
                 _loadChapterAndProgress();
               },
               itemBuilder: (context, index) {
@@ -664,92 +564,96 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // Pagination style livre - diviser le texte en pages
+                // Contenu du chapitre avec scroll vertical
                 final content = _getContent(_currentChapter?['content'], 'fr');
                 final title = _getContent(_currentChapter?['title'], 'fr');
                 final chapterNum = _currentChapter?['chapter_number'] ?? '';
-                final pageCount = _getPageCount(content, context);
 
-                return PageView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: pageCount,
-                  onPageChanged: (pageIndex) {
-                    setState(() {
-                      _scrollPosition = ((pageIndex + 1) / pageCount * 100)
-                          .clamp(0.0, 100.0);
-                    });
-                  },
-                  itemBuilder: (context, pageIndex) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        left: 24,
-                        right: 24,
-                        top: _showControls ? 120 : 60,
-                        bottom: _showControls ? 200 : 160,
+                return SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    top: _showControls ? 120 : 60,
+                    bottom: _showControls ? 120 : 80,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Titre du chapitre
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: _fontSize + 10,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: _fontFamily,
+                          color: _getTextColor(),
+                          height: 1.3,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Titre du chapitre (seulement sur la première page)
-                          if (pageIndex == 0) ...[
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: _fontSize + 10,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: _fontFamily,
-                                color: _getTextColor(),
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Chapitre $chapterNum',
-                              style: TextStyle(
-                                fontSize: _fontSize - 4,
-                                color: _getTextColor().withOpacity(0.6),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            Divider(
-                              height: 40,
-                              thickness: 1,
-                              color: _getTextColor().withOpacity(0.2),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Chapitre $chapterNum',
+                        style: TextStyle(
+                          fontSize: _fontSize - 4,
+                          color: _getTextColor().withOpacity(0.6),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      Divider(
+                        height: 40,
+                        thickness: 1,
+                        color: _getTextColor().withOpacity(0.2),
+                      ),
 
-                          // Contenu de la page
-                          Expanded(
-                            child: Text(
-                              _getPageContent(content, pageIndex, context),
-                              style: TextStyle(
-                                fontSize: _fontSize,
-                                height: 1.8,
-                                fontFamily: _fontFamily,
-                                color: _getTextColor(),
-                                letterSpacing: 0.3,
-                              ),
-                              textAlign: TextAlign.justify,
+                      // Contenu du chapitre (scroll vertical)
+                      Text(
+                        content,
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          height: 1.8,
+                          fontFamily: _fontFamily,
+                          color: _getTextColor(),
+                          letterSpacing: 0.3,
+                        ),
+                        textAlign: TextAlign.justify,
+                      ),
+                      
+                      // Espace et indication de fin de chapitre
+                      const SizedBox(height: 40),
+                      Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.more_horiz,
+                              color: _getTextColor().withOpacity(0.3),
+                              size: 32,
                             ),
-                          ),
-
-                          // Numéro de page en bas
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 16),
-                              child: Text(
-                                '${pageIndex + 1} / $pageCount',
+                            const SizedBox(height: 16),
+                            if (_currentChapterIndex < widget.story.chaptersList.length - 1)
+                              Text(
+                                'Glissez vers la gauche pour le chapitre suivant',
                                 style: TextStyle(
                                   fontSize: 12,
+                                  color: _getTextColor().withOpacity(0.4),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            else
+                              Text(
+                                'Fin de l\'histoire',
+                                style: TextStyle(
+                                  fontSize: 14,
                                   color: _getTextColor().withOpacity(0.5),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 );
               },
             ),
