@@ -210,7 +210,24 @@ class AuthService {
 
   // Déconnexion
   Future<void> logout() async {
-    await deleteToken();
+    try {
+      // Obtenir les infos d'appareil
+      final deviceService = DeviceService();
+      final deviceId = await deviceService.getDeviceId();
+      
+      // Appeler l'endpoint backend pour mettre à jour la session
+      final dio = await getDioWithAuth();
+      await dio.post(
+        '/api/auth/logout',
+        data: {'device_id': deviceId},
+      );
+    } catch (e) {
+      // Si l'appel API échoue, on supprime quand même le token local
+      print('Erreur lors de la déconnexion backend: $e');
+    } finally {
+      // Toujours supprimer le token local
+      await deleteToken();
+    }
   }
 
   // Récupérer le profil complet de l'utilisateur connecté
