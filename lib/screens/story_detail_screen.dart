@@ -1049,7 +1049,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             ],
           ),
           subtitle: Text(
-            chapter['duration'] as String,
+            chapter['duration']?.toString() ?? '',
             style: TextStyle(color: textColorSecondary, fontSize: 12),
           ),
           trailing: IconButton(
