@@ -8,11 +8,15 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   Map<String, dynamic>? _user;
   String? _errorMessage;
+  String? _errorCode;
+  String? _errorField;
 
   bool get isLoggedIn => _isLoggedIn;
   bool get isLoading => _isLoading;
   Map<String, dynamic>? get user => _user;
   String? get errorMessage => _errorMessage;
+  String? get errorCode => _errorCode;
+  String? get errorField => _errorField;
 
   // Getter pour accéder au token
   Future<String?> getToken() async {
@@ -115,6 +119,8 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;
+    _errorCode = null;
+    _errorField = null;
     notifyListeners();
 
     try {
@@ -124,18 +130,24 @@ class AuthProvider extends ChangeNotifier {
         _isLoggedIn = true;
         _user = result['user'];
         _errorMessage = null;
+        _errorCode = null;
+        _errorField = null;
         _isLoading = false;
         _logSubscriptionDetails('login');
         notifyListeners();
         return true;
       } else {
         _errorMessage = result['message'];
+        _errorCode = result['error_code'];
+        _errorField = result['field'];
         _isLoading = false;
         notifyListeners();
         return false;
       }
     } catch (e) {
       _errorMessage = 'Erreur de connexion';
+      _errorCode = null;
+      _errorField = null;
       _isLoading = false;
       notifyListeners();
       return false;

@@ -78,11 +78,14 @@ class AuthService {
       return {
         'success': false,
         'message': response.data['message'] ?? 'Erreur de connexion',
+        'error_code': response.data['error_code'],
+        'field': response.data['field'],
       };
     } on DioException catch (e) {
       // Vérifier si c'est une erreur de device déjà connecté
       final errorCode = e.response?.data['error_code'];
       final deviceName = e.response?.data['device_name'];
+      final field = e.response?.data['field'];
 
       if (errorCode == 'DEVICE_ALREADY_CONNECTED') {
         return {
@@ -98,6 +101,8 @@ class AuthService {
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur de connexion',
+        'error_code': errorCode,
+        'field': field,
       };
     } catch (e) {
       return {'success': false, 'message': 'Erreur inattendue'};
