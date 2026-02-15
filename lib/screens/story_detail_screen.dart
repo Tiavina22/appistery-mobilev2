@@ -995,12 +995,15 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         return;
       }
 
+      // Utiliser _fullStory si disponible pour avoir les chapitres complets
+      final storyForReader = _fullStory ?? widget.story;
+
       // Naviguer vers le lecteur
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => ReaderScreen(
-            story: widget.story,
+            story: storyForReader,
             initialChapterIndex: chapterIndex,
           ),
         ),

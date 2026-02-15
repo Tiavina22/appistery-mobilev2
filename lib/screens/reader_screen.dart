@@ -708,7 +708,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  'Chapitre ${_currentChapterIndex + 1}/${widget.story.chaptersList.length}',
+                                  'Chapitre ${_currentChapter?['chapter_number'] ?? _currentChapterIndex + 1}/${widget.story.chaptersList.length}',
                                   style: TextStyle(
                                     color: _getTextColor().withOpacity(0.6),
                                     fontSize: 12,
