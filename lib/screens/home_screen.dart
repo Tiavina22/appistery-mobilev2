@@ -34,6 +34,37 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   final CategoryIntelligenceService _aiService = CategoryIntelligenceService();
 
+  // Map de traduction des genres
+  final Map<String, Map<String, String>> _genreTranslations = {
+    'Romance': {'fr': 'Romance', 'en': 'Romance'},
+    'Romantic': {'fr': 'Romantique', 'en': 'Romantic'},
+    'Horror': {'fr': 'Horreur', 'en': 'Horror'},
+    'Horreur': {'fr': 'Horreur', 'en': 'Horror'},
+    'Thriller': {'fr': 'Thriller', 'en': 'Thriller'},
+    'Suspense': {'fr': 'Suspense', 'en': 'Suspense'},
+    'Fantasy': {'fr': 'Fantaisie', 'en': 'Fantasy'},
+    'Fantaisie': {'fr': 'Fantaisie', 'en': 'Fantasy'},
+    'Science Fiction': {'fr': 'Science Fiction', 'en': 'Science Fiction'},
+    'Sci-Fi': {'fr': 'Science Fiction', 'en': 'Sci-Fi'},
+    'Drame': {'fr': 'Drame', 'en': 'Drama'},
+    'Drama': {'fr': 'Drame', 'en': 'Drama'},
+    'Comédie': {'fr': 'Comédie', 'en': 'Comedy'},
+    'Comedy': {'fr': 'Comédie', 'en': 'Comedy'},
+    'Aventure': {'fr': 'Aventure', 'en': 'Adventure'},
+    'Adventure': {'fr': 'Aventure', 'en': 'Adventure'},
+    'Action': {'fr': 'Action', 'en': 'Action'},
+    'Mystère': {'fr': 'Mystère', 'en': 'Mystery'},
+    'Mystery': {'fr': 'Mystère', 'en': 'Mystery'},
+    'Historique': {'fr': 'Historique', 'en': 'Historical'},
+    'Historical': {'fr': 'Historique', 'en': 'Historical'},
+  };
+
+  // Fonction helper pour traduire le genre
+  String _translateGenre(String genre) {
+    final lang = context.locale.languageCode;
+    return _genreTranslations[genre]?[lang] ?? genre;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -350,6 +381,10 @@ class _HomeScreenState extends State<HomeScreen> {
               if (storyProvider.stories.isNotEmpty)
                 _buildHeroSection(storyProvider.stories.first),
               const SizedBox(height: 24),
+              // Section Nouveautés
+              if (storyProvider.stories.isNotEmpty)
+                _buildNewReleasesSection(storyProvider),
+              const SizedBox(height: 12),
               ..._buildGenreSections(storyProvider),
               if (storyProvider.isLoadingMore)
                 const Padding(
@@ -1273,6 +1308,56 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
+            // Badge "Nouveauté" style Netflix (si l'histoire a moins de 7 jours)
+            if (story.createdAt != null && 
+                DateTime.now().difference(story.createdAt!).inDays < 7)
+              Positioned(
+                top: 20,
+                left: 0,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE50914), // Rouge Netflix
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(4),
+                      bottomRight: Radius.circular(4),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.fiber_new_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        context.locale.languageCode == 'fr' 
+                            ? 'NOUVEAUTÉ' 
+                            : 'NEW',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
             // Contenu en bas
             Positioned(
               bottom: 0,
@@ -1333,7 +1418,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            story.genre,
+                            _translateGenre(story.genre),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -1412,7 +1497,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             icon: const Icon(Icons.play_arrow, size: 28),
                             label: Text(
-                              'Lire maintenant',
+                              context.locale.languageCode == 'fr'
+                                  ? 'Lire maintenant'
+                                  : 'Read now',
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -1466,6 +1553,89 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Section Nouveautés - 5 dernières histoires
+  Widget _buildNewReleasesSection(StoryProvider storyProvider) {
+    // Filtrer les histoires avec une date de création et trier par date décroissante
+    final recentStories = storyProvider.stories
+        .where((story) => story.createdAt != null)
+        .toList()
+      ..sort((a, b) => b.createdAt!.compareTo(a.createdAt!));
+    
+    // Prendre les 5 plus récentes
+    final newReleases = recentStories.take(5).toList();
+    
+    if (newReleases.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Générer un titre intelligent multilingue
+    final title = context.locale.languageCode == 'fr'
+        ? 'Nouveautés de la semaine'
+        : 'New this week';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Title avec badge NEW
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE50914), // Rouge Netflix
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.fiber_new_rounded,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Grille horizontale scrollable
+          SizedBox(
+            height: 200,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: newReleases.length,
+              itemBuilder: (context, index) {
+                final story = newReleases[index];
+                return Container(
+                  width: 135,
+                  margin: EdgeInsets.only(
+                    right: index < newReleases.length - 1 ? 10 : 0,
+                  ),
+                  child: _buildStoryGridItem(story),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _buildGenreSections(StoryProvider storyProvider) {
     final storiesByGenre = storyProvider.getStoriesByGenre();
     final sections = <Widget>[];
@@ -1511,9 +1681,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         );
                       },
-                      child: const Text(
-                        'Voir tout',
-                        style: TextStyle(
+                      child: Text(
+                        context.locale.languageCode == 'fr'
+                            ? 'Voir tout'
+                            : 'View all',
+                        style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),
