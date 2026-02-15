@@ -813,7 +813,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Synopsis',
+                        'synopsis'.tr(),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -821,29 +821,19 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      AnimatedCrossFade(
-                        firstChild: Text(
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: Text(
                           widget.story.description,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                          maxLines: _isExpanded ? null : 3,
+                          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 14,
                             color: textColorSecondary,
                             height: 1.5,
                           ),
                         ),
-                        secondChild: Text(
-                          widget.story.description,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textColorSecondary,
-                            height: 1.5,
-                          ),
-                        ),
-                        crossFadeState: _isExpanded
-                            ? CrossFadeState.showSecond
-                            : CrossFadeState.showFirst,
-                        duration: const Duration(milliseconds: 200),
                       ),
                       if (widget.story.description.length > 150)
                         TextButton(
@@ -853,7 +843,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             });
                           },
                           child: Text(
-                            _isExpanded ? 'Voir moins' : 'Voir plus',
+                            _isExpanded ? 'see_less'.tr() : 'see_more'.tr(),
                             style: TextStyle(
                               color: textColor,
                               fontWeight: FontWeight.bold,
