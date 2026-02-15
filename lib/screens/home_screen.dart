@@ -242,7 +242,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   final avatarData = authProvider.user?['avatar'] as String?;
                   return GestureDetector(
                     onTap: () {
-                      setState(() => _selectedIndex = 3);
+                      // Naviguer vers la page profil utilisateur
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const UserProfileScreen(),
+                        ),
+                      );
                     },
                     child: Container(
                       width: 32,

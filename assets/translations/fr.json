@@ -220,5 +220,7 @@
   "not_authenticated": "Vous n'êtes pas authentifié",
   "network_error": "Erreur réseau. Veuillez réessayer",
   "change_password_desc": "Pour votre sécurité, veuillez saisir votre mot de passe actuel avant de définir un nouveau mot de passe.",
-  "password_security_info": "Votre mot de passe doit contenir au moins 8 caractères pour assurer la sécurité de votre compte."
+  "password_security_info": "Votre mot de passe doit contenir au moins 8 caractères pour assurer la sécurité de votre compte.",
+  "contact_info": "Coordonnées",
+  "premium": "Premium"
 }

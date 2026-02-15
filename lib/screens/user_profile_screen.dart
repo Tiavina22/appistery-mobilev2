@@ -148,12 +148,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.star, color: Colors.white, size: 16),
-                        SizedBox(width: 4),
+                      children: [
+                        const Icon(Icons.star, color: Colors.white, size: 16),
+                        const SizedBox(width: 4),
                         Text(
-                          'Premium',
-                          style: TextStyle(
+                          'premium'.tr(),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -172,22 +172,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     children: [
                       // Contact section
                       _buildSectionCard(
-                        'Coordonnées',
+                        'contact_info'.tr(),
                         Icons.contact_mail,
                         isDark,
                         [
-                          _buildInfoTile(Icons.email, 'Email', email, isDark),
+                          _buildInfoTile(Icons.email, 'email'.tr(), email, isDark),
                           if (telephone != '—')
                             _buildInfoTile(
                               Icons.phone,
-                              'Téléphone',
+                              'phone'.tr(),
                               telephone,
                               isDark,
                             ),
                           if (countryName != '—')
                             _buildInfoTile(
                               Icons.location_on,
-                              'Pays',
+                              'country'.tr(),
                               countryName,
                               isDark,
                             ),
