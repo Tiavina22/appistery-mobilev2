@@ -878,7 +878,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       color: textColor,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _buildChaptersList(isDarkMode: isDarkMode),
 
                   const SizedBox(height: 32),
