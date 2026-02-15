@@ -4,21 +4,32 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import '../providers/auth_provider.dart';
 import '../services/story_service.dart';
+import '../services/category_intelligence_service.dart';
 import 'story_detail_screen.dart';
 
 class CategoryViewAllScreen extends StatelessWidget {
   final String genreName;
+  final String? intelligentTitle;
   final List<Story> stories;
 
   const CategoryViewAllScreen({
     super.key,
     required this.genreName,
+    this.intelligentTitle,
     required this.stories,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    // Utiliser le titre intelligent si fourni, sinon générer un nouveau ou utiliser genreName
+    final displayTitle = intelligentTitle ?? 
+                        CategoryIntelligenceService().generateCategoryTitle(
+                          genreName,
+                          language: context.locale.languageCode,
+                          currentTime: DateTime.now(),
+                        );
 
     return Scaffold(
       backgroundColor: isDarkMode ? Colors.black : Colors.grey.shade50,
@@ -33,7 +44,7 @@ class CategoryViewAllScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          genreName,
+          displayTitle,
           style: TextStyle(
             color: isDarkMode ? Colors.white : Colors.black,
             fontSize: 20,

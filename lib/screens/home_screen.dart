@@ -9,6 +9,7 @@ import '../providers/story_provider.dart';
 import '../providers/websocket_provider.dart';
 import '../providers/notification_provider.dart';
 import '../services/story_service.dart';
+import '../services/category_intelligence_service.dart';
 import 'login_screen.dart';
 import 'story_detail_screen.dart';
 import 'author_profile_screen.dart';
@@ -16,7 +17,6 @@ import 'genre_stories_screen.dart';
 import 'my_stories_screen.dart';
 import 'user_profile_screen.dart';
 import 'cgu_screen.dart';
-import 'notifications_screen.dart';
 import 'subscription_offers_screen.dart';
 import 'change_password_screen.dart';
 import 'category_view_all_screen.dart';
@@ -32,6 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final CategoryIntelligenceService _aiService = CategoryIntelligenceService();
 
   @override
   void initState() {
@@ -1472,6 +1473,13 @@ class _HomeScreenState extends State<HomeScreen> {
     // Afficher tous les genres avec Apple Grid System
     storiesByGenre.forEach((genre, stories) {
       if (stories.isNotEmpty) {
+        // Générer un titre intelligent avec notre IA maison
+        final intelligentTitle = _aiService.generateCategoryTitle(
+          genre,
+          language: context.locale.languageCode,
+          currentTime: DateTime.now(),
+        );
+        
         sections.add(
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -1483,7 +1491,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      genre,
+                      intelligentTitle,
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -1497,6 +1505,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(
                             builder: (context) => CategoryViewAllScreen(
                               genreName: genre,
+                              intelligentTitle: intelligentTitle,
                               stories: stories,
                             ),
                           ),
