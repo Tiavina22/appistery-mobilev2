@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import '../services/reading_service.dart';
 import '../services/story_service.dart';
@@ -52,10 +53,27 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     _currentChapterIndex = widget.initialChapterIndex;
     _pageController = PageController(initialPage: _currentChapterIndex);
+    _loadReaderPreferences(); // Charger les préférences sauvegardées
     _loadChapterAndProgress();
     _recordView();
     _setupScrollListener();
     _startReadingTimer();
+  }
+
+  // Charger les préférences de lecture depuis SharedPreferences
+  Future<void> _loadReaderPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _fontSize = prefs.getDouble('reader_font_size') ?? 18.0;
+      _fontFamily = prefs.getString('reader_font_family') ?? 'Merriweather';
+    });
+  }
+
+  // Sauvegarder les préférences de lecture
+  Future<void> _saveReaderPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('reader_font_size', _fontSize);
+    await prefs.setString('reader_font_family', _fontFamily);
   }
 
   @override
@@ -358,6 +376,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       if (_fontSize > 14) {
                         setState(() => _fontSize -= 2);
                         setModalState(() {});
+                        _saveReaderPreferences();
                       }
                     },
                     icon: const Icon(Icons.remove_circle_outline),
@@ -373,6 +392,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       onChanged: (value) {
                         setState(() => _fontSize = value);
                         setModalState(() {});
+                        _saveReaderPreferences();
                       },
                     ),
                   ),
@@ -381,6 +401,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       if (_fontSize < 28) {
                         setState(() => _fontSize += 2);
                         setModalState(() {});
+                        _saveReaderPreferences();
                       }
                     },
                     icon: const Icon(Icons.add_circle_outline),
@@ -480,6 +501,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       onTap: () {
         setState(() => _fontFamily = font);
         setModalState(() {});
+        _saveReaderPreferences();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
