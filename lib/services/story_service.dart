@@ -212,6 +212,7 @@ class Story {
   final String description;
   final String? coverImage;
   final String author;
+  final int? authorId;
   final String? authorAvatar;
   final String? authorBio;
   final int? authorFollowers;
@@ -229,6 +230,7 @@ class Story {
     required this.description,
     this.coverImage,
     required this.author,
+    this.authorId,
     this.authorAvatar,
     this.authorBio,
     this.authorFollowers,
@@ -265,6 +267,7 @@ class Story {
 
     // Gérer l'auteur qui peut être un string ou un objet
     String author = 'Unknown';
+    int? authorId;
     String? authorAvatar;
     String? authorBio;
     int? authorFollowers;
@@ -277,7 +280,8 @@ class Story {
           json['author']['email'] ??
           json['author']['biography'] ??
           'Unknown';
-      // Récupérer l'avatar, la bio et les followers de l'auteur
+      // Récupérer l'ID, l'avatar, la bio et les followers de l'auteur
+      authorId = json['author']['id'];
       authorAvatar = json['author']['avatar'];
       authorBio = json['author']['biography'];
       authorFollowers =
@@ -316,6 +320,7 @@ class Story {
       description: description,
       coverImage: json['cover_image'] ?? json['coverImage'],
       author: author,
+      authorId: authorId,
       authorAvatar: authorAvatar,
       authorBio: authorBio,
       authorFollowers: authorFollowers,

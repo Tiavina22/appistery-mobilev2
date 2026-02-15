@@ -360,37 +360,46 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Image de couverture
-                  widget.story.coverImage != null &&
-                          widget.story.coverImage!.isNotEmpty
-                      ? Image.memory(
-                          base64Decode(
-                            widget.story.coverImage!.split(',').last,
+                  // Image de couverture cliquable pour plein écran
+                  GestureDetector(
+                    onTap: () {
+                      if (widget.story.coverImage != null &&
+                          widget.story.coverImage!.isNotEmpty) {
+                        _showFullScreenImage(context);
+                      }
+                    },
+                    child: widget.story.coverImage != null &&
+                            widget.story.coverImage!.isNotEmpty
+                        ? Image.memory(
+                            base64Decode(
+                              widget.story.coverImage!.split(',').last,
+                            ),
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[900],
+                                child: Icon(
+                                  Icons.book,
+                                  size: 100,
+                                  color: isDarkMode
+                                      ? Colors.white24
+                                      : Colors.black26,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: isDarkMode
+                                ? Colors.grey[900]
+                                : Colors.grey[200],
+                            child: Icon(
+                              Icons.book,
+                              size: 100,
+                              color:
+                                  isDarkMode ? Colors.white24 : Colors.black26,
+                            ),
                           ),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[900],
-                              child: Icon(
-                                Icons.book,
-                                size: 100,
-                                color: isDarkMode
-                                    ? Colors.white24
-                                    : Colors.black26,
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: isDarkMode
-                              ? Colors.grey[900]
-                              : Colors.grey[200],
-                          child: Icon(
-                            Icons.book,
-                            size: 100,
-                            color: isDarkMode ? Colors.white24 : Colors.black26,
-                          ),
-                        ),
+                  ),
                   // Gradient overlay (du bas vers le haut) - toujours noir pour le contraste avec l'image
                   Container(
                     decoration: BoxDecoration(
@@ -506,7 +515,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                   // Auteur avec avatar
                   GestureDetector(
                     onTap: () {
-                      // TODO: Naviguer vers le profil de l'auteur
+                      // Naviguer vers le profil de l'auteur
+                      if (widget.story.authorId != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AuthorProfileScreen(
+                              authorId: widget.story.authorId!,
+                              authorName: widget.story.author,
+                            ),
+                          ),
+                        );
+                      }
                     },
                     child: Row(
                       children: [
@@ -1270,6 +1290,72 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           ),
         ),
       ],
+    );
+  }
+
+  // Méthode pour afficher l'image de couverture en plein écran
+  void _showFullScreenImage(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Image en plein écran
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: InteractiveViewer(
+                  child: Center(
+                    child: widget.story.coverImage != null &&
+                            widget.story.coverImage!.isNotEmpty
+                        ? Image.memory(
+                            base64Decode(
+                              widget.story.coverImage!.split(',').last,
+                            ),
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[900],
+                                child: const Icon(
+                                  Icons.broken_image,
+                                  size: 100,
+                                  color: Colors.white24,
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: Colors.grey[900],
+                            child: const Icon(
+                              Icons.book,
+                              size: 100,
+                              color: Colors.white24,
+                            ),
+                          ),
+                  ),
+                ),
+              ),
+              // Bouton de fermeture
+              Positioned(
+                top: 40,
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
