@@ -19,6 +19,7 @@ import 'cgu_screen.dart';
 import 'notifications_screen.dart';
 import 'subscription_offers_screen.dart';
 import 'change_password_screen.dart';
+import 'category_view_all_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,7 +32,6 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  String? _selectedGenre; // Pour tracker le genre sélectionné
 
   @override
   void initState() {
@@ -1469,48 +1469,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final storiesByGenre = storyProvider.getStoriesByGenre();
     final sections = <Widget>[];
 
-    // Si un genre est sélectionné, afficher seulement ce genre
-    if (_selectedGenre != null && storiesByGenre.containsKey(_selectedGenre)) {
-      final stories = storiesByGenre[_selectedGenre]!;
-      if (stories.isNotEmpty) {
-        return [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _selectedGenre!,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Apple Grid System: 2 colonnes, espacement uniforme
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.68,
-                  ),
-                  itemCount: stories.length,
-                  itemBuilder: (context, index) {
-                    final story = stories[index];
-                    return _buildStoryGridItem(story);
-                  },
-                ),
-              ],
-            ),
-          ),
-        ];
-      }
-    }
-
-    // Sinon afficher tous les genres avec Apple Grid System
+    // Afficher tous les genres avec Apple Grid System
     storiesByGenre.forEach((genre, stories) {
       if (stories.isNotEmpty) {
         sections.add(
@@ -1533,7 +1492,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     TextButton(
                       onPressed: () {
-                        setState(() => _selectedGenre = genre);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => CategoryViewAllScreen(
+                              genreName: genre,
+                              stories: stories,
+                            ),
+                          ),
+                        );
                       },
                       child: const Text(
                         'Voir tout',
@@ -2059,22 +2026,144 @@ class _HomeScreenState extends State<HomeScreen> {
     // Récupérer le provider ET le navigator AVANT le dialog
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final navigator = Navigator.of(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('confirm_logout'.tr()),
-        content: Text('logout_warning'.tr()),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('cancel'.tr()),
+      barrierDismissible: true,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 340),
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+            borderRadius: BorderRadius.circular(28),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('logout'.tr()),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 32),
+              
+              // Icône
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: Colors.red.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.logout_rounded,
+                  color: Colors.red,
+                  size: 32,
+                ),
+              ),
+              
+              const SizedBox(height: 24),
+              
+              // Titre
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'confirm_logout'.tr(),
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              const SizedBox(height: 12),
+              
+              // Message
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  'logout_warning'.tr(),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: isDarkMode 
+                      ? Colors.grey.shade400 
+                      : Colors.grey.shade600,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              
+              const SizedBox(height: 32),
+              
+              // Divider
+              Divider(
+                height: 1,
+                thickness: 0.5,
+                color: isDarkMode 
+                  ? Colors.grey.shade800 
+                  : Colors.grey.shade300,
+              ),
+              
+              // Boutons
+              Column(
+                children: [
+                  // Bouton Déconnexion
+                  InkWell(
+                    onTap: () => Navigator.pop(context, true),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(28),
+                      bottomRight: Radius.circular(28),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'logout'.tr(),
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.red,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                  
+                  Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: isDarkMode 
+                      ? Colors.grey.shade800 
+                      : Colors.grey.shade300,
+                  ),
+                  
+                  // Bouton Annuler
+                  InkWell(
+                    onTap: () => Navigator.pop(context, false),
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(28),
+                      bottomRight: Radius.circular(28),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Text(
+                        'cancel'.tr(),
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
 
@@ -2163,30 +2252,37 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? Colors.grey.shade900 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            width: 1,
-          ),
+          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDark 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
             // Theme Toggle
             _buildSettingsTile(
-              icon: Icons.brightness_4_rounded,
+              icon: Icons.brightness_6_rounded,
               title: 'theme'.tr(),
               subtitle: themeProvider.themeMode == ThemeMode.dark
                   ? 'dark_mode'.tr()
                   : 'light_mode'.tr(),
-              trailing: Switch(
-                value: themeProvider.themeMode == ThemeMode.dark,
-                onChanged: (bool value) {
-                  themeProvider.setTheme(value ? ThemeMode.dark : ThemeMode.light);
-                },
-                activeColor: const Color(0xFF1DB954),
+              trailing: Transform.scale(
+                scale: 0.9,
+                child: Switch(
+                  value: themeProvider.themeMode == ThemeMode.dark,
+                  onChanged: (bool value) {
+                    themeProvider.setTheme(value ? ThemeMode.dark : ThemeMode.light);
+                  },
+                  activeColor: const Color(0xFF1DB954),
+                  activeTrackColor: const Color(0xFF1DB954).withOpacity(0.5),
+                ),
               ),
               isFirst: true,
             ),
@@ -2200,6 +2296,7 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: Icon(
                 Icons.chevron_right_rounded,
                 color: isDark ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: 20,
               ),
               isLast: true,
             ),
@@ -2216,14 +2313,17 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDarkMode
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            width: 1,
-          ),
+          color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: _buildSettingsTile(
           icon: Icons.library_books_rounded,
@@ -2238,6 +2338,7 @@ class _HomeScreenState extends State<HomeScreen> {
           trailing: Icon(
             Icons.chevron_right_rounded,
             color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+            size: 20,
           ),
           isFirst: true,
           isLast: true,
@@ -2254,14 +2355,17 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDarkMode
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            width: 1,
-          ),
+          color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -2296,6 +2400,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 trailing: Icon(
                   Icons.chevron_right_rounded,
                   color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                  size: 20,
                 ),
                 onTap: () {
                   Navigator.push(
@@ -2324,6 +2429,7 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: Icon(
                 Icons.chevron_right_rounded,
                 color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: 20,
               ),
             ),
 
@@ -2342,6 +2448,7 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: Icon(
                 Icons.chevron_right_rounded,
                 color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: 20,
               ),
             ),
 
@@ -2354,6 +2461,7 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: Icon(
                 Icons.chevron_right_rounded,
                 color: Colors.red.withOpacity(0.5),
+                size: 20,
               ),
               titleColor: Colors.red,
               isLast: true,
@@ -2371,14 +2479,17 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDarkMode
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            width: 1,
-          ),
+          color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -2405,6 +2516,7 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: Icon(
                 Icons.chevron_right_rounded,
                 color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: 20,
               ),
             ),
             
@@ -2419,6 +2531,7 @@ class _HomeScreenState extends State<HomeScreen> {
               trailing: Icon(
                 Icons.chevron_right_rounded,
                 color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: 20,
               ),
               isLast: true,
             ),
@@ -2530,29 +2643,209 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showLanguageDialog(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final currentLocale = context.locale;
+    
     showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('select_language'.tr()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                title: const Text('🇫🇷 Français'),
-                onTap: () {
-                  context.setLocale(const Locale('fr'));
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                title: const Text('🇬🇧 English'),
-                onTap: () {
-                  context.setLocale(const Locale('en'));
-                  Navigator.pop(context);
-                },
-              ),
-            ],
+      barrierDismissible: true,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 340),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 32),
+                
+                // Icône
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1DB954).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.language_rounded,
+                    color: Color(0xFF1DB954),
+                    size: 32,
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Titre
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'select_language'.tr(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                const SizedBox(height: 8),
+                
+                // Description
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Choisissez votre langue préférée',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDarkMode 
+                        ? Colors.grey.shade400 
+                        : Colors.grey.shade600,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Divider
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: isDarkMode 
+                    ? Colors.grey.shade800 
+                    : Colors.grey.shade300,
+                ),
+                
+                // Options de langue
+                Column(
+                  children: [
+                    // Français
+                    InkWell(
+                      onTap: () {
+                        context.setLocale(const Locale('fr'));
+                        Navigator.pop(dialogContext);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                        child: Row(
+                          children: [
+                            const Text(
+                              '🇫🇷',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Français',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: currentLocale.languageCode == 'fr'
+                                    ? const Color(0xFF1DB954)
+                                    : (isDarkMode ? Colors.white : Colors.black),
+                                ),
+                              ),
+                            ),
+                            if (currentLocale.languageCode == 'fr')
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF1DB954),
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: isDarkMode 
+                        ? Colors.grey.shade800 
+                        : Colors.grey.shade300,
+                    ),
+                    
+                    // English
+                    InkWell(
+                      onTap: () {
+                        context.setLocale(const Locale('en'));
+                        Navigator.pop(dialogContext);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                        child: Row(
+                          children: [
+                            const Text(
+                              '🇬🇧',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'English',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: currentLocale.languageCode == 'en'
+                                    ? const Color(0xFF1DB954)
+                                    : (isDarkMode ? Colors.white : Colors.black),
+                                ),
+                              ),
+                            ),
+                            if (currentLocale.languageCode == 'en')
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF1DB954),
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: isDarkMode 
+                        ? Colors.grey.shade800 
+                        : Colors.grey.shade300,
+                    ),
+                    
+                    // Bouton Annuler
+                    InkWell(
+                      onTap: () => Navigator.pop(dialogContext),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(28),
+                        bottomRight: Radius.circular(28),
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'cancel'.tr(),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -2562,33 +2855,152 @@ class _HomeScreenState extends State<HomeScreen> {
   void _confirmLogout(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final navigator = Navigator.of(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Text('confirm_logout'.tr()),
-          content: Text('logout_confirmation_message'.tr()),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('cancel'.tr()),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 340),
+            decoration: BoxDecoration(
+              color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
+              borderRadius: BorderRadius.circular(28),
             ),
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(dialogContext);
-                await authProvider.logout();
-                navigator.pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              },
-              child: Text(
-                'logout'.tr(),
-                style: const TextStyle(color: Colors.red),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 32),
+                
+                // Icône
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: Colors.red,
+                    size: 32,
+                  ),
+                ),
+                
+                const SizedBox(height: 24),
+                
+                // Titre
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'confirm_logout'.tr(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: isDarkMode ? Colors.white : Colors.black,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+                
+                // Message
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'logout_warning'.tr(),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDarkMode 
+                        ? Colors.grey.shade400 
+                        : Colors.grey.shade600,
+                      height: 1.4,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                
+                const SizedBox(height: 32),
+                
+                // Divider
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  color: isDarkMode 
+                    ? Colors.grey.shade800 
+                    : Colors.grey.shade300,
+                ),
+                
+                // Boutons
+                Column(
+                  children: [
+                    // Bouton Déconnexion
+                    InkWell(
+                      onTap: () async {
+                        Navigator.pop(dialogContext);
+                        await authProvider.logout();
+                        navigator.pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
+                          (route) => false,
+                        );
+                      },
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(28),
+                        bottomRight: Radius.circular(28),
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'logout'.tr(),
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                    
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: isDarkMode 
+                        ? Colors.grey.shade800 
+                        : Colors.grey.shade300,
+                    ),
+                    
+                    // Bouton Annuler
+                    InkWell(
+                      onTap: () => Navigator.pop(dialogContext),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(28),
+                        bottomRight: Radius.circular(28),
+                      ),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'cancel'.tr(),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                            color: isDarkMode ? Colors.white : Colors.black,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

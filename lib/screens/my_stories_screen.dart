@@ -223,10 +223,10 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 20,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 0.65,
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.7,
                         ),
                     itemCount: _filteredStories.length,
                     itemBuilder: (context, index) {
@@ -298,25 +298,6 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
 
   Widget _buildStoryCard(BuildContext context, Map<String, dynamic> story) {
     final isCompleted = story['is_completed'] == true;
-    final completedAt = story['completed_at'];
-    final formattedDate = completedAt != null
-        ? DateFormat(
-            'dd MMM',
-            'fr_FR',
-          ).format(DateTime.parse(completedAt.toString()))
-        : null;
-
-    // Extraire le titre depuis le JSON
-    String title = 'Sans titre';
-    if (story['title'] is String) {
-      title = story['title'];
-    } else if (story['title'] is Map) {
-      final titleMap = story['title'] as Map;
-      title =
-          titleMap['gasy'] ?? titleMap['fr'] ?? titleMap['en'] ?? 'Sans titre';
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () async {
@@ -332,95 +313,49 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         // Refresh list on return
         _loadReadStories();
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            width: 0.5,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
             // Cover image
-            Expanded(
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
+            _buildCoverImage(story),
+            // Status badge
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? Colors.green.withOpacity(0.9)
+                      : Colors.blue.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isCompleted
+                          ? Icons.check_circle
+                          : Icons.auto_stories,
+                      size: 12,
+                      color: Colors.white,
                     ),
-                    child: _buildCoverImage(story),
-                  ),
-                  // Status badge
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isCompleted
-                            ? Colors.green.withOpacity(0.9)
-                            : Colors.blue.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isCompleted
-                                ? Icons.check_circle
-                                : Icons.auto_stories,
-                            size: 12,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isCompleted ? 'Terminé' : 'En cours',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Title and date
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                  if (formattedDate != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      formattedDate,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      isCompleted ? 'Terminé' : 'En cours',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
-                ],
+                ),
               ),
             ),
           ],
