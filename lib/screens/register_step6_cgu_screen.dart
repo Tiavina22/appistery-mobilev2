@@ -70,7 +70,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
   void _showCGU() {
     if (_cgu == null) {
       setState(() {
-        _errorMessage = 'Chargement des CGU...';
+        _errorMessage = 'loading_cgu'.tr();
       });
       return;
     }
@@ -334,7 +334,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                       const CircularProgressIndicator(color: Color(0xFF1DB954)),
                       const SizedBox(height: 16),
                       Text(
-                        'Chargement des conditions...',
+                        'loading_conditions'.tr(),
                         style: TextStyle(color: textColor.withOpacity(0.7)),
                       ),
                     ],

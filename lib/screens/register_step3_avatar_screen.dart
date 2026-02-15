@@ -126,7 +126,7 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Votre photo de profil',
+                'profile_photo_title'.tr(),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -135,7 +135,7 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Ajoutez une belle photo pour personnaliser votre profil',
+                'profile_photo_subtitle'.tr(),
                 style: TextStyle(
                   fontSize: 14,
                   color: textColor.withOpacity(0.7),
@@ -163,7 +163,7 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Appuyer pour ajouter',
+                                'tap_to_add_photo'.tr(),
                                 style: TextStyle(
                                   color: accentColor,
                                   fontSize: 12,
@@ -182,7 +182,7 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
                     child: GestureDetector(
                       onTap: _pickImage,
                       child: Text(
-                        'Changer la photo',
+                        'change_photo'.tr(),
                         style: TextStyle(
                           color: accentColor,
                           fontSize: 14,
