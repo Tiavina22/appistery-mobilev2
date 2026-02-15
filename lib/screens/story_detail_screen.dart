@@ -8,6 +8,7 @@ import '../services/reading_service.dart';
 import '../services/author_service.dart';
 import '../services/reaction_service.dart';
 import '../providers/story_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/facebook_notification.dart';
 import 'author_profile_screen.dart';
 import 'reader_screen.dart';
@@ -925,6 +926,45 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
     final dividerColor = isDarkMode ? Colors.white12 : Colors.black12;
 
+    // Vérifier le statut premium de l'utilisateur et de l'histoire
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isUserPremium = authProvider.isPremium;
+    final isStoryPremium = widget.story.isPremium;
+
+    // Fonction helper pour gérer la navigation vers un chapitre
+    void navigateToChapter(int chapterIndex) {
+      // Bloquer l'accès aux chapitres si l'histoire est premium et l'utilisateur ne l'est pas
+      if (isStoryPremium && !isUserPremium) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('premium_chapter_message'.tr()),
+            backgroundColor: Colors.orange,
+            action: SnackBarAction(
+              label: 'subscribe'.tr(),
+              onPressed: () {
+                if (mounted) {
+                  Navigator.of(context).pushNamed('/subscription-offers');
+                }
+              },
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      // Naviguer vers le lecteur
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReaderScreen(
+            story: widget.story,
+            initialChapterIndex: chapterIndex,
+          ),
+        ),
+      );
+    }
+
     // Pour l'instant, afficher des chapitres fictifs
     // TODO: Récupérer les vrais chapitres depuis l'API
     final chapters = List.generate(
@@ -966,13 +1006,25 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               ),
             ),
           ),
-          title: Text(
-            chapter['title'] as String,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
-            ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  chapter['title'] as String,
+                  style: TextStyle(
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              // Afficher l'icône lock pour les histoires premium
+              if (isStoryPremium && !isUserPremium)
+                const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Icon(Icons.lock, color: Colors.amber, size: 16),
+                ),
+            ],
           ),
           subtitle: Text(
             chapter['duration'] as String,
@@ -980,31 +1032,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           ),
           trailing: IconButton(
             icon: Icon(Icons.play_circle_outline, color: textColorSecondary),
-            onPressed: () {
-              // Naviguer vers le lecteur à ce chapitre
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ReaderScreen(
-                    story: widget.story,
-                    initialChapterIndex: index,
-                  ),
-                ),
-              );
-            },
+            onPressed: () => navigateToChapter(index),
           ),
-          onTap: () {
-            // Naviguer vers le lecteur à ce chapitre
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ReaderScreen(
-                  story: widget.story,
-                  initialChapterIndex: index,
-                ),
-              ),
-            );
-          },
+          onTap: () => navigateToChapter(index),
         );
       },
     );

@@ -94,24 +94,7 @@ class CategoryViewAllScreen extends StatelessWidget {
 
     return GestureDetector(
       onTap: () {
-        // Si l'histoire est premium et l'utilisateur n'est pas premium
-        if (isStoryPremium && !isUserPremium) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('premium_story_message'.tr()),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'subscribe'.tr(),
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/subscription-offers');
-                },
-              ),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-          return;
-        }
-
+        // Permettre l'accès au synopsis pour toutes les histoires
         Navigator.push(
           context,
           MaterialPageRoute(

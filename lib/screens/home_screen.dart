@@ -1255,25 +1255,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        if (isStoryPremium && !isUserPremium) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('premium_story_message'.tr()),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'subscribe'.tr(),
-                onPressed: () {
-                  if (mounted) {
-                    Navigator.of(context).pushNamed('/subscription-offers');
-                  }
-                },
-              ),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-          return;
-        }
-
+        // Permettre l'accès au synopsis pour toutes les histoires
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1473,26 +1455,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Expanded(
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              if (isStoryPremium && !isUserPremium) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('premium_story_message'.tr()),
-                                    backgroundColor: Colors.orange,
-                                    action: SnackBarAction(
-                                      label: 'subscribe'.tr(),
-                                      onPressed: () {
-                                        if (mounted) {
-                                          Navigator.of(context)
-                                              .pushNamed('/subscription-offers');
-                                        }
-                                      },
-                                    ),
-                                    duration: const Duration(seconds: 5),
-                                  ),
-                                );
-                                return;
-                              }
-
+                              // Permettre l'accès au synopsis
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -1742,26 +1705,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        // Si l'histoire est premium et l'utilisateur n'est pas premium
-        if (isStoryPremium && !isUserPremium) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('premium_story_message'.tr()),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'subscribe'.tr(),
-                onPressed: () {
-                  if (mounted) {
-                    Navigator.of(context).pushNamed('/subscription-offers');
-                  }
-                },
-              ),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-          return;
-        }
-
+        // Permettre l'accès au synopsis pour toutes les histoires
+        // Le blocage des chapitres se fera dans StoryDetailScreen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1878,26 +1823,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? const Icon(Icons.lock, color: Colors.amber)
           : null,
       onTap: () {
-        // Si l'histoire est premium et l'utilisateur n'est pas premium
-        if (isStoryPremium && !isUserPremium) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('premium_story_message'.tr()),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'subscribe'.tr(),
-                onPressed: () {
-                  if (mounted) {
-                    Navigator.of(context).pushNamed('/subscription-offers');
-                  }
-                },
-              ),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-          return;
-        }
-
+        // Permettre l'accès au synopsis pour toutes les histoires
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1916,26 +1842,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return GestureDetector(
       onTap: () {
-        // Si l'histoire est premium et l'utilisateur n'est pas premium
-        if (isStoryPremium && !isUserPremium) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('premium_story_message'.tr()),
-              backgroundColor: Colors.orange,
-              action: SnackBarAction(
-                label: 'subscribe'.tr(),
-                onPressed: () {
-                  if (mounted) {
-                    Navigator.of(context).pushNamed('/subscription-offers');
-                  }
-                },
-              ),
-              duration: const Duration(seconds: 5),
-            ),
-          );
-          return;
-        }
-
+        // Permettre l'accès au synopsis
         Navigator.push(
           context,
           MaterialPageRoute(
