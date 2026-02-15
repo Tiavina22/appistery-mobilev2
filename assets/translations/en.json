@@ -256,5 +256,20 @@
   "change_password_desc": "For your security, please enter your current password before setting a new password.",
   "password_security_info": "Your password must contain at least 8 characters to ensure the security of your account.",
   "contact_info": "Contact Information",
-  "premium": "Premium"
+  "premium": "Premium",
+  "reader_settings": "Reading Settings",
+  "reader_theme": "Theme",
+  "reader_theme_light": "Light",
+  "reader_theme_dark": "Dark",
+  "reader_text_size": "Text Size",
+  "reader_font": "Font",
+  "reader_previous": "Previous",
+  "reader_next": "Next",
+  "reader_congratulations": "🎉 Congratulations!",
+  "reader_finished_story": "You have finished this story!",
+  "reader_reading_time": "Reading time:",
+  "reader_back": "Back",
+  "reader_see_other_stories": "See other stories",
+  "reader_swipe_next": "Swipe left for the next chapter",
+  "reader_end_of_story": "End of the story"
 }

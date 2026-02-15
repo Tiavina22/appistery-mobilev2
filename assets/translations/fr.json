@@ -256,5 +256,20 @@
   "change_password_desc": "Pour votre sécurité, veuillez saisir votre mot de passe actuel avant de définir un nouveau mot de passe.",
   "password_security_info": "Votre mot de passe doit contenir au moins 8 caractères pour assurer la sécurité de votre compte.",
   "contact_info": "Coordonnées",
-  "premium": "Premium"
+  "premium": "Premium",
+  "reader_settings": "Paramètres de lecture",
+  "reader_theme": "Thème",
+  "reader_theme_light": "Clair",
+  "reader_theme_dark": "Sombre",
+  "reader_text_size": "Taille du texte",
+  "reader_font": "Police",
+  "reader_previous": "Précédent",
+  "reader_next": "Suivant",
+  "reader_congratulations": "🎉 Félicitations!",
+  "reader_finished_story": "Vous avez terminé cette histoire!",
+  "reader_reading_time": "Temps de lecture:",
+  "reader_back": "Retour",
+  "reader_see_other_stories": "Voir autres histoires",
+  "reader_swipe_next": "Glissez vers la gauche pour le chapitre suivant",
+  "reader_end_of_story": "Fin de l'histoire"
 }

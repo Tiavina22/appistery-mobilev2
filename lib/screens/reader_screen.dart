@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:async';
 import '../services/reading_service.dart';
 import '../services/story_service.dart';
@@ -231,7 +232,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: _getBackgroundColor(),
         title: Text(
-          '🎉 Félicitations!',
+          'reader_congratulations'.tr(),
           style: TextStyle(color: _getTextColor(), fontSize: 24),
           textAlign: TextAlign.center,
         ),
@@ -239,14 +240,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Vous avez terminé cette histoire!',
+              'reader_finished_story'.tr(),
               style: TextStyle(color: _getTextColor(), fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             if (_readingStartTime != null)
               Text(
-                'Temps de lecture: ${_formatReadingTime(DateTime.now().difference(_readingStartTime!).inSeconds)}',
+                '${'reader_reading_time'.tr()} ${_formatReadingTime(DateTime.now().difference(_readingStartTime!).inSeconds)}',
                 style: TextStyle(
                   color: _getTextColor().withOpacity(0.7),
                   fontSize: 14,
@@ -258,14 +259,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Retour'),
+            child: Text('reader_back'.tr()),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('Voir autres histoires'),
+            child: Text('reader_see_other_stories'.tr()),
           ),
         ],
       ),
@@ -311,7 +312,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Paramètres de lecture',
+                'reader_settings'.tr(),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -322,7 +323,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
               // Thème synchronisé avec l'app
               Text(
-                'Thème',
+                'reader_theme'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -335,7 +336,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   children: [
                     Expanded(
                       child: _buildThemeOption(
-                        'Clair',
+                        'reader_theme_light'.tr(),
                         ReaderTheme.light,
                         Colors.white,
                         Colors.black,
@@ -346,7 +347,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildThemeOption(
-                        'Sombre',
+                        'reader_theme_dark'.tr(),
                         ReaderTheme.dark,
                         const Color(0xFF1a1a1a),
                         Colors.white,
@@ -361,7 +362,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
               // Taille de police
               Text(
-                'Taille du texte',
+                'reader_text_size'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -414,7 +415,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
               // Police
               Text(
-                'Police',
+                'reader_font'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -551,9 +552,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   String _getContent(dynamic content, String language) {
     if (content is Map) {
-      return content[language] ?? content['fr'] ?? content['gasy'] ?? '';
+      // Essayer d'abord la langue actuelle, puis les fallbacks
+      return content[language]?.toString() ?? 
+             content['fr']?.toString() ?? 
+             content['en']?.toString() ?? 
+             content['gasy']?.toString() ?? 
+             content.values.firstOrNull?.toString() ?? '';
     }
-    return content.toString();
+    return content?.toString() ?? '';
   }
 
   @override
@@ -587,8 +593,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 }
 
                 // Contenu du chapitre avec scroll vertical
-                final content = _getContent(_currentChapter?['content'], 'fr');
-                final title = _getContent(_currentChapter?['title'], 'fr');
+                final currentLang = context.locale.languageCode;
+                final content = _getContent(_currentChapter?['content'], currentLang);
+                final title = _getContent(_currentChapter?['title'], currentLang);
                 final chapterNum = _currentChapter?['chapter_number'] ?? '';
 
                 return SingleChildScrollView(
@@ -615,7 +622,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Chapitre $chapterNum',
+                        '${'chapter_title'.tr()} $chapterNum',
                         style: TextStyle(
                           fontSize: _fontSize - 4,
                           color: _getTextColor().withOpacity(0.6),
@@ -654,7 +661,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             const SizedBox(height: 16),
                             if (_currentChapterIndex < widget.story.chaptersList.length - 1)
                               Text(
-                                'Glissez vers la gauche pour le chapitre suivant',
+                                'reader_swipe_next'.tr(),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: _getTextColor().withOpacity(0.4),
@@ -663,7 +670,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               )
                             else
                               Text(
-                                'Fin de l\'histoire',
+                                'reader_end_of_story'.tr(),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: _getTextColor().withOpacity(0.5),
@@ -730,7 +737,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  'Chapitre ${_currentChapter?['chapter_number'] ?? _currentChapterIndex + 1}/${widget.story.chaptersList.length}',
+                                  '${'chapter_title'.tr()} ${_currentChapter?['chapter_number'] ?? _currentChapterIndex + 1}/${widget.story.chaptersList.length}',
                                   style: TextStyle(
                                     color: _getTextColor().withOpacity(0.6),
                                     fontSize: 12,
@@ -810,7 +817,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             ? _goToPreviousChapter
                             : null,
                         icon: const Icon(Icons.chevron_left, size: 20),
-                        label: const Text('Précédent'),
+                        label: Text('reader_previous'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _getTextColor(),
                           foregroundColor: _getBackgroundColor(),
@@ -839,7 +846,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             ? _goToNextChapter
                             : null,
                         icon: const Icon(Icons.chevron_right, size: 20),
-                        label: const Text('Suivant'),
+                        label: Text('reader_next'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _getTextColor(),
                           foregroundColor: _getBackgroundColor(),
