@@ -1248,8 +1248,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // Construire dynamiquement les sections par genre
   // Section Hero Netflix Style
   Widget _buildHeroSection(Story story) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isUserPremium = authProvider.isPremium;
     final isStoryPremium = story.isPremium;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -1699,8 +1697,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStoryCard(Story story) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isUserPremium = authProvider.isPremium;
     final isStoryPremium = story.isPremium;
 
     return GestureDetector(
@@ -1760,27 +1756,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
-          // Overlay bloquant pour histoires premium si non-premium
-          if (isStoryPremium && !isUserPremium)
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  color: Colors.black.withOpacity(0.4),
-                  child: const Center(
-                    child: Icon(Icons.lock, color: Colors.amber, size: 32),
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
   Widget _buildSearchResultTile(Story story) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isUserPremium = authProvider.isPremium;
     final isStoryPremium = story.isPremium;
 
     return ListTile(
@@ -1806,22 +1787,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: const Text('👑', style: TextStyle(fontSize: 12)),
               ),
             ),
-          if (isStoryPremium && !isUserPremium)
-            Positioned.fill(
-              child: Container(
-                color: Colors.black.withOpacity(0.4),
-                child: const Center(
-                  child: Icon(Icons.lock, color: Colors.amber, size: 20),
-                ),
-              ),
-            ),
         ],
       ),
       title: Text(story.title),
       subtitle: Text(story.author),
-      trailing: isStoryPremium && !isUserPremium
-          ? const Icon(Icons.lock, color: Colors.amber)
-          : null,
       onTap: () {
         // Permettre l'accès au synopsis pour toutes les histoires
         Navigator.push(
@@ -1835,8 +1804,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStoryGridItem(Story story) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isUserPremium = authProvider.isPremium;
     final isStoryPremium = story.isPremium;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -1910,23 +1877,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            // Overlay bloquant pour histoires premium si non-premium
-            if (isStoryPremium && !isUserPremium)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.4),
-                    child: const Center(
-                      child: Icon(
-                        Icons.lock,
-                        color: Colors.amber,
-                        size: 32,
-                      ),
                     ),
                   ),
                 ),

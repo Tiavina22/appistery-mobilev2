@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:provider/provider.dart';
 import 'dart:convert';
-import '../providers/auth_provider.dart';
 import '../services/story_service.dart';
 import '../services/category_intelligence_service.dart';
 import 'story_detail_screen.dart';
@@ -87,8 +85,6 @@ class CategoryViewAllScreen extends StatelessWidget {
   }
 
   Widget _buildStoryGridItem(BuildContext context, Story story) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isUserPremium = authProvider.isPremium;
     final isStoryPremium = story.isPremium;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -160,23 +156,6 @@ class CategoryViewAllScreen extends StatelessWidget {
                       color: Colors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            // Overlay bloquant pour histoires premium si non-premium
-            if (isStoryPremium && !isUserPremium)
-              Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.4),
-                    child: const Center(
-                      child: Icon(
-                        Icons.lock,
-                        color: Colors.amber,
-                        size: 32,
-                      ),
                     ),
                   ),
                 ),
