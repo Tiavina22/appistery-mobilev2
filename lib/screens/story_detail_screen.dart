@@ -357,18 +357,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             ),
             actions: [],
             flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Image de couverture cliquable pour plein écran
-                  GestureDetector(
-                    onTap: () {
-                      if (widget.story.coverImage != null &&
-                          widget.story.coverImage!.isNotEmpty) {
-                        _showFullScreenImage(context);
-                      }
-                    },
-                    child: widget.story.coverImage != null &&
+              background: GestureDetector(
+                onTap: () {
+                  if (widget.story.coverImage != null &&
+                      widget.story.coverImage!.isNotEmpty) {
+                    _showFullScreenImage(context);
+                  }
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Image de couverture
+                    widget.story.coverImage != null &&
                             widget.story.coverImage!.isNotEmpty
                         ? Image.memory(
                             base64Decode(
@@ -399,62 +399,62 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                   isDarkMode ? Colors.white24 : Colors.black26,
                             ),
                           ),
-                  ),
-                  // Gradient overlay (du bas vers le haut) - toujours noir pour le contraste avec l'image
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                          Colors.black,
-                        ],
-                        stops: const [0.0, 0.7, 1.0],
+                    // Gradient overlay (du bas vers le haut) - toujours noir pour le contraste avec l'image
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                            Colors.black,
+                          ],
+                          stops: const [0.0, 0.7, 1.0],
+                        ),
                       ),
                     ),
-                  ),
-                  // Stats en overlay style Instagram
-                  if (_readingStats != null && !_isLoadingStats)
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
+                    // Stats en overlay style Instagram
+                    if (_readingStats != null && !_isLoadingStats)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildCompactStat(
+                                Icons.visibility_outlined,
+                                '${_readingStats!['total_views'] ?? 0}',
+                              ),
+                              const SizedBox(width: 12),
+                              _buildCompactStat(
+                                Icons.people_outline,
+                                '${_readingStats!['unique_readers'] ?? 0}',
+                              ),
+                              const SizedBox(width: 12),
+                              _buildCompactStat(
+                                Icons.check_circle_outline,
+                                '${_readingStats!['completed_reads'] ?? 0}',
+                              ),
+                            ],
                           ),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildCompactStat(
-                              Icons.visibility_outlined,
-                              '${_readingStats!['total_views'] ?? 0}',
-                            ),
-                            const SizedBox(width: 12),
-                            _buildCompactStat(
-                              Icons.people_outline,
-                              '${_readingStats!['unique_readers'] ?? 0}',
-                            ),
-                            const SizedBox(width: 12),
-                            _buildCompactStat(
-                              Icons.check_circle_outline,
-                              '${_readingStats!['completed_reads'] ?? 0}',
-                            ),
-                          ],
-                        ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
