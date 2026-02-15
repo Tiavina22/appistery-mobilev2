@@ -901,7 +901,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 32),
                   ElevatedButton.icon(
                     onPressed: () {
-                      setState(() => _selectedIndex = 0);
+                      setState(() => _selectedIndex = 1); // Index 1 = Search tab
                     },
                     icon: const Icon(Icons.explore_rounded),
                     label: Text('discover'.tr()),
