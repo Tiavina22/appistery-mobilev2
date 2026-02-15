@@ -204,7 +204,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       if (mounted) {
         NotificationOverlay.show(
           context,
-          message: 'Erreur: ${e.toString()}',
+          message: '${'error'.tr()}: ${e.toString()}',
           icon: Icons.error_outline,
           backgroundColor: Colors.red[600]!,
           duration: const Duration(seconds: 2),
@@ -245,7 +245,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         if (_isFollowing) {
           NotificationOverlay.show(
             context,
-            message: 'Vous suivez maintenant ${widget.story.author}',
+            message: '${'now_following'.tr()} ${widget.story.author}',
             icon: Icons.check_circle_outline,
             backgroundColor: Colors.green[600]!,
             duration: const Duration(seconds: 3),
@@ -253,7 +253,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         } else {
           NotificationOverlay.show(
             context,
-            message: 'Vous avez arrêté de suivre ${widget.story.author}',
+            message: '${'unfollowed'.tr()} ${widget.story.author}',
             icon: Icons.remove_circle_outline,
             backgroundColor: Colors.orange[600]!,
             duration: const Duration(seconds: 3),
@@ -264,7 +264,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       if (mounted) {
         NotificationOverlay.show(
           context,
-          message: 'Erreur: ${e.toString()}',
+          message: '${'error'.tr()}: ${e.toString()}',
           icon: Icons.error_outline,
           backgroundColor: Colors.red[600]!,
           duration: const Duration(seconds: 3),
@@ -311,7 +311,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       if (mounted) {
         NotificationOverlay.show(
           context,
-          message: 'Erreur: ${e.toString()}',
+          message: '${'error'.tr()}: ${e.toString()}',
           icon: Icons.error_outline,
           backgroundColor: Colors.red[600]!,
           duration: const Duration(seconds: 2),
@@ -490,7 +490,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       ),
                       _buildMetaChip(
                         icon: Icons.menu_book_outlined,
-                        label: '${widget.story.chapters} chapitres',
+                        label: '${widget.story.chapters} ${'chapters'.tr()}',
                         isDarkMode: isDarkMode,
                       ),
                       if (widget.story.rating != null)
@@ -549,7 +549,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'By',
+                                'by'.tr(),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: textColorSecondary,
@@ -596,9 +596,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          const SnackBar(
+                                          SnackBar(
                                             content: Text(
-                                              'Cette histoire n\'a pas encore de chapitres',
+                                              'no_chapters_yet'.tr(),
                                             ),
                                             backgroundColor: Colors.orange,
                                           ),
@@ -651,7 +651,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         context,
                                       ).showSnackBar(
                                         SnackBar(
-                                          content: Text('Erreur: $e'),
+                                          content: Text('${'error'.tr()}: $e'),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
@@ -683,10 +683,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                 ),
                           label: Text(
                             _isLoadingStory
-                                ? 'Chargement...'
+                                ? 'loading'.tr()
                                 : _isCompleted
-                                ? 'Relire'
-                                : (_hasStartedReading ? 'Continuer' : 'Lire'),
+                                ? 'reread'.tr()
+                                : (_hasStartedReading ? 'continue'.tr() : 'read'.tr()),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -726,7 +726,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             size: 24,
                           ),
                           label: Text(
-                            _isFavorite ? 'Ajouté' : 'Ma liste',
+                            _isFavorite ? 'added_to_favorites'.tr() : 'add_to_list'.tr(),
                             style: const TextStyle(fontSize: 14),
                           ),
                           style: OutlinedButton.styleFrom(
@@ -871,7 +871,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
                   // Liste des chapitres
                   Text(
-                    'Chapitres',
+                    'chapters_title'.tr(),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -885,7 +885,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
                   // À propos de l'auteur
                   Text(
-                    'À propos de l\'auteur',
+                    'about_author'.tr(),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -985,16 +985,17 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       );
     }
 
-    // Pour l'instant, afficher des chapitres fictifs
-    // TODO: Récupérer les vrais chapitres depuis l'API
-    final chapters = List.generate(
-      widget.story.chapters,
-      (index) => {
-        'number': index + 1,
-        'title': 'Chapitre ${index + 1}',
-        'duration': '${(index % 3 + 1) * 5} min',
-      },
-    );
+    // Utiliser les chapitres réels de l'histoire
+    final chapters = widget.story.chaptersList.isNotEmpty
+        ? widget.story.chaptersList
+        : List.generate(
+            widget.story.chapters,
+            (index) => {
+              'number': index + 1,
+              'title': 'Chapter ${index + 1}',
+              'duration': '${(index % 3 + 1) * 5} ${'min_read'.tr()}',
+            },
+          );
 
     return ListView.separated(
       shrinkWrap: true,
@@ -1004,6 +1005,17 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           Divider(color: dividerColor, height: 1),
       itemBuilder: (context, index) {
         final chapter = chapters[index];
+        // Gérer le titre du chapitre (peut être une map avec lang ou un string)
+        String chapterTitle = '';
+        final titleData = chapter['title'];
+        if (titleData is Map) {
+          chapterTitle = titleData['fr'] ?? titleData['en'] ?? 'Chapter ${index + 1}';
+        } else if (titleData is String) {
+          chapterTitle = titleData;
+        } else {
+          chapterTitle = 'Chapter ${index + 1}';
+        }
+
         return ListTile(
           contentPadding: const EdgeInsets.symmetric(vertical: 8),
           leading: Container(
@@ -1017,7 +1029,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             ),
             child: Center(
               child: Text(
-                '${chapter['number']}',
+                '${chapter['number'] ?? index + 1}',
                 style: TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.bold,
@@ -1030,7 +1042,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             children: [
               Expanded(
                 child: Text(
-                  chapter['title'] as String,
+                  chapterTitle,
                   style: TextStyle(
                     color: textColor,
                     fontWeight: FontWeight.w500,
@@ -1126,8 +1138,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                   // Afficher le nombre de followers
                   Text(
                     widget.story.authorFollowers != null
-                        ? '${widget.story.authorFollowers} followers'
-                        : 'Followers',
+                        ? '${widget.story.authorFollowers} ${'followers'.tr()}'
+                        : 'followers'.tr(),
                     style: TextStyle(color: textColorSecondary, fontSize: 13),
                   ),
                 ],
@@ -1152,8 +1164,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               ),
               child: Text(
                 _isLoadingFollow
-                    ? 'Chargement...'
-                    : (_isFollowing ? 'Suivi' : 'Suivre'),
+                    ? 'loading'.tr()
+                    : (_isFollowing ? 'followed'.tr() : 'follow'.tr()),
               ),
             ),
           ],
