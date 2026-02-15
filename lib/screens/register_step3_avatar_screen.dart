@@ -25,6 +25,7 @@ class RegisterStep3AvatarScreen extends StatefulWidget {
 class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
   File? _avatarFile;
   String? _avatarBase64;
+  String? _errorMessage;
 
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
@@ -40,18 +41,16 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
       setState(() {
         _avatarFile = File(image.path);
         _avatarBase64 = base64Encode(bytes);
+        _errorMessage = null; // Clear error when image is selected
       });
     }
   }
 
   void _handleContinue() {
     if (_avatarBase64 == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('avatar_required'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'avatar_required'.tr();
+      });
       return;
     }
 
@@ -194,6 +193,40 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
                   ),
                 ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.25),
+
+              // Error message (Netflix style)
+              if (_errorMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,

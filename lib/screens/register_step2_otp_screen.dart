@@ -30,6 +30,8 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
   bool _isResending = false;
   int _remainingSeconds = 60;
   Timer? _timer;
+  String? _errorMessage;
+  String? _successMessage;
 
   @override
   void initState() {
@@ -66,6 +68,8 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
   Future<void> _handleResendOTP() async {
     setState(() {
       _isResending = true;
+      _errorMessage = null;
+      _successMessage = null;
     });
 
     final authService = AuthService();
@@ -85,19 +89,13 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
       }
       _focusNodes[0].requestFocus();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('otp_resent'.tr()),
-          backgroundColor: const Color(0xFF1DB954),
-        ),
-      );
+      setState(() {
+        _successMessage = 'otp_resent'.tr();
+      });
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'otp_resend_error'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = result['message'] ?? 'otp_resend_error'.tr();
+      });
     }
   }
 
@@ -105,17 +103,17 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
     final code = _otpControllers.map((c) => c.text).join();
 
     if (code.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('otp_incomplete'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'otp_incomplete'.tr();
+        _successMessage = null;
+      });
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
+      _successMessage = null;
     });
 
     final authService = AuthService();
@@ -136,12 +134,9 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
         ),
       );
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'otp_invalid'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = result['message'] ?? 'otp_invalid'.tr();
+      });
     }
   }
 
@@ -275,6 +270,73 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
                       ),
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+
+              // Success message (Netflix style)
+              if (_successMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1DB954).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.check_circle_outline,
+                        color: Color(0xFF1DB954),
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _successMessage!,
+                          style: const TextStyle(
+                            color: Color(0xFF1DB954),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Error message (Netflix style)
+              if (_errorMessage != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,

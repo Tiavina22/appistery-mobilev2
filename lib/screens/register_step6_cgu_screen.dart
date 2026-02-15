@@ -31,6 +31,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
   Map<String, dynamic>? _cgu;
   bool _cguAccepted = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -68,12 +69,9 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
 
   void _showCGU() {
     if (_cgu == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Chargement des CGU...'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'Chargement des CGU...';
+      });
       return;
     }
 
@@ -114,17 +112,15 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
 
   Future<void> _handleCompleteRegistration() async {
     if (!_cguAccepted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('cgu_acceptance_required'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'cgu_acceptance_required'.tr();
+      });
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     final authService = AuthService();
@@ -233,12 +229,9 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
         },
       );
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'registration_error'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = result['message'] ?? 'registration_error'.tr();
+      });
     }
   }
 
@@ -376,7 +369,42 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
+
+              // Error message (Netflix style)
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_errorMessage != null) const SizedBox(height: 24),
+              if (_errorMessage == null) const SizedBox(height: 24),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,

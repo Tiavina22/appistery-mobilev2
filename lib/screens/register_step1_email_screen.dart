@@ -18,6 +18,7 @@ class _RegisterStep1EmailScreenState extends State<RegisterStep1EmailScreen> {
   final _emailController = TextEditingController();
   final _usernameController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -30,6 +31,7 @@ class _RegisterStep1EmailScreenState extends State<RegisterStep1EmailScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
+        _errorMessage = null; // Clear previous errors
       });
 
       final authService = AuthService();
@@ -54,19 +56,9 @@ class _RegisterStep1EmailScreenState extends State<RegisterStep1EmailScreen> {
           ),
         );
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              result['message'] ?? 'register_error'.tr(),
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        setState(() {
+          _errorMessage = result['message'] ?? 'register_error'.tr();
+        });
       }
     }
   }
@@ -224,7 +216,41 @@ class _RegisterStep1EmailScreenState extends State<RegisterStep1EmailScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 48),
+                        const SizedBox(height: 24),
+
+                        // Error message (Netflix style)
+                        if (_errorMessage != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _errorMessage!,
+                                    style: const TextStyle(
+                                      color: Colors.red,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (_errorMessage != null) const SizedBox(height: 24),
+                        if (_errorMessage == null) const SizedBox(height: 24),
 
                         // Bouton Suivant
                         SizedBox(
