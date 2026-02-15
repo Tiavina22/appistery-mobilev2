@@ -53,6 +53,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   bool _isFavorite = false;
   bool _isLoadingFavorite = false;
 
+  // Story avec chapitres chargés
+  Story? _fullStory;
+  bool _isLoadingChapters = false;
+
   @override
   void initState() {
     super.initState();
@@ -64,6 +68,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     _loadReadingStats();
     _loadLastReadingPosition();
     _loadReactions();
+    _loadFullStoryWithChapters();
   }
 
   @override
@@ -225,6 +230,27 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     );
     // Recharger le compteur de commentaires au retour
     _loadReactions();
+  }
+
+  Future<void> _loadFullStoryWithChapters() async {
+    if (_isLoadingChapters) return;
+
+    setState(() => _isLoadingChapters = true);
+    try {
+      final storyService = StoryService();
+      final fullStory = await storyService.getStoryById(widget.story.id);
+      if (mounted) {
+        setState(() {
+          _fullStory = fullStory;
+          _isLoadingChapters = false;
+        });
+      }
+    } catch (e) {
+      print('Erreur lors du chargement des chapitres: $e');
+      if (mounted) {
+        setState(() => _isLoadingChapters = false);
+      }
+    }
   }
 
   Future<void> _toggleFollow() async {
@@ -585,10 +611,16 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                               : () async {
                                   setState(() => _isLoadingStory = true);
                                   try {
-                                    // Charger les détails complets de l'histoire avec les chapitres
-                                    final storyService = StoryService();
-                                    final fullStory = await storyService
-                                        .getStoryById(widget.story.id);
+                                    // Utiliser _fullStory s'il est déjà chargé, sinon charger
+                                    Story fullStory;
+                                    if (_fullStory != null &&
+                                        _fullStory!.chaptersList.isNotEmpty) {
+                                      fullStory = _fullStory!;
+                                    } else {
+                                      final storyService = StoryService();
+                                      fullStory = await storyService
+                                          .getStoryById(widget.story.id);
+                                    }
 
                                     // Vérifier qu'il y a des chapitres
                                     if (fullStory.chaptersList.isEmpty) {
@@ -975,11 +1007,12 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       );
     }
 
-    // Utiliser les chapitres réels de l'histoire
-    final chapters = widget.story.chaptersList.isNotEmpty
-        ? widget.story.chaptersList
+    // Utiliser les chapitres réels de l'histoire (depuis _fullStory si disponible, sinon widget.story)
+    final storyToUse = _fullStory ?? widget.story;
+    final chapters = storyToUse.chaptersList.isNotEmpty
+        ? storyToUse.chaptersList
         : List.generate(
-            widget.story.chapters,
+            storyToUse.chapters,
             (index) => {
               'number': index + 1,
               'title': 'Chapter ${index + 1}',
