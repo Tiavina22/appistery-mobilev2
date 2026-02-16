@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/reading_service.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
@@ -15,13 +17,28 @@ class MyStoriesScreen extends StatefulWidget {
 class _MyStoriesScreenState extends State<MyStoriesScreen> {
   final ReadingService _readingService = ReadingService();
   List<Map<String, dynamic>> _readStories = [];
-  bool _isLoading = true;
+  bool _isLoading = false; // Commencer à false
   String _selectedFilter = 'all'; // all, reading, completed
 
   @override
   void initState() {
     super.initState();
-    _loadReadStories();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Charger le cache de manière synchrone d'abord
+    final cachedStories = await _getCachedReadStories();
+    if (cachedStories != null && cachedStories.isNotEmpty) {
+      setState(() {
+        _readStories = cachedStories;
+      });
+      // Rafraîchir en arrière-plan
+      _refreshStoriesInBackground();
+    } else {
+      // Pas de cache, charger depuis le serveur
+      _loadReadStories();
+    }
   }
 
   Future<void> _loadReadStories() async {
@@ -36,6 +53,8 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         _readStories = stories;
         _isLoading = false;
       });
+      
+      await _cacheReadStories(stories);
     } catch (error) {
       setState(() {
         _isLoading = false;
@@ -45,6 +64,53 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
           SnackBar(content: Text('Erreur lors du chargement: $error')),
         );
       }
+    }
+  }
+
+  Future<void> _refreshStoriesInBackground() async {
+    try {
+      final stories = await _readingService.getUserReadStories();
+      setState(() {
+        _readStories = stories;
+      });
+      await _cacheReadStories(stories);
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  Future<void> _cacheReadStories(List<Map<String, dynamic>> stories) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_read_stories', jsonEncode(stories));
+      await prefs.setInt(
+        'cached_read_stories_timestamp',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> _getCachedReadStories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final timestamp = prefs.getInt('cached_read_stories_timestamp');
+      
+      if (timestamp == null) return null;
+      
+      final cacheAge = DateTime.now().millisecondsSinceEpoch - timestamp;
+      if (cacheAge > Duration(minutes: 10).inMilliseconds) {
+        return null;
+      }
+      
+      final storiesJson = prefs.getString('cached_read_stories');
+      if (storiesJson == null) return null;
+      
+      final List<dynamic> decoded = jsonDecode(storiesJson);
+      return decoded.cast<Map<String, dynamic>>();
+    } catch (e) {
+      return null;
     }
   }
 
@@ -131,9 +197,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
               const SizedBox(height: 16),
             ],
             // Content
-            if (_isLoading)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
-            else if (_readStories.isEmpty)
+            if (_readStories.isEmpty)
               Expanded(
                 child: Center(
                   child: Column(
@@ -378,7 +442,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
 
     // Vérifier si c'est une URL relative (commence par /uploads/)
     if (coverUrl.startsWith('/uploads/')) {
-      final apiUrl = const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:5500');
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
       final imageUrl = '$apiUrl$coverUrl';
       
       return Image.network(

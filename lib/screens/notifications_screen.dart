@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:convert';
 import '../providers/notification_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -13,9 +14,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
-    // Charger les notifications au démarrage
+    // Rafraîchir les notifications en arrière-plan (déjà chargées au démarrage)
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<NotificationProvider>().loadNotifications();
+      final provider = context.read<NotificationProvider>();
+      if (provider.notifications.isEmpty) {
+        provider.loadNotifications();
+      }
     });
   }
 
@@ -78,10 +82,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: Consumer<NotificationProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
           if (provider.notifications.isEmpty) {
             return Center(
               child: Column(
@@ -141,6 +141,8 @@ class NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Dismissible(
       key: Key(notification.id.toString()),
       direction: DismissDirection.endToStart,
@@ -155,22 +157,12 @@ class NotificationTile extends StatelessWidget {
       ),
       child: Container(
         color: notification.is_read
-            ? Colors.white
-            : Colors.blue.withOpacity(0.05),
+            ? Colors.transparent
+            : (isDarkMode 
+                ? Colors.blue.withOpacity(0.1)
+                : Colors.blue.withOpacity(0.05)),
         child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: Colors.blue.withOpacity(0.2),
-            child: Text(
-              notification.type == 'story_created'
-                  ? '📖'
-                  : notification.type == 'reaction_added'
-                  ? '❤️'
-                  : notification.type == 'comment_added'
-                  ? '💬'
-                  : '👤',
-              style: const TextStyle(fontSize: 20),
-            ),
-          ),
+          leading: _buildAvatar(notification, isDarkMode),
           title: Text(
             notification.title,
             style: TextStyle(
@@ -234,5 +226,53 @@ class NotificationTile extends StatelessWidget {
     } else {
       return 'Il y a ${(difference.inDays / 7).floor()} semaine${(difference.inDays / 7).floor() > 1 ? 's' : ''}';
     }
+  }
+
+  Widget _buildAvatar(AppNotification notification, bool isDarkMode) {
+    // Si l'acteur a un avatar, l'afficher
+    if (notification.actor != null && notification.actor!['avatar'] != null) {
+      final avatar = notification.actor!['avatar'];
+      
+      // Vérifier si c'est une URL ou base64
+      if (avatar.startsWith('/uploads/')) {
+        final apiUrl = 'https://mistery.pro';
+        return CircleAvatar(
+          backgroundImage: NetworkImage('$apiUrl$avatar'),
+          backgroundColor: isDarkMode 
+              ? Colors.blue.withOpacity(0.3)
+              : Colors.blue.withOpacity(0.2),
+        );
+      } else if (avatar.startsWith('data:image')) {
+        try {
+          final base64String = avatar.split(',')[1];
+          final bytes = base64Decode(base64String);
+          return CircleAvatar(
+            backgroundImage: MemoryImage(bytes),
+            backgroundColor: isDarkMode 
+                ? Colors.blue.withOpacity(0.3)
+                : Colors.blue.withOpacity(0.2),
+          );
+        } catch (e) {
+          // Fallback to emoji
+        }
+      }
+    }
+    
+    // Sinon, afficher l'emoji par défaut
+    return CircleAvatar(
+      backgroundColor: isDarkMode 
+          ? Colors.blue.withOpacity(0.3)
+          : Colors.blue.withOpacity(0.2),
+      child: Text(
+        notification.type == 'story_created'
+            ? '📖'
+            : notification.type == 'reaction_added'
+            ? '❤️'
+            : notification.type == 'comment_added'
+            ? '💬'
+            : '👤',
+        style: const TextStyle(fontSize: 20),
+      ),
+    );
   }
 }

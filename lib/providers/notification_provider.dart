@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/notification_service.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppNotification {
   final int id;
@@ -46,6 +48,23 @@ class AppNotification {
       story: json['story'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': user_id,
+      'type': type,
+      'title': title,
+      'message': message,
+      'actor_id': actor_id,
+      'related_story_id': related_story_id,
+      'related_chapter_id': related_chapter_id,
+      'is_read': is_read,
+      'created_at': created_at.toIso8601String(),
+      'actor': actor,
+      'story': story,
+    };
+  }
 }
 
 class NotificationProvider extends ChangeNotifier {
@@ -68,6 +87,19 @@ class NotificationProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Charger depuis le cache d'abord
+      final cachedNotifications = await _getCachedNotifications();
+      if (cachedNotifications != null && cachedNotifications.isNotEmpty) {
+        _notifications = cachedNotifications;
+        _isLoading = false;
+        notifyListeners();
+        
+        // 2. Rafraîchir en arrière-plan
+        _refreshNotificationsInBackground(limit, offset);
+        return;
+      }
+      
+      // 3. Si pas de cache, charger depuis le serveur
       final result = await _service.getNotifications(
         limit: limit,
         offset: offset,
@@ -77,6 +109,10 @@ class NotificationProvider extends ChangeNotifier {
         _notifications = (result['data'] as List)
             .map((json) => AppNotification.fromJson(json))
             .toList();
+        
+        // Sauvegarder dans le cache
+        await _cacheNotifications(_notifications);
+        
         await loadUnreadCount();
       } else {
         _error =
@@ -88,6 +124,67 @@ class NotificationProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  // Rafraîchir les notifications en arrière-plan
+  Future<void> _refreshNotificationsInBackground(int limit, int offset) async {
+    try {
+      final result = await _service.getNotifications(
+        limit: limit,
+        offset: offset,
+      );
+
+      if (result['success']) {
+        _notifications = (result['data'] as List)
+            .map((json) => AppNotification.fromJson(json))
+            .toList();
+        
+        await _cacheNotifications(_notifications);
+        await loadUnreadCount();
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  // Sauvegarder les notifications dans le cache
+  Future<void> _cacheNotifications(List<AppNotification> notifications) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final notificationsJson = notifications.map((n) => n.toJson()).toList();
+      await prefs.setString('cached_notifications', jsonEncode(notificationsJson));
+      await prefs.setInt(
+        'cached_notifications_timestamp',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  // Récupérer les notifications du cache
+  Future<List<AppNotification>?> _getCachedNotifications() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final timestamp = prefs.getInt('cached_notifications_timestamp');
+      
+      // Vérifier si le cache est encore valide (10 minutes)
+      if (timestamp == null) return null;
+      
+      final cacheAge = DateTime.now().millisecondsSinceEpoch - timestamp;
+      if (cacheAge > Duration(minutes: 10).inMilliseconds) {
+        return null;
+      }
+      
+      final notificationsJson = prefs.getString('cached_notifications');
+      if (notificationsJson == null) return null;
+      
+      final List<dynamic> decoded = jsonDecode(notificationsJson);
+      return decoded.map((json) => AppNotification.fromJson(json)).toList();
+    } catch (e) {
+      return null;
+    }
   }
 
   // Charger le nombre de notifications non lues

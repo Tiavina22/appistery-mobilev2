@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
@@ -43,6 +44,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // No posts/followers loading (not used)
     } catch (e) {
       // ignore errors silently for now
+    }
+  }
+
+  ImageProvider? _getAvatarImageProvider(String? avatar) {
+    if (avatar == null || avatar.isEmpty) {
+      return null;
+    }
+
+    // Si c'est une URL (commence par /uploads/ ou http)
+    if (avatar.startsWith('/uploads/') || avatar.startsWith('http')) {
+      final apiUrl = dotenv.env['API_URL'] ?? '';
+      final imageUrl = avatar.startsWith('http') ? avatar : '$apiUrl$avatar';
+      return NetworkImage(imageUrl);
+    }
+
+    // Sinon, c'est du base64
+    try {
+      return MemoryImage(base64Decode(avatar));
+    } catch (e) {
+      return null;
     }
   }
 
@@ -105,9 +126,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: CircleAvatar(
                     radius: 70,
                     backgroundColor: Colors.grey.shade300,
-                    backgroundImage: avatar != null && avatar.isNotEmpty
-                        ? MemoryImage(base64Decode(avatar))
-                        : null,
+                    backgroundImage: _getAvatarImageProvider(avatar),
                     child: avatar == null || avatar.isEmpty
                         ? Icon(
                             Icons.person,

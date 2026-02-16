@@ -81,18 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
         // Configurer les listeners WebSocket en premier (non bloquant)
         _setupNotificationListeners();
 
-        // Charger les histoires en priorité (contenu principal)
-        await storyProvider.loadStories();
-
-        // Charger genres et auteurs en parallèle (moins critique)
-        Future.wait([
-          storyProvider.loadGenres(),
-          storyProvider.loadAuthors(),
-          Provider.of<NotificationProvider>(
-            context,
-            listen: false,
-          ).loadNotifications(),
-        ]);
+        // Charger les histoires en priorité (contenu principal) - déjà fait dans splash
+        // Les genres et auteurs sont aussi déjà chargés
+        // Juste s'assurer que les listeners WebSocket sont actifs
       }
     });
   }
@@ -1889,18 +1880,6 @@ class _HomeScreenState extends State<HomeScreen> {
               child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
             );
           },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: Colors.grey.shade800,
-              child: const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: Colors.white,
-                ),
-              ),
-            );
-          },
         );
       }
       
@@ -1937,18 +1916,6 @@ class _HomeScreenState extends State<HomeScreen> {
             return Container(
               color: Colors.grey.shade800,
               child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: Colors.grey.shade800,
-              child: const Center(
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: Colors.white,
-                ),
-              ),
             );
           },
         );

@@ -124,11 +124,15 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
 
       if (authProvider.isLoggedIn) {
         screen = const HomeWithVersionCheck();
-        // Pré-charger les stories en parallèle pendant le splash
+        // Pré-charger les stories et notifications en parallèle pendant le splash
         Future.wait([
           storyProvider.loadStories(),
           storyProvider.loadGenres(),
           storyProvider.loadAuthors(),
+          Provider.of<NotificationProvider>(
+            context,
+            listen: false,
+          ).loadNotifications(),
         ]);
       } else {
         screen = const LoginScreen();
@@ -152,16 +156,8 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    // Afficher le splash screen si nécessaire
-    if (_showSplash) {
+    // Afficher le splash screen pendant le chargement initial ou si nécessaire
+    if (_isLoading || _showSplash) {
       return NetflixSplashScreen(
         onComplete: _onSplashComplete,
       );
