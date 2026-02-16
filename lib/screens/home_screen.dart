@@ -21,6 +21,7 @@ import 'cgu_screen.dart';
 import 'subscription_offers_screen.dart';
 import 'change_password_screen.dart';
 import 'category_view_all_screen.dart';
+import '../widgets/lazy_image.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -1869,17 +1870,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
         final imageUrl = '$apiUrl$imageData';
         
-        return Image.network(
-          imageUrl,
+        return LazyImage(
+          imageUrl: imageUrl,
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.shade800,
-              child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
-            );
-          },
         );
       }
       
@@ -1907,17 +1902,11 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       } else {
         // It's a URL
-        return Image.network(
-          imageData,
+        return LazyImage(
+          imageUrl: imageData,
           fit: BoxFit.cover,
           width: double.infinity,
           height: double.infinity,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.shade800,
-              child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
-            );
-          },
         );
       }
     } catch (e) {
@@ -1936,30 +1925,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
         final imageUrl = '$apiUrl$imageData';
         
-        return Image.network(
-          imageUrl,
+        return LazyImage(
+          imageUrl: imageUrl,
           fit: BoxFit.cover,
           width: 140,
           height: double.infinity,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.shade800,
-              child: const Icon(Icons.broken_image, color: Colors.grey),
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              color: Colors.grey.shade800,
-              child: const Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            );
-          },
         );
       }
       
@@ -2029,18 +1999,11 @@ class _HomeScreenState extends State<HomeScreen> {
         final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
         final imageUrl = '$apiUrl$imageData';
         
-        return Image.network(
-          imageUrl,
+        return LazyImage(
+          imageUrl: imageUrl,
           fit: BoxFit.cover,
           width: 32,
           height: 32,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.account_circle,
-              color: Colors.white,
-              size: 24,
-            );
-          },
         );
       }
       
@@ -2069,29 +2032,11 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       } else {
         // It's a full URL
-        return Image.network(
-          imageData,
+        return LazyImage(
+          imageUrl: imageData,
           fit: BoxFit.cover,
           width: 32,
           height: 32,
-          errorBuilder: (context, error, stackTrace) {
-            return const Icon(
-              Icons.account_circle,
-              color: Colors.white,
-              size: 24,
-            );
-          },
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            );
-          },
         );
       }
     } catch (e) {
@@ -2130,16 +2075,11 @@ class _HomeScreenState extends State<HomeScreen> {
           color: Colors.grey.withOpacity(0.2),
         ),
         child: ClipOval(
-          child: Image.network(
-            imageUrl,
+          child: LazyImage(
+            imageUrl: imageUrl,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(
-                Icons.person_rounded,
-                color: Color(0xFF1DB954),
-                size: 24,
-              );
-            },
+            width: 44,
+            height: 44,
           ),
         ),
       );
@@ -2157,16 +2097,11 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Colors.grey.withOpacity(0.2),
           ),
           child: ClipOval(
-            child: Image.network(
-              avatarData,
+            child: LazyImage(
+              imageUrl: avatarData,
               fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(
-                  Icons.person_rounded,
-                  color: Color(0xFF1DB954),
-                  size: 24,
-                );
-              },
+              width: 44,
+              height: 44,
             ),
           ),
         );
