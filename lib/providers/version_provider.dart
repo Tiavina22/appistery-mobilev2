@@ -34,16 +34,10 @@ class VersionProvider extends ChangeNotifier {
     try {
       final versionCode = VersionService.getAppVersionCode();
       final platform = VersionService.getAppPlatform();
-
-      print('📱 Checking version... Code: $versionCode, Platform: $platform');
-
       final versionInfo = await _versionService.checkVersion(
         versionCode: versionCode,
         platform: platform,
       );
-
-      print('✅ Version check response: $versionInfo');
-
       // Check if no active version is available
       if (versionInfo.isEmpty || versionInfo['currentVersion'] == null) {
         _noActiveVersion = true;
@@ -53,8 +47,7 @@ class VersionProvider extends ChangeNotifier {
         _downloadUrl = versionInfo['downloadUrl'];
         _versionName = versionInfo['versionName'];
         _description = versionInfo['description'];
-        print('⚠️ No active version found - app is blocked');
-      } else {
+          } else {
         _noActiveVersion = false;
         _isUpdateRequired = versionInfo['isUpdateRequired'] ?? false;
         _isVersionExpired = versionInfo['isVersionExpired'] ?? false;

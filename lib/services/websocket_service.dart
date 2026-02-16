@@ -20,6 +20,9 @@ class WebSocketService {
   final List<Function(dynamic)> _onFavoritesUpdatedCallbacks = [];
   final List<Function(dynamic)> _onGenresListCallbacks = [];
   final List<Function(dynamic)> _onAuthorsListCallbacks = [];
+  final List<Function(dynamic)> _onSubscriptionUpdatedCallbacks = [];
+  final List<Function(dynamic)> _onSubscriptionActivatedCallbacks = [];
+  final List<Function(dynamic)> _onSubscriptionExpiredCallbacks = [];
 
   bool get isConnected => _socket?.connected ?? false;
   IO.Socket? get socket => _socket;
@@ -177,6 +180,34 @@ class WebSocketService {
           }
         }
       });
+
+      // Événements pour les abonnements
+      _socket!.on('subscription:updated', (data) {
+        for (var callback in _onSubscriptionUpdatedCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
+
+      _socket!.on('subscription:activated', (data) {
+        for (var callback in _onSubscriptionActivatedCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
+
+      _socket!.on('subscription:expired', (data) {
+        for (var callback in _onSubscriptionExpiredCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
     } catch (e) {
     }
   }
@@ -238,6 +269,21 @@ class WebSocketService {
   // Écouter la liste des auteurs
   void onAuthorsList(Function(dynamic) callback) {
     _onAuthorsListCallbacks.add(callback);
+  }
+
+  // Écouter les mises à jour d'abonnement
+  void onSubscriptionUpdated(Function(dynamic) callback) {
+    _onSubscriptionUpdatedCallbacks.add(callback);
+  }
+
+  // Écouter les nouveaux abonnements activés
+  void onSubscriptionActivated(Function(dynamic) callback) {
+    _onSubscriptionActivatedCallbacks.add(callback);
+  }
+
+  // Écouter les abonnements expirés
+  void onSubscriptionExpired(Function(dynamic) callback) {
+    _onSubscriptionExpiredCallbacks.add(callback);
   }
 
   // Demander la liste des genres

@@ -262,8 +262,7 @@ class AuthService {
       );
     } catch (e) {
       // Si l'appel API échoue, on supprime quand même le token local
-      print('Erreur lors de la déconnexion backend: $e');
-    } finally {
+       } finally {
       // Toujours supprimer le token local
       await deleteToken();
     }

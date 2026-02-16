@@ -108,11 +108,7 @@ class StoryService {
 
       if (response.statusCode == 200) {
         final data = response.data['data'] ?? response.data;
-        print('DEBUG getStoryById: chapters in data: ${data['chapters']}');
-        print('DEBUG getStoryById: Chapters in data: ${data['Chapters']}');
-        print('DEBUG getStoryById: chaptersList in data: ${data['chaptersList']}');
-        final story = Story.fromJson(data as Map<String, dynamic>);
-        print('DEBUG getStoryById: story.chaptersList.length: ${story.chaptersList.length}');
+         final story = Story.fromJson(data as Map<String, dynamic>);
         return story;
       }
       throw Exception('Failed to load story: ${response.statusCode}');

@@ -247,7 +247,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         });
       }
     } catch (e) {
-      print('Erreur lors du chargement des chapitres: $e');
       if (mounted) {
         setState(() => _isLoadingChapters = false);
       }
@@ -983,10 +982,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
     // Utiliser les chapitres réels de l'histoire (depuis _fullStory si disponible, sinon widget.story)
     final storyToUse = _fullStory ?? widget.story;
-    print('DEBUG: _fullStory is null: ${_fullStory == null}');
-    print('DEBUG: storyToUse.chaptersList.length: ${storyToUse.chaptersList.length}');
+    
     if (storyToUse.chaptersList.isNotEmpty) {
-      print('DEBUG: Premier chapitre: ${storyToUse.chaptersList[0]}');
+   
     }
     final chapters = storyToUse.chaptersList.isNotEmpty
         ? storyToUse.chaptersList
