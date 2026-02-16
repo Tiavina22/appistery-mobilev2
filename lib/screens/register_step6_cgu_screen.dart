@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
@@ -10,7 +11,7 @@ class RegisterStep6CGUScreen extends StatefulWidget {
   final String username;
   final String password;
   final String telephone;
-  final String? avatar;
+  final File? avatarFile;
   final int? countryId;
 
   const RegisterStep6CGUScreen({
@@ -19,7 +20,7 @@ class RegisterStep6CGUScreen extends StatefulWidget {
     required this.username,
     required this.password,
     required this.telephone,
-    this.avatar,
+    this.avatarFile,
     this.countryId,
   });
 
@@ -129,7 +130,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
       username: widget.username,
       password: widget.password,
       telephone: widget.telephone,
-      avatar: widget.avatar,
+      avatarFile: widget.avatarFile,
       countryId: widget.countryId,
       cguAccepted: _cguAccepted,
     );

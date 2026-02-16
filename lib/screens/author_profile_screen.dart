@@ -341,7 +341,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
     if (avatarData.startsWith('/uploads/') ||
         avatarData.startsWith('http://') ||
         avatarData.startsWith('https://')) {
-      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
       final imageUrl = avatarData.startsWith('http')
           ? avatarData
           : '$apiUrl$avatarData';

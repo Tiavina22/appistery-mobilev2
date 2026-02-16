@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'dart:io';
 import 'device_service.dart';
 
 class AuthService {
@@ -167,49 +168,82 @@ class AuthService {
     }
   }
 
-  // Inscription - Étape 3: Finaliser avec mot de passe
+  // Inscription - Étape 3: Finaliser avec mot de passe + fichier avatar
   Future<Map<String, dynamic>> completeRegistration({
     required String username,
     required String email,
     required String password,
     String? telephone,
     String? language,
-    String? avatar,
+    File? avatarFile,
     int? countryId,
     bool? cguAccepted,
   }) async {
     try {
-      final response = await _dio.post(
-        '$apiUrl/api/auth/complete-registration',
-        data: {
+      // Si un fichier avatar est fourni, utiliser le nouvel endpoint avec upload
+      if (avatarFile != null) {
+        final formData = FormData.fromMap({
           'username': username,
           'email': email,
           'password': password,
           if (telephone != null) 'telephone': telephone,
           if (language != null) 'language': language,
-          if (avatar != null) 'avatar': avatar,
           if (countryId != null) 'country_id': countryId,
           if (cguAccepted != null) 'cgu_accepted': cguAccepted,
-        },
-      );
+          'avatar': await MultipartFile.fromFile(
+            avatarFile.path,
+            filename: 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        });
 
-      if (response.statusCode == 201) {
-        final token = response.data['token'];
-        await saveToken(token);
-        return {'success': true, 'token': token, 'user': response.data['user']};
+        final response = await _dio.post(
+          '$apiUrl/api/auth/complete-registration-with-avatar',
+          data: formData,
+        );
+
+        if (response.statusCode == 201) {
+          final token = response.data['token'];
+          await saveToken(token);
+          return {'success': true, 'token': token, 'user': response.data['user']};
+        }
+
+        return {
+          'success': false,
+          'message': response.data['message'] ?? 'Erreur d\'inscription',
+        };
+      } else {
+        // Sinon, utiliser l'ancien endpoint sans avatar (backward compatibility)
+        final response = await _dio.post(
+          '$apiUrl/api/auth/complete-registration',
+          data: {
+            'username': username,
+            'email': email,
+            'password': password,
+            if (telephone != null) 'telephone': telephone,
+            if (language != null) 'language': language,
+            if (countryId != null) 'country_id': countryId,
+            if (cguAccepted != null) 'cgu_accepted': cguAccepted,
+          },
+        );
+
+        if (response.statusCode == 201) {
+          final token = response.data['token'];
+          await saveToken(token);
+          return {'success': true, 'token': token, 'user': response.data['user']};
+        }
+
+        return {
+          'success': false,
+          'message': response.data['message'] ?? 'Erreur d\'inscription',
+        };
       }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Erreur d\'inscription',
-      };
     } on DioException catch (e) {
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur d\'inscription',
       };
     } catch (e) {
-      return {'success': false, 'message': 'Erreur inattendue'};
+      return {'success': false, 'message': 'Erreur inattendue: $e'};
     }
   }
 

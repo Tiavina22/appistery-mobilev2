@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'dart:convert';
 import 'dart:io';
 import 'register_step4_password_screen.dart';
 
@@ -24,7 +23,6 @@ class RegisterStep3AvatarScreen extends StatefulWidget {
 
 class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
   File? _avatarFile;
-  String? _avatarBase64;
   String? _errorMessage;
 
   Future<void> _pickImage() async {
@@ -37,17 +35,15 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
     );
 
     if (image != null) {
-      final bytes = await File(image.path).readAsBytes();
       setState(() {
         _avatarFile = File(image.path);
-        _avatarBase64 = base64Encode(bytes);
         _errorMessage = null; // Clear error when image is selected
       });
     }
   }
 
   void _handleContinue() {
-    if (_avatarBase64 == null) {
+    if (_avatarFile == null) {
       setState(() {
         _errorMessage = 'avatar_required'.tr();
       });
@@ -60,7 +56,7 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
         builder: (context) => RegisterStep4PasswordScreen(
           email: widget.email,
           username: widget.username,
-          avatar: _avatarBase64,
+          avatarFile: _avatarFile,
         ),
       ),
     );

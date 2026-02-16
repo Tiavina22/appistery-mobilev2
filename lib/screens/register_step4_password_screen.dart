@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../providers/theme_provider.dart';
 import 'register_step5_country_phone_screen.dart';
 
 class RegisterStep4PasswordScreen extends StatefulWidget {
   final String email;
   final String username;
-  final String? avatar;
+  final File? avatarFile;
 
   const RegisterStep4PasswordScreen({
     super.key,
     required this.email,
     required this.username,
-    this.avatar,
+    this.avatarFile,
   });
 
   @override
@@ -45,7 +46,7 @@ class _RegisterStep4PasswordScreenState
           email: widget.email,
           username: widget.username,
           password: _passwordController.text,
-          avatar: widget.avatar,
+          avatarFile: widget.avatarFile,
         ),
       ),
     );
