@@ -147,4 +147,55 @@ class ReactionService {
       rethrow;
     }
   }
+
+  // Toggle comment like
+  Future<Map<String, dynamic>> toggleCommentLike(int commentId) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('Non authentifié');
+      }
+
+      final response = await _dio.post(
+        '/api/comments/$commentId/like',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 && response.data['success']) {
+        return {
+          'liked': response.data['liked'],
+          'message': response.data['message'],
+        };
+      }
+      throw Exception('Erreur lors du like du commentaire');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get comment likes
+  Future<Map<String, dynamic>> getCommentLikes(int commentId) async {
+    try {
+      final token = await _authService.getToken();
+      final options = token != null
+          ? Options(headers: {'Authorization': 'Bearer $token'})
+          : null;
+
+      final response = await _dio.get(
+        '/api/comments/$commentId/likes',
+        options: options,
+      );
+
+      if (response.statusCode == 200 && response.data['success']) {
+        return {
+          'likeCount': response.data['likeCount'] ?? 0,
+          'userLiked': response.data['userLiked'] ?? false,
+          'likes': response.data['likes'] ?? [],
+        };
+      }
+      throw Exception('Erreur lors de la récupération des likes');
+    } catch (e) {
+      rethrow;
+    }
+  }
 }
