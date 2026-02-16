@@ -351,6 +351,29 @@ class Story {
           : null,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'synopsis': description,
+      'description': description,
+      'cover_image': coverImage,
+      'coverImage': coverImage,
+      'author': author,
+      'author_id': authorId,
+      'author_name': author,
+      'genre': genre,
+      'chapters': chapters,
+      'chapters_count': chapters,
+      'rating': rating,
+      'is_favorite': isFavorite,
+      'is_premium': isPremium,
+      'chaptersList': chaptersList,
+      'created_at': createdAt?.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
+    };
+  }
 }
 
 class Author {
@@ -368,5 +391,14 @@ class Author {
       avatar: json['avatar'],
       biography: json['biography'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'pseudo': pseudo,
+      'avatar': avatar,
+      'biography': biography,
+    };
   }
 }

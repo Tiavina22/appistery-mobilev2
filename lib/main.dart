@@ -16,6 +16,7 @@ import 'providers/version_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/subscription_offer_provider.dart';
 import 'widgets/home_with_version_check.dart';
+import 'widgets/netflix_splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,6 +78,7 @@ class InitialScreenLoader extends StatefulWidget {
 class _InitialScreenLoaderState extends State<InitialScreenLoader> {
   Widget? _initialScreen;
   bool _isLoading = true;
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -88,6 +90,10 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
     final prefs = await SharedPreferences.getInstance();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final versionProvider = Provider.of<VersionProvider>(
+      context,
+      listen: false,
+    );
+    final storyProvider = Provider.of<StoryProvider>(
       context,
       listen: false,
     );
@@ -104,20 +110,29 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
     // Vérifier d'abord les étapes d'onboarding
     if (!languageSelected) {
       screen = const LanguageSelectionScreen();
+      _showSplash = false; // Pas de splash pour l'onboarding
     } else if (!themeSelected) {
       screen = const ThemeSelectionScreen();
+      _showSplash = false;
     } else if (!onboardingCompleted) {
       // Si onboarding non complété, aller au login
       screen = const LoginScreen();
+      _showSplash = false;
     } else {
       // Onboarding complété, vérifier si l'utilisateur est connecté
-      // Rafraîchir le statut de connexion au démarrage
       await authProvider.refreshLoginStatus();
 
       if (authProvider.isLoggedIn) {
         screen = const HomeWithVersionCheck();
+        // Pré-charger les stories en parallèle pendant le splash
+        Future.wait([
+          storyProvider.loadStories(),
+          storyProvider.loadGenres(),
+          storyProvider.loadAuthors(),
+        ]);
       } else {
         screen = const LoginScreen();
+        _showSplash = false;
       }
     }
 
@@ -129,10 +144,27 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
     }
   }
 
+  void _onSplashComplete() {
+    setState(() {
+      _showSplash = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Afficher le splash screen si nécessaire
+    if (_showSplash) {
+      return NetflixSplashScreen(
+        onComplete: _onSplashComplete,
+      );
     }
 
     return _initialScreen ?? const LanguageSelectionScreen();
