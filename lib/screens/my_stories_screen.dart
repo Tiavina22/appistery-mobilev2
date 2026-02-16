@@ -376,6 +376,27 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
       );
     }
 
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (coverUrl.startsWith('/uploads/')) {
+      final apiUrl = const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:5500');
+      final imageUrl = '$apiUrl$coverUrl';
+      
+      return Image.network(
+        imageUrl,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.grey[300],
+            child: Icon(Icons.book, color: Colors.grey[600], size: 48),
+          );
+        },
+      );
+    }
+
     // Vérifier si c'est une image base64
     if (coverUrl.startsWith('data:image')) {
       try {

@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/story_service.dart';
 import '../services/reading_service.dart';
 import '../services/author_service.dart';
@@ -394,37 +395,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                   fit: StackFit.expand,
                   children: [
                     // Image de couverture
-                    widget.story.coverImage != null &&
-                            widget.story.coverImage!.isNotEmpty
-                        ? Image.memory(
-                            base64Decode(
-                              widget.story.coverImage!.split(',').last,
-                            ),
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[900],
-                                child: Icon(
-                                  Icons.book,
-                                  size: 100,
-                                  color: isDarkMode
-                                      ? Colors.white24
-                                      : Colors.black26,
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: isDarkMode
-                                ? Colors.grey[900]
-                                : Colors.grey[200],
-                            child: Icon(
-                              Icons.book,
-                              size: 100,
-                              color:
-                                  isDarkMode ? Colors.white24 : Colors.black26,
-                            ),
-                          ),
+                    _buildCoverImage(fit: BoxFit.cover),
                     // Gradient overlay (du bas vers le haut) - toujours noir pour le contraste avec l'image
                     Container(
                       decoration: BoxDecoration(
@@ -1226,67 +1197,106 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     );
   }
 
-  // Méthode pour construire l'avatar de l'auteur en base64 (version large pour la section "À propos")
+  // Méthode pour construire l'avatar de l'auteur (version large pour la section "À propos")
   Widget _buildAuthorAvatarLarge({required bool isDarkMode}) {
     final iconColor = isDarkMode ? Colors.white70 : Colors.black54;
+    final avatarData = widget.story.authorAvatar;
 
-    if (widget.story.authorAvatar != null &&
-        widget.story.authorAvatar!.isNotEmpty) {
-      try {
-        final base64String = widget.story.authorAvatar!.contains(',')
-            ? widget.story.authorAvatar!.split(',').last
-            : widget.story.authorAvatar!;
-
-        return Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(Icons.person, color: iconColor, size: 30);
-          },
-        );
-      } catch (e) {
-        return Icon(Icons.person, color: iconColor, size: 30);
-      }
+    if (avatarData == null || avatarData.isEmpty) {
+      return Icon(Icons.person, color: iconColor, size: 30);
     }
-    return Icon(Icons.person, color: iconColor, size: 30);
+
+    // Vérifier si c'est une URL (commence par /uploads/ ou http)
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = avatarData.startsWith('http')
+          ? avatarData
+          : '$apiUrl$avatarData';
+
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, color: iconColor, size: 30);
+        },
+      );
+    }
+
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = avatarData.contains(',')
+          ? avatarData.split(',').last
+          : avatarData;
+
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, color: iconColor, size: 30);
+        },
+      );
+    } catch (e) {
+      return Icon(Icons.person, color: iconColor, size: 30);
+    }
   }
 
-  // Méthode pour construire l'avatar de l'auteur en base64
+  // Méthode pour construire l'avatar de l'auteur (supporte URL et base64)
   Widget _buildAuthorAvatar({required bool isDarkMode}) {
     final iconColor = isDarkMode ? Colors.white70 : Colors.black54;
+    final avatarData = widget.story.authorAvatar;
 
-    // Afficher l'avatar en base64 s'il existe, sinon afficher une icône par défaut
-    if (widget.story.authorAvatar != null &&
-        widget.story.authorAvatar!.isNotEmpty) {
-      try {
-        // Décoder le base64
-        final base64String = widget.story.authorAvatar!.contains(',')
-            ? widget.story.authorAvatar!.split(',').last
-            : widget.story.authorAvatar!;
-
-        return Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.withOpacity(0.3),
-              child: Icon(Icons.person, color: iconColor, size: 24),
-            );
-          },
-        );
-      } catch (e) {
-        // En cas d'erreur de décodage, afficher l'icône par défaut
-        return Container(
-          color: Colors.grey.withOpacity(0.3),
-          child: Icon(Icons.person, color: iconColor, size: 24),
-        );
-      }
+    if (avatarData == null || avatarData.isEmpty) {
+      return Container(
+        color: Colors.grey.withOpacity(0.3),
+        child: Icon(Icons.person, color: iconColor, size: 24),
+      );
     }
-    // Si pas d'avatar, afficher l'icône par défaut
-    return Container(
-      color: Colors.grey.withOpacity(0.3),
-      child: Icon(Icons.person, color: iconColor, size: 24),
-    );
+
+    // Vérifier si c'est une URL (commence par /uploads/ ou http)
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = avatarData.startsWith('http')
+          ? avatarData
+          : '$apiUrl$avatarData';
+
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.withOpacity(0.3),
+            child: Icon(Icons.person, color: iconColor, size: 24),
+          );
+        },
+      );
+    }
+
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = avatarData.contains(',')
+          ? avatarData.split(',').last
+          : avatarData;
+
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.withOpacity(0.3),
+            child: Icon(Icons.person, color: iconColor, size: 24),
+          );
+        },
+      );
+    } catch (e) {
+      return Container(
+        color: Colors.grey.withOpacity(0.3),
+        child: Icon(Icons.person, color: iconColor, size: 24),
+      );
+    }
   }
 
   // Section pour afficher les stats et le statut de completion
@@ -1359,32 +1369,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                 onTap: () => Navigator.pop(context),
                 child: InteractiveViewer(
                   child: Center(
-                    child: widget.story.coverImage != null &&
-                            widget.story.coverImage!.isNotEmpty
-                        ? Image.memory(
-                            base64Decode(
-                              widget.story.coverImage!.split(',').last,
-                            ),
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                color: Colors.grey[900],
-                                child: const Icon(
-                                  Icons.broken_image,
-                                  size: 100,
-                                  color: Colors.white24,
-                                ),
-                              );
-                            },
-                          )
-                        : Container(
-                            color: Colors.grey[900],
-                            child: const Icon(
-                              Icons.book,
-                              size: 100,
-                              color: Colors.white24,
-                            ),
-                          ),
+                    child: _buildCoverImage(fit: BoxFit.contain),
                   ),
                 ),
               ),
@@ -1406,5 +1391,91 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         );
       },
     );
+  }
+
+  // Helper method to build cover image (supports both URL and base64)
+  Widget _buildCoverImage({required BoxFit fit}) {
+    final coverImage = widget.story.coverImage;
+    
+    if (coverImage == null || coverImage.isEmpty) {
+      return Container(
+        color: Colors.grey[900],
+        child: const Icon(
+          Icons.book,
+          size: 100,
+          color: Colors.white24,
+        ),
+      );
+    }
+
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (coverImage.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = '$apiUrl$coverImage';
+      
+      return Image.network(
+        imageUrl,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[900],
+            child: const Icon(
+              Icons.book,
+              size: 100,
+              color: Colors.white24,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Vérifier si c'est une URL complète
+    if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+      return Image.network(
+        coverImage,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[900],
+            child: const Icon(
+              Icons.book,
+              size: 100,
+              color: Colors.white24,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = coverImage.contains(',')
+          ? coverImage.split(',').last
+          : coverImage;
+      
+      return Image.memory(
+        base64Decode(base64String),
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[900],
+            child: const Icon(
+              Icons.book,
+              size: 100,
+              color: Colors.white24,
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      return Container(
+        color: Colors.grey[900],
+        child: const Icon(
+          Icons.book,
+          size: 100,
+          color: Colors.white24,
+        ),
+      );
+    }
   }
 }

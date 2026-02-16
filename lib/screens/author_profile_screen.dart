@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/author_service.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
@@ -329,16 +330,47 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
       ),
       child: ClipOval(
         child: avatarData != null && avatarData.isNotEmpty
-            ? Image.memory(
-                base64Decode(avatarData.split(',').last),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(Icons.person, size: 60, color: iconColor);
-                },
-              )
+            ? _buildAvatarImage(avatarData, iconColor)
             : Icon(Icons.person, size: 60, color: iconColor),
       ),
     );
+  }
+
+  Widget _buildAvatarImage(String avatarData, Color iconColor) {
+    // Vérifier si c'est une URL (commence par /uploads/ ou http)
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = avatarData.startsWith('http')
+          ? avatarData
+          : '$apiUrl$avatarData';
+
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, size: 60, color: iconColor);
+        },
+      );
+    }
+
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = avatarData.contains(',')
+          ? avatarData.split(',').last
+          : avatarData;
+
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, size: 60, color: iconColor);
+        },
+      );
+    } catch (e) {
+      return Icon(Icons.person, size: 60, color: iconColor);
+    }
   }
 
   Widget _buildStatItem(
@@ -406,15 +438,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: story.coverImage != null && story.coverImage!.isNotEmpty
-                  ? Image.memory(
-                      base64Decode(story.coverImage!.split(',').last),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.book, color: Colors.grey, size: 60),
-                        );
-                      },
-                    )
+                  ? _buildCoverImage(story.coverImage!)
                   : const Center(
                       child: Icon(Icons.book, color: Colors.grey, size: 60),
                     ),
@@ -468,5 +492,74 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         ],
       ),
     );
+  }
+
+  // Helper method to build cover image (supports both URL and base64)
+  Widget _buildCoverImage(String coverImage) {
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (coverImage.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+      final imageUrl = '$apiUrl$coverImage';
+      
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey,
+              size: 60,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Vérifier si c'est une URL complète
+    if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+      return Image.network(
+        coverImage,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey,
+              size: 60,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = coverImage.contains(',')
+          ? coverImage.split(',').last
+          : coverImage;
+      
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey,
+              size: 60,
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      return const Center(
+        child: Icon(
+          Icons.image_not_supported,
+          color: Colors.grey,
+          size: 60,
+        ),
+      );
+    }
   }
 }

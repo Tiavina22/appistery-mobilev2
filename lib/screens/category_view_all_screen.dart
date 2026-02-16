@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import '../services/story_service.dart';
 import '../services/category_intelligence_service.dart';
@@ -168,6 +169,25 @@ class CategoryViewAllScreen extends StatelessWidget {
 
   Widget _buildImageFromString(String imageData) {
     try {
+      // Vérifier si c'est une URL relative (commence par /uploads/)
+      if (imageData.startsWith('/uploads/')) {
+        final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+        final imageUrl = '$apiUrl$imageData';
+        
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            );
+          },
+        );
+      }
+      
       // Check if it's a base64 string
       if (imageData.startsWith('data:image') || !imageData.startsWith('http')) {
         // It's likely base64

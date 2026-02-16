@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
@@ -1149,35 +1150,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         Row(
                           children: [
                             // Avatar
-                            Container(
-                              width: 56,
-                              height: 56,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: const Color(0xFF1DB954),
-                                  width: 2,
-                                ),
-                                image: authProvider.user!['avatar'] != null &&
-                                    authProvider.user!['avatar']!.isNotEmpty
-                                    ? DecorationImage(
-                                        image: MemoryImage(
-                                          base64Decode(
-                                            authProvider.user!['avatar'] ?? '',
-                                          ),
-                                        ),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                              ),
-                              child: authProvider.user!['avatar'] == null ||
-                                  authProvider.user!['avatar']!.isEmpty
-                                  ? const Icon(
-                                      Icons.person,
-                                      color: Color(0xFF1DB954),
-                                      size: 28,
-                                    )
-                                  : null,
+                            _buildUserAvatarLarge(
+                              authProvider.user!['avatar'],
+                              isDarkMode: isDarkMode,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -1890,6 +1865,37 @@ class _HomeScreenState extends State<HomeScreen> {
   // Helper method for hero images (full width)
   Widget _buildHeroImageFromString(String imageData) {
     try {
+      // Vérifier si c'est une URL relative (commence par /uploads/)
+      if (imageData.startsWith('/uploads/')) {
+        final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+        final imageUrl = '$apiUrl$imageData';
+        
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Icon(Icons.broken_image, color: Colors.grey, size: 60),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Center(
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  color: Colors.white,
+                ),
+              ),
+            );
+          },
+        );
+      }
+      
       // Check if it's a base64 string
       if (imageData.startsWith('data:image') || !imageData.startsWith('http')) {
         // It's likely base64
@@ -1950,6 +1956,38 @@ class _HomeScreenState extends State<HomeScreen> {
   // Helper method to detect and build image from base64 or URL
   Widget _buildImageFromString(String imageData) {
     try {
+      // Vérifier si c'est une URL relative (commence par /uploads/)
+      if (imageData.startsWith('/uploads/')) {
+        final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+        final imageUrl = '$apiUrl$imageData';
+        
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: 140,
+          height: double.infinity,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              color: Colors.grey.shade800,
+              child: const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            );
+          },
+        );
+      }
+      
       // Check if it's a base64 string
       if (imageData.startsWith('data:image') || !imageData.startsWith('http')) {
         // It's likely base64
@@ -2011,6 +2049,26 @@ class _HomeScreenState extends State<HomeScreen> {
   // Helper method for avatar images (smaller, circular)
   Widget _buildAvatarImage(String imageData) {
     try {
+      // Vérifier si c'est une URL relative (commence par /uploads/)
+      if (imageData.startsWith('/uploads/')) {
+        final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+        final imageUrl = '$apiUrl$imageData';
+        
+        return Image.network(
+          imageUrl,
+          fit: BoxFit.cover,
+          width: 32,
+          height: 32,
+          errorBuilder: (context, error, stackTrace) {
+            return const Icon(
+              Icons.account_circle,
+              color: Colors.white,
+              size: 24,
+            );
+          },
+        );
+      }
+      
       // Check if it's a base64 string
       if (imageData.startsWith('data:image') || !imageData.startsWith('http')) {
         // It's likely base64
@@ -2035,7 +2093,7 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         );
       } else {
-        // It's a URL
+        // It's a full URL
         return Image.network(
           imageData,
           fit: BoxFit.cover,
@@ -2063,6 +2121,231 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       return const Icon(Icons.account_circle, color: Colors.white, size: 24);
+    }
+  }
+
+  // Helper pour construire l'avatar utilisateur (supporte URL et base64)
+  Widget _buildUserAvatar(String? avatarData, {required bool isDarkMode}) {
+    if (avatarData == null || avatarData.isEmpty) {
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey.withOpacity(0.2),
+        ),
+        child: const Icon(
+          Icons.person_rounded,
+          color: Color(0xFF1DB954),
+          size: 24,
+        ),
+      );
+    }
+
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (avatarData.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+      final imageUrl = '$apiUrl$avatarData';
+      
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey.withOpacity(0.2),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.person_rounded,
+                color: Color(0xFF1DB954),
+                size: 24,
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Sinon c'est du base64 ou une URL complète
+    try {
+      if (avatarData.startsWith('http://') || avatarData.startsWith('https://')) {
+        // URL complète
+        return Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey.withOpacity(0.2),
+          ),
+          child: ClipOval(
+            child: Image.network(
+              avatarData,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.person_rounded,
+                  color: Color(0xFF1DB954),
+                  size: 24,
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        // Base64
+        return Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey.withOpacity(0.2),
+            image: DecorationImage(
+              image: MemoryImage(
+                base64Decode(avatarData),
+              ),
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      return Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.grey.withOpacity(0.2),
+        ),
+        child: const Icon(
+          Icons.person_rounded,
+          color: Color(0xFF1DB954),
+          size: 24,
+        ),
+      );
+    }
+  }
+
+  // Helper pour construire un avatar utilisateur plus grand (56x56)
+  Widget _buildUserAvatarLarge(String? avatarData, {required bool isDarkMode}) {
+    if (avatarData == null || avatarData.isEmpty) {
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFF1DB954),
+            width: 2,
+          ),
+        ),
+        child: const Icon(
+          Icons.person,
+          color: Color(0xFF1DB954),
+          size: 28,
+        ),
+      );
+    }
+
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (avatarData.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+      final imageUrl = '$apiUrl$avatarData';
+      
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFF1DB954),
+            width: 2,
+          ),
+        ),
+        child: ClipOval(
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return const Icon(
+                Icons.person,
+                color: Color(0xFF1DB954),
+                size: 28,
+              );
+            },
+          ),
+        ),
+      );
+    }
+
+    // Sinon c'est du base64 ou une URL complète
+    try {
+      if (avatarData.startsWith('http://') || avatarData.startsWith('https://')) {
+        // URL complète
+        return Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF1DB954),
+              width: 2,
+            ),
+          ),
+          child: ClipOval(
+            child: Image.network(
+              avatarData,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.person,
+                  color: Color(0xFF1DB954),
+                  size: 28,
+                );
+              },
+            ),
+          ),
+        );
+      } else {
+        // Base64
+        return Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: const Color(0xFF1DB954),
+              width: 2,
+            ),
+            image: DecorationImage(
+              image: MemoryImage(
+                base64Decode(avatarData),
+              ),
+              fit: BoxFit.cover,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      return Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: const Color(0xFF1DB954),
+            width: 2,
+          ),
+        ),
+        child: const Icon(
+          Icons.person,
+          color: Color(0xFF1DB954),
+          size: 28,
+        ),
+      );
     }
   }
 
@@ -2416,28 +2699,9 @@ class _HomeScreenState extends State<HomeScreen> {
             // Profile Info
             if (authProvider.user != null)
               _buildSettingsTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.grey.withOpacity(0.2),
-                    image:
-                        authProvider.user!['avatar'] != null &&
-                            authProvider.user!['avatar']!.isNotEmpty
-                        ? DecorationImage(
-                            image: MemoryImage(
-                              base64Decode(authProvider.user!['avatar']),
-                            ),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child:
-                      authProvider.user!['avatar'] == null ||
-                          authProvider.user!['avatar']!.isEmpty
-                      ? Icon(Icons.person_rounded, color: const Color(0xFF1DB954), size: 24)
-                      : null,
+                leading: _buildUserAvatar(
+                  authProvider.user!['avatar'],
+                  isDarkMode: isDarkMode,
                 ),
                 title: authProvider.user!['username'] ?? 'User',
                 subtitle: authProvider.user!['email'] ?? 'No email',
