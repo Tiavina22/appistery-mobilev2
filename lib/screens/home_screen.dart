@@ -264,41 +264,117 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
         body: _buildBody(),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: (int index) {
-            setState(() => _selectedIndex = index);
-          },
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          selectedItemColor: Theme.of(context).brightness == Brightness.dark
-              ? Colors.white
-              : Colors.black,
-          unselectedItemColor: Colors.grey,
-          selectedFontSize: 12,
-          unselectedFontSize: 12,
-          items: [
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.home_outlined),
-              activeIcon: const Icon(Icons.home),
-              label: 'home'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.explore_outlined),
-              activeIcon: const Icon(Icons.explore),
-              label: 'search'.tr(),
-            ),
-            BottomNavigationBarItem(
-              icon: const Icon(Icons.person_outline),
-              activeIcon: const Icon(Icons.person),
-              label: 'settings'.tr(),
-            ),
-          ],
+        bottomNavigationBar: _buildAppleStyleNavBar(),
+      ),
+    );
+  }
+
+  // Apple-style Bottom Navigation Bar
+  Widget _buildAppleStyleNavBar() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: isDarkMode 
+            ? const Color(0xFF1C1C1E).withOpacity(0.95)  // iOS dark background
+            : Colors.white.withOpacity(0.95),            // iOS light background
+        border: Border(
+          top: BorderSide(
+            color: isDarkMode 
+                ? Colors.white.withOpacity(0.1)
+                : Colors.black.withOpacity(0.1),
+            width: 0.5,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildNavItem(
+                icon: Icons.house_rounded,
+                label: 'home'.tr(),
+                index: 0,
+                isDarkMode: isDarkMode,
+              ),
+              _buildNavItem(
+                icon: Icons.search_rounded,
+                label: 'search'.tr(),
+                index: 1,
+                isDarkMode: isDarkMode,
+              ),
+              _buildNavItem(
+                icon: Icons.person_rounded,
+                label: 'settings'.tr(),
+                index: 2,
+                isDarkMode: isDarkMode,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  Widget _buildNavItem({
+    required IconData icon,
+    required String label,
+    required int index,
+    required bool isDarkMode,
+  }) {
+    final isSelected = _selectedIndex == index;
+    final primaryColor = isDarkMode ? Colors.white : Colors.black;
+    final secondaryColor = isDarkMode 
+        ? Colors.white.withOpacity(0.5) 
+        : Colors.black.withOpacity(0.5);
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() => _selectedIndex = index);
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                child: Icon(
+                  icon,
+                  size: 26,
+                  color: isSelected ? primaryColor : secondaryColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeInOut,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? primaryColor : secondaryColor,
+                  letterSpacing: -0.2,
+                ),
+                child: Text(label),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildBody() {
     return IndexedStack(
