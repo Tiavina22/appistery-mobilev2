@@ -279,11 +279,27 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
             : (currentCount > 0 ? currentCount - 1 : 0);
       });
       
-      // Send to server (in background)
-      await _reactionService.toggleCommentLike(commentId);
+      // Send to server (in background) and calibrate with response
+      final response = await _reactionService.toggleCommentLike(commentId);
+      
+      // Calibrate state with server response
+      if (response['liked'] != null && mounted) {
+        final serverLikedState = response['liked'] as bool;
+        setState(() {
+          _commentLikes[commentId] = serverLikedState;
+          // Recalculate count based on final state
+          if (serverLikedState && (_commentLikes[commentId] == true)) {
+            // Ensure count is correct if liked
+            _commentLikesCounts[commentId] = (_commentLikesCounts[commentId] ?? 0);
+          } else if (!serverLikedState) {
+            // Ensure count is correct if unliked
+            _commentLikesCounts[commentId] = (_commentLikesCounts[commentId] ?? 0);
+          }
+        });
+      }
       
     } catch (e) {
-      // Revert on error
+      // Revert on error - do optimistic revert
       if (mounted) {
         setState(() {
           final isCurrentlyLiked = _commentLikes[commentId] == true;
