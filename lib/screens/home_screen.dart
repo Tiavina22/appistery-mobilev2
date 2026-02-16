@@ -275,9 +275,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     return Container(
       decoration: BoxDecoration(
-        color: isDarkMode 
-            ? const Color(0xFF1C1C1E).withOpacity(0.95)  // iOS dark background
-            : Colors.white.withOpacity(0.95),            // iOS light background
+        color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
             color: isDarkMode 
