@@ -155,7 +155,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         setState(() {
           _reactionsData = data;
           _hasUserReacted = data['userReaction'] != null;
-          _isFavorite = _hasUserReacted; // "Ma liste" est basée sur les reactions
           _commentsCount =
               commentsData['pagination']?['total'] ?? comments.length;
           _isLoadingReactions = false;
@@ -300,16 +299,17 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
     setState(() => _isLoadingFavorite = true);
     try {
-      // Utiliser reactions pour "Ma liste" au lieu de favorites
-      final wasInList = _isFavorite;
+      final storyService = StoryService();
 
-      // Toggle reaction (like/unlike)
-      await _reactionService.toggleReaction(widget.story.id);
-      await _loadReactions(); // Recharger pour mettre à jour _hasUserReacted
+      if (_isFavorite) {
+        await storyService.removeFavorite(widget.story.id);
+      } else {
+        await storyService.addFavorite(widget.story.id);
+      }
 
       if (mounted) {
         setState(() {
-          _isFavorite = _hasUserReacted; // Synchroniser avec le statut de reaction
+          _isFavorite = !_isFavorite;
         });
 
         // Afficher une notification
