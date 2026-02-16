@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:provider/provider.dart';
 import 'dart:convert';
-import '../providers/story_provider.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
 

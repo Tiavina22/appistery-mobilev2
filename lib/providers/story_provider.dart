@@ -214,7 +214,7 @@ class StoryProvider extends ChangeNotifier {
       // 4. Sauvegarder dans le cache
       await _cacheService.cacheStories(_stories);
       
-      final duration = DateTime.now().difference(startTime);
+      DateTime.now().difference(startTime);
       _error = null;
       _hasMoreStories = _stories.length >= _pageSize;
       _currentPage = 1;

@@ -14,7 +14,6 @@ import '../services/category_intelligence_service.dart';
 import 'login_screen.dart';
 import 'story_detail_screen.dart';
 import 'author_profile_screen.dart';
-import 'genre_stories_screen.dart';
 import 'my_stories_screen.dart';
 import 'user_profile_screen.dart';
 import 'cgu_screen.dart';
@@ -74,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Future.microtask(() async {
       if (mounted) {
-        final storyProvider = Provider.of<StoryProvider>(
+        Provider.of<StoryProvider>(
           context,
           listen: false,
         );
@@ -312,22 +311,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildNavItem(String label, int index) {
-    final isSelected = _selectedIndex == index;
-    return GestureDetector(
-      onTap: () {
-        setState(() => _selectedIndex = index);
-      },
-      child: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey[400],
-          fontSize: 14,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
-      ),
-    );
-  }
 
   Widget _buildBody() {
     return IndexedStack(
@@ -1101,6 +1084,16 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
+                          DropdownMenuItem(
+                            value: Locale('mg'),
+                            child: Row(
+                              children: [
+                                Text('🇲🇬', style: TextStyle(fontSize: 16)),
+                                SizedBox(width: 10),
+                                Text('Malagasy', style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ),
                         ],
                         onChanged: (Locale? value) {
                           if (value != null) {
@@ -1671,112 +1664,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ];
   }
 
-  Widget _buildStoryCard(Story story) {
-    final isStoryPremium = story.isPremium;
 
-    return GestureDetector(
-      onTap: () {
-        // Permettre l'accès au synopsis pour toutes les histoires
-        // Le blocage des chapitres se fera dans StoryDetailScreen
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StoryDetailScreen(story: story),
-          ),
-        );
-      },
-      child: Stack(
-        children: [
-          Container(
-            width: 140,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey.shade900,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: story.coverImage != null && story.coverImage!.isNotEmpty
-                  ? _buildImageFromString(story.coverImage!)
-                  : Container(
-                      width: 140,
-                      color: Colors.grey.shade900,
-                      child: const Center(
-                        child: Icon(
-                          Icons.image_not_supported,
-                          color: Colors.grey,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-            ),
-          ),
-          // Badge Premium
-          if (isStoryPremium)
-            Positioned(
-              top: 8,
-              right: 8,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.amber,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'Premium',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchResultTile(Story story) {
-    final isStoryPremium = story.isPremium;
-
-    return ListTile(
-      leading: Stack(
-        children: [
-          story.coverImage != null
-              ? SizedBox(
-                  width: 50,
-                  height: 70,
-                  child: _buildImageFromString(story.coverImage!),
-                )
-              : const SizedBox(width: 50, child: Icon(Icons.image)),
-          if (isStoryPremium)
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: Colors.amber,
-                  shape: BoxShape.circle,
-                ),
-                child: const Text('👑', style: TextStyle(fontSize: 12)),
-              ),
-            ),
-        ],
-      ),
-      title: Text(story.title),
-      subtitle: Text(story.author),
-      onTap: () {
-        // Permettre l'accès au synopsis pour toutes les histoires
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StoryDetailScreen(story: story),
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildStoryGridItem(Story story) {
     final isStoryPremium = story.isPremium;
@@ -2140,284 +2028,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // Helper pour construire un avatar utilisateur plus grand (56x56)
-  Widget _buildUserAvatarLarge(String? avatarData, {required bool isDarkMode}) {
-    if (avatarData == null || avatarData.isEmpty) {
-      return Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFF1DB954),
-            width: 2,
-          ),
-        ),
-        child: const Icon(
-          Icons.person,
-          color: Color(0xFF1DB954),
-          size: 28,
-        ),
-      );
-    }
 
-    // Vérifier si c'est une URL relative (commence par /uploads/)
-    if (avatarData.startsWith('/uploads/')) {
-      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
-      final imageUrl = '$apiUrl$avatarData';
-      
-      return Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFF1DB954),
-            width: 2,
-          ),
-        ),
-        child: ClipOval(
-          child: Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) {
-              return const Icon(
-                Icons.person,
-                color: Color(0xFF1DB954),
-                size: 28,
-              );
-            },
-          ),
-        ),
-      );
-    }
-
-    // Sinon c'est du base64 ou une URL complète
-    try {
-      if (avatarData.startsWith('http://') || avatarData.startsWith('https://')) {
-        // URL complète
-        return Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF1DB954),
-              width: 2,
-            ),
-          ),
-          child: ClipOval(
-            child: Image.network(
-              avatarData,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Icon(
-                  Icons.person,
-                  color: Color(0xFF1DB954),
-                  size: 28,
-                );
-              },
-            ),
-          ),
-        );
-      } else {
-        // Base64
-        return Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: const Color(0xFF1DB954),
-              width: 2,
-            ),
-            image: DecorationImage(
-              image: MemoryImage(
-                base64Decode(avatarData),
-              ),
-              fit: BoxFit.cover,
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      return Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: const Color(0xFF1DB954),
-            width: 2,
-          ),
-        ),
-        child: const Icon(
-          Icons.person,
-          color: Color(0xFF1DB954),
-          size: 28,
-        ),
-      );
-    }
-  }
-
-  Future<void> _logout(BuildContext context) async {
-    // Récupérer le provider ET le navigator AVANT le dialog
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final navigator = Navigator.of(context);
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: true,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 340),
-          decoration: BoxDecoration(
-            color: isDarkMode ? const Color(0xFF1C1C1E) : Colors.white,
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 32),
-              
-              // Icône
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.red.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.logout_rounded,
-                  color: Colors.red,
-                  size: 32,
-                ),
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Titre
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'confirm_logout'.tr(),
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: isDarkMode ? Colors.white : Colors.black,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Message
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Text(
-                  'logout_warning'.tr(),
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: isDarkMode 
-                      ? Colors.grey.shade400 
-                      : Colors.grey.shade600,
-                    height: 1.4,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-              
-              const SizedBox(height: 32),
-              
-              // Divider
-              Divider(
-                height: 1,
-                thickness: 0.5,
-                color: isDarkMode 
-                  ? Colors.grey.shade800 
-                  : Colors.grey.shade300,
-              ),
-              
-              // Boutons
-              Column(
-                children: [
-                  // Bouton Déconnexion
-                  InkWell(
-                    onTap: () => Navigator.pop(context, true),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        'logout'.tr(),
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.red,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                  
-                  Divider(
-                    height: 1,
-                    thickness: 0.5,
-                    color: isDarkMode 
-                      ? Colors.grey.shade800 
-                      : Colors.grey.shade300,
-                  ),
-                  
-                  // Bouton Annuler
-                  InkWell(
-                    onTap: () => Navigator.pop(context, false),
-                    borderRadius: const BorderRadius.only(
-                      bottomLeft: Radius.circular(28),
-                      bottomRight: Radius.circular(28),
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Text(
-                        'cancel'.tr(),
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                          color: isDarkMode ? Colors.white : Colors.black,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-
-    if (confirmed == true) {
-      await authProvider.logout();
-
-      // Utiliser le navigator sauvegardé
-      navigator.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginScreen()),
-        (route) => false,
-      );
-    }
-  }
 
   Widget _buildSettingsTab() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
+    Provider.of<ThemeProvider>(context);
+    Provider.of<AuthProvider>(context);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
@@ -2861,6 +2476,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return 'Français';
     } else if (locale.languageCode == 'en') {
       return 'English';
+    } else if (locale.languageCode == 'mg') {
+      return 'Malagasy';
     }
     return 'Unknown';
   }
@@ -2924,7 +2541,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    'Choisissez votre langue préférée',
+                    'select_language_description'.tr(),
                     style: TextStyle(
                       fontSize: 15,
                       color: isDarkMode 
@@ -3026,6 +2643,53 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             if (currentLocale.languageCode == 'en')
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Color(0xFF1DB954),
+                                size: 24,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    Divider(
+                      height: 1,
+                      thickness: 0.5,
+                      color: isDarkMode 
+                        ? Colors.grey.shade800 
+                        : Colors.grey.shade300,
+                    ),
+                    
+                    // Malagasy
+                    InkWell(
+                      onTap: () {
+                        context.setLocale(const Locale('mg'));
+                        Navigator.pop(dialogContext);
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                        child: Row(
+                          children: [
+                            const Text(
+                              '🇲🇬',
+                              style: TextStyle(fontSize: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Malagasy',
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: currentLocale.languageCode == 'mg'
+                                    ? const Color(0xFF1DB954)
+                                    : (isDarkMode ? Colors.white : Colors.black),
+                                ),
+                              ),
+                            ),
+                            if (currentLocale.languageCode == 'mg')
                               const Icon(
                                 Icons.check_circle_rounded,
                                 color: Color(0xFF1DB954),

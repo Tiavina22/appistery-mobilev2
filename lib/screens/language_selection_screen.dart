@@ -51,7 +51,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                 ),
                 const SizedBox(height: 24),
                 const Text(
-                  'APPISTERY',
+                  'Appistery',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -61,7 +61,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                 ),
                 const SizedBox(height: 12),
                 const Text(
-                  'Select Your Language\nChoisissez votre langue',
+                  'Select Your Language\nChoisissez votre langue\nSafidio ny fiteny',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
@@ -111,6 +111,16 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                               Text('🇫🇷', style: TextStyle(fontSize: 28)),
                               SizedBox(width: 12),
                               Text('Français'),
+                            ],
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'mg',
+                          child: Row(
+                            children: [
+                              Text('🇲🇬', style: TextStyle(fontSize: 28)),
+                              SizedBox(width: 12),
+                              Text('Malagasy'),
                             ],
                           ),
                         ),

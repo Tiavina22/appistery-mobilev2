@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +26,7 @@ void main() async {
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('fr')],
+      supportedLocales: const [Locale('en'), Locale('fr'), Locale('mg')],
       path: 'assets/translations',
       fallbackLocale: const Locale('fr'),
       child: MultiProvider(
@@ -50,20 +51,38 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    return Builder(
+      builder: (context) {
+        // Map 'mg' to 'fr' for Material localization since 'mg' is not supported by Flutter
+        final currentLocale = context.locale;
+        final materialLocale = currentLocale.languageCode == 'mg' 
+            ? const Locale('fr') 
+            : currentLocale;
 
-    return MaterialApp(
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
-      debugShowCheckedModeBanner: false,
-      theme: themeProvider.lightTheme,
-      darkTheme: themeProvider.darkTheme,
-      themeMode: themeProvider.themeMode,
-      routes: {
-        '/notifications': (context) => const NotificationsScreen(),
-        '/subscription-offers': (context) => const SubscriptionOffersScreen(),
-      },
-      home: const InitialScreenLoader(),
+        return MaterialApp(
+          localizationsDelegates: [
+            ...context.localizationDelegates,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('fr'),
+          ],
+          locale: materialLocale,
+          debugShowCheckedModeBanner: false,
+          theme: themeProvider.lightTheme,
+          darkTheme: themeProvider.darkTheme,
+          themeMode: themeProvider.themeMode,
+          routes: {
+            '/notifications': (context) => const NotificationsScreen(),
+            '/subscription-offers': (context) => const SubscriptionOffersScreen(),
+          },
+          home: const InitialScreenLoader(),
+        );
+      }
     );
   }
 }

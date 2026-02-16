@@ -673,6 +673,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                 'reader_end_of_story'.tr(),
                                 style: TextStyle(
                                   fontSize: 14,
+                                  // ignore: deprecated_member_use
                                   color: _getTextColor().withOpacity(0.5),
                                   fontWeight: FontWeight.w600,
                                 ),

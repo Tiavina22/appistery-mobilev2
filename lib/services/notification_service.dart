@@ -48,7 +48,7 @@ class NotificationService {
       );
 
       return response.data['unread_count'] ?? 0;
-    } on DioException catch (e) {
+    } on DioException {
       return 0;
     }
   }
@@ -67,7 +67,7 @@ class NotificationService {
       );
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
+    } on DioException {
       return false;
     }
   }
@@ -86,7 +86,7 @@ class NotificationService {
       );
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
+    } on DioException {
       return false;
     }
   }
@@ -105,7 +105,7 @@ class NotificationService {
       );
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
+    } on DioException {
       return false;
     }
   }

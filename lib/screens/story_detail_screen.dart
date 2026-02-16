@@ -127,7 +127,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               completionInfo != null && completionInfo['is_completed'] == true;
         });
       }
-    } catch (e) {
     } finally {
       if (mounted) {
         setState(() => _isLoadingStats = false);

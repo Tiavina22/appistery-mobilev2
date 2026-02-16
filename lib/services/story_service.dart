@@ -62,14 +62,14 @@ class StoryService {
         '/api/stories/all',
         queryParameters: {'limit': limit, 'offset': offset},
       );
-      final networkDuration = DateTime.now().difference(startTime);
+      DateTime.now().difference(startTime);
 
       if (response.statusCode == 200) {
         final data = response.data['data'] as List? ?? response.data as List;
         final stories = data
             .map((story) => Story.fromJson(story as Map<String, dynamic>))
             .toList();
-        final totalDuration = DateTime.now().difference(startTime);
+        DateTime.now().difference(startTime);
         return stories;
       }
       throw Exception('Failed to load stories: ${response.statusCode}');
@@ -121,7 +121,7 @@ class StoryService {
 
   Future<void> addFavorite(int storyId) async {
     try {
-      final response = await _dio.post(
+      await _dio.post(
         '/api/stories/favorites/add',
         data: {'story_id': storyId},
       );
@@ -134,7 +134,7 @@ class StoryService {
 
   Future<void> removeFavorite(int storyId) async {
     try {
-      final response = await _dio.delete(
+      await _dio.delete(
         '/api/stories/favorites/remove/$storyId',
       );
     } on DioException catch (e) {

@@ -23,35 +23,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
   }
 
-  String _getNotificationIcon(String type) {
-    switch (type) {
-      case 'story_created':
-        return '📖';
-      case 'reaction_added':
-        return '❤️';
-      case 'comment_added':
-        return '💬';
-      case 'follow':
-        return '👤';
-      default:
-        return '🔔';
-    }
-  }
 
-  String _getNotificationTitle(String type) {
-    switch (type) {
-      case 'story_created':
-        return 'Nouvelle histoire';
-      case 'reaction_added':
-        return 'Nouvelle réaction';
-      case 'comment_added':
-        return 'Nouveau commentaire';
-      case 'follow':
-        return 'Nouvel abonné';
-      default:
-        return 'Notification';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {

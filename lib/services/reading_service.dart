@@ -45,11 +45,11 @@ class ReadingService {
         return;
       }
 
-      final response = await _dio.post(
+      await _dio.post(
         '/api/stories/$storyId/view',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-    } on DioException catch (e) {
+    } on DioException {
     }
   }
 
@@ -67,7 +67,7 @@ class ReadingService {
         return;
       }
 
-      final response = await _dio.post(
+      await _dio.post(
         '/api/stories/$storyId/chapters/$chapterId/progress',
         data: {
           'scroll_position': scrollPosition,
@@ -76,7 +76,7 @@ class ReadingService {
         },
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
-    } on DioException catch (e) {
+    } on DioException {
     }
   }
 
@@ -104,7 +104,7 @@ class ReadingService {
         return null;
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       return null;
     }
   }
@@ -124,7 +124,7 @@ class ReadingService {
         return response.data['data'];
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       return null;
     }
   }
@@ -146,7 +146,7 @@ class ReadingService {
         return true;
       }
       return false;
-    } on DioException catch (e) {
+    } on DioException {
       return false;
     }
   }
@@ -166,7 +166,7 @@ class ReadingService {
         return response.data['data']['is_completed'] ?? false;
       }
       return false;
-    } on DioException catch (e) {
+    } on DioException {
       return false;
     }
   }
@@ -186,7 +186,7 @@ class ReadingService {
         return response.data['data'];
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       return null;
     }
   }
@@ -200,7 +200,7 @@ class ReadingService {
         return response.data['data'];
       }
       return null;
-    } on DioException catch (e) {
+    } on DioException {
       return null;
     }
   }
@@ -225,7 +225,7 @@ class ReadingService {
         );
       }
       return [];
-    } on DioException catch (e) {
+    } on DioException {
       return [];
     }
   }

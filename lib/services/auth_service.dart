@@ -28,7 +28,7 @@ class AuthService {
   // Supprimer le token
   Future<void> deleteToken() async {
     await _storage.delete(key: 'auth_token');
-    final check = await _storage.read(key: 'auth_token');
+    await _storage.read(key: 'auth_token');
      }
 
   // Vérifier si l'utilisateur est connecté
