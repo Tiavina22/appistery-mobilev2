@@ -158,8 +158,8 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                 ],
               ),
             ),
-            // Filter tabs with iOS pill style
-            if (!_isLoading && _readStories.isNotEmpty) ...[
+            // Filter tabs with iOS pill style - Keep visible once stories are loaded
+            if (_readStories.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -365,17 +365,34 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
 
     return GestureDetector(
       onTap: () async {
-        // Convert story map to Story object
-        final storyObj = Story.fromJson(story);
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StoryDetailScreen(story: storyObj),
-          ),
-        );
-        // Refresh list on return
-        _loadReadStories();
+        // Load complete story data including author and avatar
+        try {
+          final storyService = StoryService();
+          final completeStory = await storyService.getStoryById(story['id']);
+          if (mounted) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StoryDetailScreen(story: completeStory),
+              ),
+            );
+            // Refresh list on return
+            _loadReadStories();
+          }
+        } catch (e) {
+          // Fallback: use available data
+          final storyObj = Story.fromJson(story);
+          if (mounted) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StoryDetailScreen(story: storyObj),
+              ),
+            );
+            // Refresh list on return
+            _loadReadStories();
+          }
+        }
       },
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
