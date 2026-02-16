@@ -268,13 +268,6 @@ class _HomeScreenState extends State<HomeScreen> {
           currentIndex: _selectedIndex,
           onTap: (int index) {
             setState(() => _selectedIndex = index);
-            // Load favorites when favorites tab is selected
-            if (index == 2) {
-              Provider.of<StoryProvider>(
-                context,
-                listen: false,
-              ).loadFavorites();
-            }
           },
           type: BottomNavigationBarType.fixed,
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -296,11 +289,6 @@ class _HomeScreenState extends State<HomeScreen> {
               label: 'search'.tr(),
             ),
             BottomNavigationBarItem(
-              icon: const Icon(Icons.favorite_border),
-              activeIcon: const Icon(Icons.favorite),
-              label: 'favorites'.tr(),
-            ),
-            BottomNavigationBarItem(
               icon: const Icon(Icons.person_outline),
               activeIcon: const Icon(Icons.person),
               label: 'settings'.tr(),
@@ -318,7 +306,6 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildHomeTab(),
         _buildSearchTab(),
-        _buildFavoritesTab(),
         _buildSettingsTab(),
       ],
     );
@@ -829,112 +816,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFavoritesTab() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    return Consumer<StoryProvider>(
-      builder: (context, storyProvider, _) {
-        if (storyProvider.isLoading && storyProvider.favorites.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
 
-        if (storyProvider.favorites.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.favorite_border_rounded,
-                    size: 80,
-                    color: isDarkMode
-                        ? Colors.grey.shade700
-                        : Colors.grey.shade400,
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'no_favorites'.tr(),
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: isDarkMode
-                          ? Colors.grey.shade500
-                          : Colors.grey.shade700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'favorites_will_appear_here'.tr(),
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDarkMode
-                          ? Colors.grey.shade600
-                          : Colors.grey.shade500,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() => _selectedIndex = 1); // Index 1 = Search tab
-                    },
-                    icon: const Icon(Icons.explore_rounded),
-                    label: Text('discover'.tr()),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 14,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Titre de la page - Apple style
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Text(
-                'my_favorites'.tr(),
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.5,
-                  color: isDarkMode ? Colors.white : Colors.black,
-                ),
-              ),
-            ),
-            // Grid des favoris - Apple Grid System
-            Expanded(
-              child: GridView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.68,
-                ),
-                itemCount: storyProvider.favorites.length,
-                itemBuilder: (context, index) {
-                  final story = storyProvider.favorites[index];
-                  return _buildStoryGridItem(story);
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   // Settings tab is now in a separate SettingsScreen
   // This method is kept for reference but is no longer used
