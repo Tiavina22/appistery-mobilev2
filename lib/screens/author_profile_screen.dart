@@ -120,9 +120,8 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
       body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
-                  // AppBar avec avatar
                   SliverAppBar(
-                    expandedHeight: 200,
+                    expandedHeight: 0,
                     pinned: true,
                     backgroundColor: backgroundColor,
                     elevation: 0,
@@ -140,81 +139,72 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                       ),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Fond dégradé
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: isDarkMode
-                                    ? [Colors.grey[800]!, Colors.black]
-                                    : [Colors.grey[400]!, Colors.grey[200]!],
-                              ),
-                            ),
-                          ),
-                          // Avatar centré
-                          Center(child: _buildAvatar(isDarkMode: isDarkMode)),
-                        ],
-                      ),
-                    ),
                   ),
 
-                  // Informations du profil
+                  // Informations du profil avec avatar à gauche
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          // Nom de l'auteur
-                          Text(
-                            widget.authorName,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Spécialité
-                          if (_authorProfile?['speciality'] != null)
-                            Text(
-                              _authorProfile!['speciality'],
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: textColorSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          const SizedBox(height: 20),
-
-                          // Stats
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildStatItem(
-                                'Histoires',
-                                _stats['total_stories']?.toString() ?? '0',
-                                isDarkMode: isDarkMode,
-                              ),
-                              _buildStatItem(
-                                'Followers',
-                                _followersCount.toString(),
-                                isDarkMode: isDarkMode,
-                              ),
-                              _buildStatItem(
-                                'Vues',
-                                _stats['total_views']?.toString() ?? '0',
-                                isDarkMode: isDarkMode,
+                              // Avatar à gauche
+                              _buildAvatar(isDarkMode: isDarkMode),
+                              const SizedBox(width: 16),
+                              // Infos à droite
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Nom de l'auteur
+                                    Text(
+                                      widget.authorName,
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    // Spécialité
+                                    if (_authorProfile?['speciality'] != null)
+                                      Text(
+                                        _authorProfile!['speciality'],
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: textColorSecondary,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 12),
+                                    // Stats en colonne
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        _buildStatItemCompact(
+                                          'Histoires',
+                                          _stats['total_stories']?.toString() ?? '0',
+                                          isDarkMode: isDarkMode,
+                                        ),
+                                        _buildStatItemCompact(
+                                          'Followers',
+                                          _followersCount.toString(),
+                                          isDarkMode: isDarkMode,
+                                        ),
+                                        _buildStatItemCompact(
+                                          'Vues',
+                                          _stats['total_views']?.toString() ?? '0',
+                                          isDarkMode: isDarkMode,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
 
                           // Bouton Suivre/Abonné
                           SizedBox(
@@ -392,6 +382,30 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         ),
         const SizedBox(height: 4),
         Text(label, style: TextStyle(fontSize: 14, color: textColorSecondary)),
+      ],
+    );
+  }
+
+  Widget _buildStatItemCompact(
+    String label,
+    String value, {
+    required bool isDarkMode,
+  }) {
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final textColorSecondary = isDarkMode ? Colors.grey[400] : Colors.grey[600];
+
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(fontSize: 12, color: textColorSecondary)),
       ],
     );
   }
