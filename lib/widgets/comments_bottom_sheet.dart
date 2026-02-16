@@ -338,6 +338,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
 
     try {
       setState(() => _isSubmitting = true);
+      // Conserver l'ID du commentaire parent avant de réinitialiser l'état de réponse
+      final parentId = _replyingToCommentId;
       
       // Optimistic update - add comment immediately
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -348,7 +350,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         'comment_text': text,
         'created_at': DateTime.now().toIso8601String(),
         'is_edited': false,
-        'parent_comment_id': _replyingToCommentId,
+        'parent_comment_id': parentId,
         'user': {
           'id': user?['id'],
           'username': user?['username'],
@@ -367,15 +369,15 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
       });
       
       _commentController.clear();
-      _cancelReply();
       _focusNode.unfocus();
       
       // Send to server
       await _reactionService.addComment(
         widget.storyId,
         text,
-        parentCommentId: _replyingToCommentId,
+        parentCommentId: parentId,
       );
+      _cancelReply();
       
       setState(() => _isSubmitting = false);
       
