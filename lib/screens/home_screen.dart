@@ -1555,23 +1555,31 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          // Grille horizontale scrollable
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: newReleases.length,
-              itemBuilder: (context, index) {
-                final story = newReleases[index];
-                return Container(
-                  width: 135,
-                  margin: EdgeInsets.only(
-                    right: index < newReleases.length - 1 ? 10 : 0,
-                  ),
-                  child: _buildStoryGridItem(story),
-                );
-              },
-            ),
+          // Grille horizontale scrollable - mêmes dimensions que les cards des sections genres
+          Builder(
+            builder: (context) {
+              // Calculer la taille identique aux cards du GridView (crossAxisCount: 3, ratio: 0.68)
+              final screenWidth = MediaQuery.of(context).size.width;
+              final cardWidth = (screenWidth - 32 - 20) / 3; // padding 16*2 + spacing 10*2
+              final cardHeight = cardWidth / 0.68;
+              return SizedBox(
+                height: cardHeight,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: newReleases.length,
+                  itemBuilder: (context, index) {
+                    final story = newReleases[index];
+                    return Container(
+                      width: cardWidth,
+                      margin: EdgeInsets.only(
+                        right: index < newReleases.length - 1 ? 10 : 0,
+                      ),
+                      child: _buildStoryGridItem(story),
+                    );
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
