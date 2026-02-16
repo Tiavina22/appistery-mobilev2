@@ -117,16 +117,15 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : NestedScrollView(
+      body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
                   // AppBar avec avatar
                   SliverAppBar(
                     expandedHeight: 200,
                     pinned: true,
-                    backgroundColor: cardColor,
+                    backgroundColor: backgroundColor,
+                    elevation: 0,
                     leading: IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
@@ -300,7 +299,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                       ),
                     ),
                   ),
-                ];
+              ];
               },
               body: TabBarView(
                 controller: _tabController,
@@ -458,20 +457,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Email',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _authorProfile?['email'] ?? 'Non disponible',
-            style: TextStyle(fontSize: 14, color: textColorSecondary),
-          ),
-          const SizedBox(height: 20),
           Text(
             'Membre depuis',
             style: TextStyle(
