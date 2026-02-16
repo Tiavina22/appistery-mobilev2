@@ -671,9 +671,9 @@ class _HomeScreenState extends State<HomeScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => GenreStoriesScreen(
+            builder: (context) => CategoryViewAllScreen(
+              genreName: genre['title'] ?? 'Unknown',
               genreId: genre['id'] ?? 0,
-              genreTitle: genre['title'] ?? 'Unknown',
             ),
           ),
         );

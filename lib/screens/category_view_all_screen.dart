@@ -6,26 +6,64 @@ import '../services/story_service.dart';
 import '../services/category_intelligence_service.dart';
 import 'story_detail_screen.dart';
 
-class CategoryViewAllScreen extends StatelessWidget {
+class CategoryViewAllScreen extends StatefulWidget {
   final String genreName;
   final String? intelligentTitle;
-  final List<Story> stories;
+  final List<Story>? stories;
+  final int? genreId;
 
   const CategoryViewAllScreen({
     super.key,
     required this.genreName,
     this.intelligentTitle,
-    required this.stories,
+    this.stories,
+    this.genreId,
   });
+
+  @override
+  State<CategoryViewAllScreen> createState() => _CategoryViewAllScreenState();
+}
+
+class _CategoryViewAllScreenState extends State<CategoryViewAllScreen> {
+  final StoryService _storyService = StoryService();
+  List<Story> _stories = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.stories != null && widget.stories!.isNotEmpty) {
+      _stories = widget.stories!;
+    } else if (widget.genreId != null) {
+      _loadStoriesByGenre();
+    }
+  }
+
+  Future<void> _loadStoriesByGenre() async {
+    setState(() => _isLoading = true);
+    try {
+      final allStories = await _storyService.getAllStories();
+      final filtered = allStories
+          .where((story) =>
+              story.genre.toLowerCase() == widget.genreName.toLowerCase())
+          .toList();
+      setState(() {
+        _stories = filtered;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     // Utiliser le titre intelligent si fourni, sinon générer un nouveau ou utiliser genreName
-    final displayTitle = intelligentTitle ?? 
+    final displayTitle = widget.intelligentTitle ?? 
                         CategoryIntelligenceService().generateCategoryTitle(
-                          genreName,
+                          widget.genreName,
                           language: context.locale.languageCode,
                           currentTime: DateTime.now(),
                         );
@@ -52,36 +90,38 @@ class CategoryViewAllScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: stories.isEmpty
-          ? Center(
-              child: Text(
-                'no_data'.tr(),
-                style: TextStyle(
-                  color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
-                  fontSize: 16,
-                ),
-              ),
-            )
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.68,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _stories.isEmpty
+              ? Center(
+                  child: Text(
+                    'no_data'.tr(),
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+                      fontSize: 16,
+                    ),
                   ),
-                  itemCount: stories.length,
-                  itemBuilder: (context, index) {
-                    final story = stories[index];
-                    return _buildStoryGridItem(context, story);
-                  },
+                )
+              : SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        mainAxisSpacing: 10,
+                        crossAxisSpacing: 10,
+                        childAspectRatio: 0.68,
+                      ),
+                      itemCount: _stories.length,
+                      itemBuilder: (context, index) {
+                        final story = _stories[index];
+                        return _buildStoryGridItem(context, story);
+                      },
+                    ),
+                  ),
                 ),
-              ),
-            ),
     );
   }
 
