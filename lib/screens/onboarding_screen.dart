@@ -16,19 +16,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<OnboardingData> _pages = [
     OnboardingData(
-      icon: Icons.book,
+      imagePath: 'assets/onboarding/one.png',
       titleKey: 'onboarding_title_1',
       descriptionKey: 'onboarding_desc_1',
       color: const Color(0xFF1DB954),
     ),
     OnboardingData(
-      icon: Icons.headphones,
+      imagePath: 'assets/onboarding/two.png',
       titleKey: 'onboarding_title_2',
       descriptionKey: 'onboarding_desc_2',
       color: const Color(0xFF1DB954),
     ),
     OnboardingData(
-      icon: Icons.auto_stories,
+      imagePath: 'assets/onboarding/three.png',
       titleKey: 'onboarding_title_3',
       descriptionKey: 'onboarding_desc_3',
       color: const Color(0xFF1DB954),
@@ -58,108 +58,151 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     }
   }
 
-  void _previousPage() {
-    if (_currentPage > 0) {
-      _pageController.previousPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: PageView.builder(
-                controller: _pageController,
-                onPageChanged: (index) {
-                  setState(() {
-                    _currentPage = index;
-                  });
-                },
-                itemCount: _pages.length,
-                itemBuilder: (context, index) {
-                  return _OnboardingPage(data: _pages[index]);
-                },
+      body: Stack(
+        children: [
+          // PageView with images
+          PageView.builder(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentPage = index;
+              });
+            },
+            itemCount: _pages.length,
+            itemBuilder: (context, index) {
+              return _OnboardingPage(data: _pages[index]);
+            },
+          ),
+          
+          // Top gradient overlay for better text visibility
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.7),
+                    Colors.transparent,
+                  ],
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      _pages.length,
-                      (index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: _currentPage == index ? 32 : 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _currentPage == index
-                              ? const Color(0xFF1DB954)
-                              : Colors.grey.shade800,
-                          borderRadius: BorderRadius.circular(4),
+          ),
+          
+          // Skip button at top right
+          if (_currentPage < _pages.length - 1)
+            Positioned(
+              top: 40,
+              right: 20,
+              child: TextButton(
+                onPressed: _completeOnboarding,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.black.withOpacity(0.3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: Text(
+                  'skip'.tr(),
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          
+          // Bottom section with dots and button
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.all(32.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withOpacity(0.8),
+                      Colors.black,
+                    ],
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Page indicators
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        _pages.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: _currentPage == index ? 24 : 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: _currentPage == index
+                                ? const Color(0xFF1DB954)
+                                : Colors.grey.shade700,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      if (_currentPage > 0)
-                        TextButton(
-                          onPressed: _previousPage,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey,
-                          ),
-                          child: Text('previous'.tr()),
-                        )
-                      else
-                        const SizedBox(width: 80),
-                      TextButton(
-                        onPressed: _completeOnboarding,
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.grey,
-                        ),
-                        child: Text('skip'.tr()),
-                      ),
-                      ElevatedButton(
-                        onPressed: _nextPage,
+                    const SizedBox(height: 32),
+                    
+                    // Main button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _currentPage == _pages.length - 1
+                            ? _completeOnboarding
+                            : _nextPage,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1DB954),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(4),
                           ),
+                          elevation: 0,
                         ),
                         child: Text(
                           _currentPage == _pages.length - 1
                               ? 'start'.tr()
                               : 'next'.tr(),
                           style: const TextStyle(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -172,13 +215,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 }
 
 class OnboardingData {
-  final IconData icon;
+  final String imagePath;
   final String titleKey;
   final String descriptionKey;
   final Color color;
 
   OnboardingData({
-    required this.icon,
+    required this.imagePath,
     required this.titleKey,
     required this.descriptionKey,
     required this.color,
@@ -192,40 +235,62 @@ class _OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: data.color.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(data.icon, size: 80, color: data.color),
+    return Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage(data.imagePath),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.black.withOpacity(0.2),
+              Colors.black.withOpacity(0.4),
+              Colors.black.withOpacity(0.8),
+            ],
+            stops: const [0.0, 0.5, 1.0],
           ),
-          const SizedBox(height: 40),
-          Text(
-            data.titleKey.tr(),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
+                // Title
+                Text(
+                  data.titleKey.tr(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                // Description
+                Text(
+                  data.descriptionKey.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white.withOpacity(0.9),
+                    height: 1.5,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                const SizedBox(height: 140), // Space for bottom controls
+              ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            data.descriptionKey.tr(),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade400,
-              height: 1.5,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

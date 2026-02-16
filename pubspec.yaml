@@ -52,4 +52,5 @@ flutter:
   assets:
     - assets/translations/
     - assets/logo/
+    - assets/onboarding/
     - .env
