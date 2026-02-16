@@ -1294,47 +1294,32 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Statut de lecture
+        // Badge de lecture complétée
         if (_isCompleted)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
-              border: Border.all(color: Colors.green, width: 1),
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Vous avez complété cette histoire',
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (_completionInfo != null)
-                        Text(
-                          'Temps de lecture: ${_completionInfo!['total_reading_time_hours']} h',
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
+                const Icon(Icons.check_circle, color: Colors.white, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'already_read'.tr(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
 
-        const SizedBox(height: 16),
+        if (_isCompleted) const SizedBox(height: 16),
       ],
     );
   }

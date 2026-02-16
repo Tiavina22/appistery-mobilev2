@@ -2542,7 +2542,12 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icons.info_outline_rounded,
               title: 'version'.tr(),
               subtitle: 'v1.0.0',
-              trailing: const SizedBox.shrink(),
+              onTap: _showAboutBottomSheet,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
+                size: 20,
+              ),
               isFirst: true,
             ),
 
@@ -3077,6 +3082,108 @@ class _HomeScreenState extends State<HomeScreen> {
         ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
       }
     }
+  }
+
+  // Afficher le bottom sheet "À propos de l'application"
+  void _showAboutBottomSheet() {
+    final isDarkMode = Provider.of<ThemeProvider>(context, listen: false).isDarkMode;
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(20),
+              topRight: Radius.circular(20),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Logo de l'application
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    'assets/logo/logo-appistery-no.png',
+                    width: 80,
+                    height: 80,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Nom de l'application
+                Text(
+                  'Appistery',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Description
+                Text(
+                  'app_description'.tr(),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.6,
+                    color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Version
+                Text(
+                  'Version 1.0.0',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isDarkMode ? Colors.grey[500] : Colors.grey[500],
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Bouton fermer
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'close'.tr(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2E7D32),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
