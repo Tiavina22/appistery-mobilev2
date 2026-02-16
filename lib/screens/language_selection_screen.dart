@@ -14,6 +14,17 @@ class LanguageSelectionScreen extends StatefulWidget {
 class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
   String _selectedLanguage = 'en';
 
+  String _getContinueText() {
+    switch (_selectedLanguage) {
+      case 'fr':
+        return 'Continuer';
+      case 'mg':
+        return 'Hanohy';
+      default:
+        return 'Continue';
+    }
+  }
+
   Future<void> _selectLanguage(
     BuildContext context,
     String languageCode,
@@ -150,9 +161,9 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  child: Text(
+                    _getContinueText(),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],

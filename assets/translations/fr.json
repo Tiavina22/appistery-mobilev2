@@ -106,6 +106,7 @@
   "result": "résultat",
   "results": "résultats",
   "no_favorites": "Vous n'avez pas encore d'histoires favorites",
+  "favorites_will_appear_here": "Vos histoires préférées apparaîtront ici",
   "discover": "Découvrir",
   "chapters": "chapitres",
   "chapters_title": "Chapitres",
@@ -296,5 +297,9 @@
   "per_month": "/ mois",
   "months_access": "mois d'accès",
   "popular": "Populaire",
-  "subscribe_now": "S'abonner maintenant"
+  "subscribe_now": "S'abonner maintenant",
+  "new_badge": "NOUVEAUTÉ",
+  "read_now": "Lire maintenant",
+  "new_this_week": "Nouveautés de la semaine",
+  "view_all": "Voir tout"
 }

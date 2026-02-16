@@ -37,27 +37,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Map de traduction des genres
   final Map<String, Map<String, String>> _genreTranslations = {
-    'Romance': {'fr': 'Romance', 'en': 'Romance'},
-    'Romantic': {'fr': 'Romantique', 'en': 'Romantic'},
-    'Horror': {'fr': 'Horreur', 'en': 'Horror'},
-    'Horreur': {'fr': 'Horreur', 'en': 'Horror'},
-    'Thriller': {'fr': 'Thriller', 'en': 'Thriller'},
-    'Suspense': {'fr': 'Suspense', 'en': 'Suspense'},
-    'Fantasy': {'fr': 'Fantaisie', 'en': 'Fantasy'},
-    'Fantaisie': {'fr': 'Fantaisie', 'en': 'Fantasy'},
-    'Science Fiction': {'fr': 'Science Fiction', 'en': 'Science Fiction'},
-    'Sci-Fi': {'fr': 'Science Fiction', 'en': 'Sci-Fi'},
-    'Drame': {'fr': 'Drame', 'en': 'Drama'},
-    'Drama': {'fr': 'Drame', 'en': 'Drama'},
-    'Comédie': {'fr': 'Comédie', 'en': 'Comedy'},
-    'Comedy': {'fr': 'Comédie', 'en': 'Comedy'},
-    'Aventure': {'fr': 'Aventure', 'en': 'Adventure'},
-    'Adventure': {'fr': 'Aventure', 'en': 'Adventure'},
-    'Action': {'fr': 'Action', 'en': 'Action'},
-    'Mystère': {'fr': 'Mystère', 'en': 'Mystery'},
-    'Mystery': {'fr': 'Mystère', 'en': 'Mystery'},
-    'Historique': {'fr': 'Historique', 'en': 'Historical'},
-    'Historical': {'fr': 'Historique', 'en': 'Historical'},
+    'Romance': {'fr': 'Romance', 'en': 'Romance', 'mg': 'Fitiavana'},
+    'Romantic': {'fr': 'Romantique', 'en': 'Romantic', 'mg': 'Fitiavana'},
+    'Horror': {'fr': 'Horreur', 'en': 'Horror', 'mg': 'Mampihorohoron'},
+    'Horreur': {'fr': 'Horreur', 'en': 'Horror', 'mg': 'Mampihorohoron'},
+    'Thriller': {'fr': 'Thriller', 'en': 'Thriller', 'mg': 'Thriller'},
+    'Suspense': {'fr': 'Suspense', 'en': 'Suspense', 'mg': 'Miandry'},
+    'Fantasy': {'fr': 'Fantaisie', 'en': 'Fantasy', 'mg': 'Nofinofy'},
+    'Fantaisie': {'fr': 'Fantaisie', 'en': 'Fantasy', 'mg': 'Nofinofy'},
+    'Science Fiction': {'fr': 'Science Fiction', 'en': 'Science Fiction', 'mg': 'Siansa Foronina'},
+    'Sci-Fi': {'fr': 'Science Fiction', 'en': 'Sci-Fi', 'mg': 'Siansa'},
+    'Drame': {'fr': 'Drame', 'en': 'Drama', 'mg': 'Tantara mampalahelo'},
+    'Drama': {'fr': 'Drame', 'en': 'Drama', 'mg': 'Tantara mampalahelo'},
+    'Comédie': {'fr': 'Comédie', 'en': 'Comedy', 'mg': 'Tantara mampiomehy'},
+    'Comedy': {'fr': 'Comédie', 'en': 'Comedy', 'mg': 'Tantara mampiomehy'},
+    'Aventure': {'fr': 'Aventure', 'en': 'Adventure', 'mg': 'Zava-nitranga'},
+    'Adventure': {'fr': 'Aventure', 'en': 'Adventure', 'mg': 'Zava-nitranga'},
+    'Action': {'fr': 'Action', 'en': 'Action', 'mg': 'Hetsika'},
+    'Mystère': {'fr': 'Mystère', 'en': 'Mystery', 'mg': 'Zava-miafina'},
+    'Mystery': {'fr': 'Mystère', 'en': 'Mystery', 'mg': 'Zava-miafina'},
+    'Historique': {'fr': 'Historique', 'en': 'Historical', 'mg': 'Tantara'},
+    'Historical': {'fr': 'Historique', 'en': 'Historical', 'mg': 'Tantara'},
   };
 
   // Fonction helper pour traduire le genre
@@ -865,7 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Vos histoires préférées apparaîtront ici',
+                    'favorites_will_appear_here'.tr(),
                     style: TextStyle(
                       fontSize: 14,
                       color: isDarkMode
@@ -1289,9 +1289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        context.locale.languageCode == 'fr' 
-                            ? 'NOUVEAUTÉ' 
-                            : 'NEW',
+                        'new_badge'.tr(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -1424,9 +1422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             },
                             icon: const Icon(Icons.play_arrow, size: 28),
                             label: Text(
-                              context.locale.languageCode == 'fr'
-                                  ? 'Lire maintenant'
-                                  : 'Read now',
+                              'read_now'.tr(),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -1496,9 +1492,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Générer un titre intelligent multilingue
-    final title = context.locale.languageCode == 'fr'
-        ? 'Nouveautés de la semaine'
-        : 'New this week';
+    final title = 'new_this_week'.tr();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -1617,9 +1611,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       },
                       child: Text(
-                        context.locale.languageCode == 'fr'
-                            ? 'Voir tout'
-                            : 'View all',
+                        'view_all'.tr(),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

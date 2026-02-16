@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,7 +7,6 @@ import '../services/story_service.dart';
 import '../services/reading_service.dart';
 import '../services/author_service.dart';
 import '../services/reaction_service.dart';
-import '../providers/story_provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/facebook_notification.dart';
 import 'author_profile_screen.dart';
@@ -37,17 +35,14 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Map<String, dynamic>? _reactionsData;
   bool _isLoadingReactions = false;
   bool _hasUserReacted = false;
-  String? _userReactionType;
   int _commentsCount = 0;
 
   // Nouveaux états pour le suivi de lecture
   bool _isCompleted = false;
-  Map<String, dynamic>? _completionInfo;
   Map<String, dynamic>? _readingStats;
   bool _isLoadingStats = false;
 
   // États pour le statut de lecture
-  Map<String, dynamic>? _lastReadingPosition;
   bool _hasStartedReading = false;
 
   // États pour les favoris
@@ -87,7 +82,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
       if (mounted) {
         setState(() {
-          _lastReadingPosition = lastPosition;
           _hasStartedReading = lastPosition != null;
         });
         if (lastPosition != null) {
@@ -122,7 +116,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       if (mounted) {
         setState(() {
           _readingStats = stats;
-          _completionInfo = completionInfo;
           _isCompleted =
               completionInfo != null && completionInfo['is_completed'] == true;
         });
@@ -162,7 +155,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         setState(() {
           _reactionsData = data;
           _hasUserReacted = data['userReaction'] != null;
-          _userReactionType = data['userReaction']?['reaction_type'];
+          _isFavorite = _hasUserReacted; // "Ma liste" est basée sur les reactions
           _commentsCount =
               commentsData['pagination']?['total'] ?? comments.length;
           _isLoadingReactions = false;
@@ -307,18 +300,16 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
     setState(() => _isLoadingFavorite = true);
     try {
-      final storyService = StoryService();
-      final wasFavorite = _isFavorite;
+      // Utiliser reactions pour "Ma liste" au lieu de favorites
+      final wasInList = _isFavorite;
 
-      if (_isFavorite) {
-        await storyService.removeFavorite(widget.story.id);
-      } else {
-        await storyService.addFavorite(widget.story.id);
-      }
+      // Toggle reaction (like/unlike)
+      await _reactionService.toggleReaction(widget.story.id);
+      await _loadReactions(); // Recharger pour mettre à jour _hasUserReacted
 
       if (mounted) {
         setState(() {
-          _isFavorite = !_isFavorite;
+          _isFavorite = _hasUserReacted; // Synchroniser avec le statut de reaction
         });
 
         // Afficher une notification
