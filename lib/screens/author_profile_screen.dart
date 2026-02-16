@@ -125,6 +125,8 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                     pinned: true,
                     backgroundColor: backgroundColor,
                     elevation: 0,
+                    scrolledUnderElevation: 0,
+                    forceElevated: false,
                     leading: IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),

@@ -197,7 +197,13 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
               const SizedBox(height: 16),
             ],
             // Content
-            if (_readStories.isEmpty)
+            if (_isLoading && _readStories.isEmpty)
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
+            else if (_readStories.isEmpty)
               Expanded(
                 child: Center(
                   child: Column(
