@@ -443,7 +443,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Commentaires',
+                            'comments_title'.tr(),
                             style: TextStyle(
                               color: textColor,
                               fontSize: 18,
@@ -816,7 +816,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 4),
                         child: Text(
-                          'Réponse à un commentaire',
+                          'comment_reply_to_comment'.tr(),
                           style: TextStyle(
                             fontSize: 11,
                             color: subtextColor,
@@ -849,16 +849,16 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
-                                Icon(
+                              children: [
+                                const Icon(
                                   Icons.verified,
                                   size: 10,
                                   color: Colors.white,
                                 ),
-                                SizedBox(width: 2),
+                                const SizedBox(width: 2),
                                 Text(
-                                  'Premium',
-                                  style: TextStyle(
+                                  'premium_badge'.tr(),
+                                  style: const TextStyle(
                                     fontSize: 10,
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
@@ -878,7 +878,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'Auteur',
+                              'author_badge'.tr(),
                               style: const TextStyle(
                                 fontSize: 10,
                                 color: Colors.white,
@@ -945,7 +945,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    likeCount > 0 ? likeCount.toString() : 'J\'aime',
+                                    likeCount > 0
+                                        ? likeCount.toString()
+                                        : 'like_button'.tr(),
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -971,7 +973,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                                 vertical: 4,
                               ),
                               child: Text(
-                                'Répondre',
+                                'reply_button'.tr(),
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
@@ -998,7 +1000,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     final difference = now.difference(dateTime);
 
     if (difference.inDays > 30) {
-      return DateFormat('d MMM').format(dateTime);
+      // Use 'fr' locale as fallback since 'mg' (Malagasy) is not supported by intl
+      return DateFormat('d MMM', 'fr').format(dateTime);
     } else if (difference.inDays > 0) {
       return '${difference.inDays}${'d'.tr()}';
     } else if (difference.inHours > 0) {

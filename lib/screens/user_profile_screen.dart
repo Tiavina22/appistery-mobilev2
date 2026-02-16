@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 // author_service removed: no posts/followers in UI
 
@@ -27,8 +26,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _loadExtras() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = authProvider.user;
+      Provider.of<AuthProvider>(context, listen: false);
 
       // Load countries
       final authService = AuthService();
@@ -314,45 +312,3 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 }
-
-Widget _buildDetailRow(String label, String value, bool isDark) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6.0),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-String _formatDate(dynamic raw) {
-  if (raw == null) return '—';
-  try {
-    final dt = DateTime.parse(raw.toString());
-    return dt.toLocal().toString().split('.').first;
-  } catch (e) {
-    return raw.toString();
-  }
-}
-
-// counts removed: no posts/followers/following in profile UI

@@ -2,7 +2,7 @@ import 'dart:math';
 
 /// Service d'Intelligence Artificielle maison pour générer des titres
 /// de catégories intelligents et personnalisés comme Netflix
-/// Supporte le français et l'anglais de manière dynamique
+/// Supporte le français, l'anglais et le malgache de manière dynamique
 class CategoryIntelligenceService {
   final Random _random = Random();
 
@@ -374,6 +374,189 @@ class CategoryIntelligenceService {
         'Tales of old',
       ],
     },
+
+    // ==================== MALAGASY ====================
+    'mg': {
+      // Romance
+      'Romance': [
+        'Ho anareo tia',
+        'Rehefa mitempo ny fo',
+        'Tantaran\'ny fo',
+        'Tiavo izao',
+        'Fitiavana sy hafanam-po',
+        'Eny amin\'ny rivotra ny fitiavana',
+        'Fihetseham-po lalina',
+      ],
+      'Romantic': [
+        'Ho anareo tia',
+        'Rehefa mitempo ny fo',
+        'Tantaran\'ny fo',
+        'Tiavo izao',
+        'Fitiavana sy hafanam-po',
+      ],
+      
+      // Horror
+      'Horror': [
+        'Mampatahotra anao',
+        'Horohoro azo antoka',
+        'Sahia matahotra',
+        'Alina tsy mahatery torimaso',
+        'Tahotra amin\'ny alina',
+        'Miomàna hangovitra',
+        'Miandry anao ny horohoro',
+      ],
+      'Horreur': [
+        'Mampatahotra anao',
+        'Horohoro azo antoka',
+        'Sahia matahotra',
+        'Alina tsy mahatery torimaso',
+        'Tahotra amin\'ny alina',
+      ],
+      
+      // Thriller / Suspense
+      'Thriller': [
+        'Suspense mampientanentana',
+        'Fahaketrahana lehibe',
+        'Mihazona mafy',
+        'Miakatra ny adrenalina',
+        'Mistery ho vavahana',
+        'Tsy afaka miala',
+        'Eo an-tsisin\'ny seza',
+      ],
+      'Suspense': [
+        'Suspense mampientanentana',
+        'Fahaketrahana lehibe',
+        'Mistery ho vavahana',
+        'Tsy afaka miala',
+      ],
+      
+      // Fantasy
+      'Fantasy': [
+        'Tontolo noforonina',
+        'Majika sy aventure',
+        'Mandosira any hafa',
+        'Univers mahagaga',
+        'Rehefa miasa ny majika',
+        'Mihoatra ny tena izy',
+        'Fanjakana voavoady',
+      ],
+      'Fantaisie': [
+        'Tontolo noforonina',
+        'Majika sy aventure',
+        'Mandosira any hafa',
+        'Univers mahagaga',
+      ],
+      
+      // Science-Fiction
+      'Science Fiction': [
+        'Ho avy mety',
+        'Dia amin\'ny fotoana',
+        'Teknolojia sy olombelona',
+        'Mihoatra ny kintana',
+        'Rahampitso manomboka androany',
+        'Univers mifanila',
+        'Efa izao ny ho avy',
+      ],
+      'Sci-Fi': [
+        'Ho avy mety',
+        'Dia amin\'ny fotoana',
+        'Mihoatra ny kintana',
+      ],
+      
+      // Drama
+      'Drame': [
+        'Fihetseham-po lalina',
+        'Tantara mampihontsina',
+        'Miatrika ny fiainana',
+        'Draman\'olombelona',
+        'Rehefa miova ny fiainana',
+        'Tantara mahery',
+        'Fihetseham-po mivantana',
+      ],
+      'Drama': [
+        'Fihetseham-po lalina',
+        'Tantara mampihontsina',
+        'Draman\'olombelona',
+        'Tantara mahery',
+      ],
+      
+      // Comedy
+      'Comédie': [
+        'Hehy azo antoka',
+        'Fihetseham-po tsara',
+        'Mialà sasatra ary mitsiky',
+        'Hampihomehy anao',
+        'Maivana',
+        'Fotoana mahafinaritra',
+        'Tsiky eo am-bava',
+      ],
+      'Comedy': [
+        'Hehy azo antoka',
+        'Fihetseham-po tsara',
+        'Hampihomehy anao',
+        'Fotoana mahafinaritra',
+      ],
+      
+      // Adventure
+      'Aventure': [
+        'Fitsidihana lehibe',
+        'Miantso ny aventure',
+        'Fikatsahana tsy mahazatra',
+        'Dia tsy hay hadinoina',
+        'Mandehana hikarokaroka',
+        'Dia tsy mampino',
+        'Fahitana mahafinaritra',
+      ],
+      'Adventure': [
+        'Fitsidihana lehibe',
+        'Miantso ny aventure',
+        'Fikatsahana tsy mahazatra',
+        'Mandehana hikarokaroka',
+      ],
+      
+      // Action
+      'Action': [
+        'Action mamirapiratra',
+        'Adrenalina madio',
+        'Haingana be',
+        'Cascades mahatalanjona',
+        'Fahaketrahana lehibe',
+        'Fo mivezivezy',
+        'Action tsy miato',
+      ],
+      
+      // Mystery
+      'Mystère': [
+        'Enigma mahavariana',
+        'Mistery ho vavahana',
+        'Soso-kevitra miafina',
+        'Famotorana mampientanentana',
+        'Tsiambaratelo voaseho',
+        'Vahy ny enigma',
+      ],
+      'Mystery': [
+        'Enigma mahavariana',
+        'Mistery ho vavahana',
+        'Famotorana mampientanentana',
+        'Tsiambaratelo voaseho',
+      ],
+      
+      // Historical
+      'Historique': [
+        'Milentika any amin\'ny lasa',
+        'Tantara velona',
+        'Vanim-potoana taloha',
+        'Vavolombelon\'ny tantara',
+        'Tantara fahiny',
+        'Fahatsiarovana taloha',
+      ],
+      'Historical': [
+        'Milentika any amin\'ny lasa',
+        'Tantara velona',
+        'Vavolombelon\'ny tantara',
+        'Tantara fahiny',
+      ],
+    },
   };
 
   /// Templates contextuels basés sur l'heure de la journée
@@ -420,6 +603,27 @@ class CategoryIntelligenceService {
         'Fantasy': ['Fantastic dreams', 'Midnight magic'],
       },
     },
+    'mg': {
+      'morning': {
+        'Romance': ['Atombohy ny andro amin\'ny fitiavana', 'Hafaliana maraina'],
+        'Horror': ['Horohoro maraina', 'Mifohaza matahotra'],
+        'Fantasy': ['Majika maraina', 'Manoroninofy'],
+      },
+      'afternoon': {
+        'Romance': ['Tolakandro romantika', 'Fialan-tsasatra fitiavana'],
+        'Thriller': ['Suspense tolakandro', 'Fahaketrahana miakatra'],
+      },
+      'evening': {
+        'Horror': ['Hariva mampatahotra', 'Rehefa milentika ny masoandro'],
+        'Thriller': ['Mistery hariva', 'Hariva suspense'],
+        'Romance': ['Romance alina', 'Hariva manokana'],
+      },
+      'night': {
+        'Horror': ['Tahotra alina', 'Nofy ratsy'],
+        'Thriller': ['Alina mistery', 'Tsy mahatery torimaso'],
+        'Fantasy': ['Nofy mahagaga', 'Majika misasak\'alina'],
+      },
+    },
   };
 
   /// Mots-clés pour identifier les genres alternatifs
@@ -458,7 +662,13 @@ class CategoryIntelligenceService {
     
     // Si le genre est vide ou inconnu, retourner un titre par défaut
     if (cleanGenre.isEmpty) {
-      return lang == 'fr' ? 'Découvrez nos histoires' : 'Discover our stories';
+      if (lang == 'mg') {
+        return 'Mahita ny tantaranay';
+      } else if (lang == 'fr') {
+        return 'Découvrez nos histoires';
+      } else {
+        return 'Discover our stories';
+      }
     }
 
     // 1. Essayer de trouver des templates directs
@@ -541,29 +751,49 @@ class CategoryIntelligenceService {
     String language,
   ) {
     // Templates génériques par défaut
-    final genericTemplates = language == 'fr'
-        ? [
-            'Découvrez $genre',
-            'Plongez dans $genre',
-            'Explorez $genre',
-            '$genre pour vous',
-            'Sélection $genre',
-            'L\'univers $genre',
-            'Collection $genre',
-          ]
-        : [
-            'Discover $genre',
-            'Dive into $genre',
-            'Explore $genre',
-            '$genre for you',
-            '$genre selection',
-            'The $genre universe',
-            '$genre collection',
-          ];
+    List<String> genericTemplates;
+    
+    if (language == 'mg') {
+      genericTemplates = [
+        'Mahita $genre',
+        'Milentika ao amin\'ny $genre',
+        'Tsidiho $genre',
+        '$genre ho anao',
+        'Safidy $genre',
+        'Tontolo $genre',
+        'Rakitra $genre',
+      ];
+    } else if (language == 'fr') {
+      genericTemplates = [
+        'Découvrez $genre',
+        'Plongez dans $genre',
+        'Explorez $genre',
+        '$genre pour vous',
+        'Sélection $genre',
+        'L\'univers $genre',
+        'Collection $genre',
+      ];
+    } else {
+      genericTemplates = [
+        'Discover $genre',
+        'Dive into $genre',
+        'Explore $genre',
+        '$genre for you',
+        '$genre selection',
+        'The $genre universe',
+        '$genre collection',
+      ];
+    }
 
     // Si l'utilisateur a beaucoup lu, personnaliser
     if (userReadCount != null && userReadCount > 10) {
-      if (language == 'fr') {
+      if (language == 'mg') {
+        genericTemplates.addAll([
+          'Bebe kokoa $genre ho anao',
+          'Tohizo amin\'ny $genre',
+          'Mbola betsaka $genre',
+        ]);
+      } else if (language == 'fr') {
         genericTemplates.addAll([
           'Plus de $genre pour vous',
           'Continuez avec $genre',
@@ -590,17 +820,27 @@ class CategoryIntelligenceService {
   }) {
     if (storyCount == 0) return null;
 
-    final subtitles = language == 'fr'
-        ? [
-            '$storyCount histoire${storyCount > 1 ? 's' : ''} à découvrir',
-            'Sélection de $storyCount titre${storyCount > 1 ? 's' : ''}',
-            '$storyCount histoire${storyCount > 1 ? 's' : ''} captivante${storyCount > 1 ? 's' : ''}',
-          ]
-        : [
-            '$storyCount stor${storyCount > 1 ? 'ies' : 'y'} to discover',
-            'Selection of $storyCount title${storyCount > 1 ? 's' : ''}',
-            '$storyCount captivating stor${storyCount > 1 ? 'ies' : 'y'}',
-          ];
+    List<String> subtitles;
+    
+    if (language == 'mg') {
+      subtitles = [
+        '$storyCount tantara ho hitanao',
+        'Safidy tantara $storyCount',
+        '$storyCount tantara mahasarika',
+      ];
+    } else if (language == 'fr') {
+      subtitles = [
+        '$storyCount histoire${storyCount > 1 ? 's' : ''} à découvrir',
+        'Sélection de $storyCount titre${storyCount > 1 ? 's' : ''}',
+        '$storyCount histoire${storyCount > 1 ? 's' : ''} captivante${storyCount > 1 ? 's' : ''}',
+      ];
+    } else {
+      subtitles = [
+        '$storyCount stor${storyCount > 1 ? 'ies' : 'y'} to discover',
+        'Selection of $storyCount title${storyCount > 1 ? 's' : ''}',
+        '$storyCount captivating stor${storyCount > 1 ? 'ies' : 'y'}',
+      ];
+    }
 
     return subtitles[_random.nextInt(subtitles.length)];
   }
@@ -629,7 +869,13 @@ class CategoryIntelligenceService {
     String language = 'fr',
   }) {
     if (preferences.isEmpty) {
-      return language == 'fr' ? 'Recommandé pour vous' : 'Recommended for you';
+      if (language == 'mg') {
+        return 'Soso-kevitra ho anao';
+      } else if (language == 'fr') {
+        return 'Recommandé pour vous';
+      } else {
+        return 'Recommended for you';
+      }
     }
 
     // Trouver le genre préféré
@@ -637,25 +883,39 @@ class CategoryIntelligenceService {
         .reduce((a, b) => a.value > b.value ? a : b)
         .key;
 
-    final personalizedTitles = language == 'fr'
-        ? [
-            'Sélectionné pour vous',
-            'Vos histoires préférées',
-            'Recommandé pour vous',
-            'Continuer votre lecture',
-            'Parce que vous aimez $topGenre',
-            'Basé sur vos goûts',
-            'Fait pour vous',
-          ]
-        : [
-            'Selected for you',
-            'Your favorite stories',
-            'Recommended for you',
-            'Continue reading',
-            'Because you love $topGenre',
-            'Based on your taste',
-            'Made for you',
-          ];
+    List<String> personalizedTitles;
+    
+    if (language == 'mg') {
+      personalizedTitles = [
+        'Voafidy ho anao',
+        'Ny tantaranao tiana',
+        'Soso-kevitra ho anao',
+        'Tohizo ny famakiana',
+        'Satria tianao $topGenre',
+        'Mifototra amin\'ny fitiavanao',
+        'Natao ho anao',
+      ];
+    } else if (language == 'fr') {
+      personalizedTitles = [
+        'Sélectionné pour vous',
+        'Vos histoires préférées',
+        'Recommandé pour vous',
+        'Continuer votre lecture',
+        'Parce que vous aimez $topGenre',
+        'Basé sur vos goûts',
+        'Fait pour vous',
+      ];
+    } else {
+      personalizedTitles = [
+        'Selected for you',
+        'Your favorite stories',
+        'Recommended for you',
+        'Continue reading',
+        'Because you love $topGenre',
+        'Based on your taste',
+        'Made for you',
+      ];
+    }
 
     return personalizedTitles[_random.nextInt(personalizedTitles.length)];
   }

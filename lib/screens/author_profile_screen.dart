@@ -25,7 +25,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
   final AuthorService _authorService = AuthorService();
   late TabController _tabController;
 
-  bool _isLoading = true;
   bool _isFollowing = false;
   int _followersCount = 0;
   Map<String, dynamic>? _authorProfile;
@@ -46,7 +45,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
   }
 
   Future<void> _loadAuthorData() async {
-    setState(() => _isLoading = true);
 
     try {
       // Charger en parallèle
@@ -66,10 +64,8 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
             .map((json) => Story.fromJson(json))
             .toList();
         _stats = results[4] as Map<String, dynamic>;
-        _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -113,7 +109,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
-    final cardColor = isDarkMode ? Colors.grey[900] : Colors.grey[200];
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -364,29 +359,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
     }
   }
 
-  Widget _buildStatItem(
-    String label,
-    String value, {
-    required bool isDarkMode,
-  }) {
-    final textColor = isDarkMode ? Colors.white : Colors.black;
-    final textColorSecondary = isDarkMode ? Colors.grey[400] : Colors.grey[600];
-
-    return Column(
-      children: [
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: textColor,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 14, color: textColorSecondary)),
-      ],
-    );
-  }
 
   Widget _buildStatItemCompact(
     String label,

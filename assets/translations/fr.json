@@ -301,5 +301,12 @@
   "new_badge": "NOUVEAUTÉ",
   "read_now": "Lire maintenant",
   "new_this_week": "Nouveautés de la semaine",
-  "view_all": "Voir tout"
+  "view_all": "Voir tout",
+  "comments_title": "Commentaires",
+  "comment_reply_to_comment": "Répondre à",
+  "premium_badge": "Premium",
+  "author_badge": "Auteur",
+  "like_button": "J'aime",
+  "reply_button": "Répondre",
+  "edited_label": "(modifié)"
 }

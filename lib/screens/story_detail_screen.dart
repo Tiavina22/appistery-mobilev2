@@ -247,7 +247,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Future<void> _toggleFollow() async {
     setState(() => _isLoadingFollow = true);
     try {
-      final wasFollowing = _isFollowing;
       if (_isFollowing) {
         await _authorService.unfollowAuthor(1);
       } else {
