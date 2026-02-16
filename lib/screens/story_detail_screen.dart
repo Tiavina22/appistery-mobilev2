@@ -13,7 +13,7 @@ import '../providers/auth_provider.dart';
 import '../widgets/facebook_notification.dart';
 import 'author_profile_screen.dart';
 import 'reader_screen.dart';
-import 'story_comments_screen.dart';
+import '../widgets/comments_bottom_sheet.dart';
 
 class StoryDetailScreen extends StatefulWidget {
   final Story story;
@@ -220,13 +220,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   }
 
   void _openComments() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StoryCommentsScreen(
-          storyId: widget.story.id,
-          storyTitle: widget.story.title,
-        ),
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsBottomSheet(
+        storyId: widget.story.id,
+        storyTitle: widget.story.title,
       ),
     );
     // Recharger le compteur de commentaires au retour

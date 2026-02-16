@@ -23,6 +23,7 @@ class WebSocketService {
   final List<Function(dynamic)> _onSubscriptionUpdatedCallbacks = [];
   final List<Function(dynamic)> _onSubscriptionActivatedCallbacks = [];
   final List<Function(dynamic)> _onSubscriptionExpiredCallbacks = [];
+  final List<Function(dynamic)> _onCommentAddedCallbacks = [];
 
   bool get isConnected => _socket?.connected ?? false;
   IO.Socket? get socket => _socket;
@@ -208,6 +209,15 @@ class WebSocketService {
           }
         }
       });
+
+      _socket!.on('comment:added', (data) {
+        for (var callback in _onCommentAddedCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
     } catch (e) {
     }
   }
@@ -284,6 +294,11 @@ class WebSocketService {
   // Écouter les abonnements expirés
   void onSubscriptionExpired(Function(dynamic) callback) {
     _onSubscriptionExpiredCallbacks.add(callback);
+  }
+
+  // Écouter les nouveaux commentaires
+  void onCommentAdded(Function(dynamic) callback) {
+    _onCommentAddedCallbacks.add(callback);
   }
 
   // Demander la liste des genres
