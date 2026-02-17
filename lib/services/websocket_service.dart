@@ -18,6 +18,12 @@ class WebSocketService {
   final List<Function(dynamic)> _onFavoriteAddedCallbacks = [];
   final List<Function(dynamic)> _onFavoriteRemovedCallbacks = [];
   final List<Function(dynamic)> _onFavoritesUpdatedCallbacks = [];
+  final List<Function(dynamic)> _onGenresListCallbacks = [];
+  final List<Function(dynamic)> _onAuthorsListCallbacks = [];
+  final List<Function(dynamic)> _onSubscriptionUpdatedCallbacks = [];
+  final List<Function(dynamic)> _onSubscriptionActivatedCallbacks = [];
+  final List<Function(dynamic)> _onSubscriptionExpiredCallbacks = [];
+  final List<Function(dynamic)> _onCommentAddedCallbacks = [];
 
   bool get isConnected => _socket?.connected ?? false;
   IO.Socket? get socket => _socket;
@@ -25,13 +31,11 @@ class WebSocketService {
   // Se connecter au serveur WebSocket
   Future<void> connect() async {
     if (_socket?.connected == true) {
-      print('WebSocket: Already connected');
       return;
     }
 
     final token = await _authService.getToken();
     if (token == null) {
-      print('WebSocket: No token available');
       return;
     }
 
@@ -46,8 +50,6 @@ class WebSocketService {
       // Utiliser WS pour HTTP
       wsUrl = apiUrl.replaceFirst('http://', 'ws://');
     }
-
-    print('📡 WebSocket: Connecting to $wsUrl');
 
     try {
       _socket = IO.io(
@@ -70,128 +72,153 @@ class WebSocketService {
 
       // Événements de connexion
       _socket!.onConnect((_) {
-        print('✅ WebSocket: Connected to server');
       });
 
       _socket!.onConnectError((error) {
-        print('❌ WebSocket: Connection error: $error');
       });
 
       _socket!.onDisconnect((_) {
-        print('❌ WebSocket: Disconnected from server');
       });
 
       _socket!.onError((error) {
-        print('❌ WebSocket: Error: $error');
       });
 
       // Événements personnalisés de base
       _socket!.on('pong', (data) {
-        print('✅ WebSocket: Pong received: $data');
       });
 
       _socket!.on('user:online', (data) {
-        print('✅ WebSocket: User online: $data');
       });
 
       _socket!.on('user:offline', (data) {
-        print('✅ WebSocket: User offline: $data');
       });
 
       // IMPORTANT: Enregistrer les listeners pour les histoires ICI
       _socket!.on('story:new', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT story:new reçu!');
-        print('🔥🔥🔥 Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onNewStoryCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback story:new: $e');
           }
         }
       });
 
       _socket!.on('chapter:new', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT chapter:new reçu!');
-        print('🔥🔥🔥 Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onNewChapterCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback chapter:new: $e');
           }
         }
       });
 
       _socket!.on('notification:received', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT notification:received reçu!');
-        print('🔥🔥🔥 Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onNotificationCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback notification:received: $e');
           }
         }
       });
 
       _socket!.on('story:updated', (data) {
-        print('🔥🔥🔥 WebSocket: EVENT story:updated reçu!');
-        print('🔥🔥🔥 Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onStoryUpdatedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('❌ Erreur dans callback story:updated: $e');
           }
         }
       });
 
       // Événements de favoris
       _socket!.on('favorite:added', (data) {
-        print('WebSocket: EVENT favorite:added reçu!');
-        print('WebSocket: Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onFavoriteAddedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('Erreur dans callback favorite:added: $e');
           }
         }
       });
 
       _socket!.on('favorite:removed', (data) {
-        print('WebSocket: EVENT favorite:removed reçu!');
-        print('WebSocket: Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onFavoriteRemovedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('Erreur dans callback favorite:removed: $e');
+          }
+        }
+      });
+      // Événements pour genres et auteurs
+      _socket!.on('genres:list', (data) {
+        for (var callback in _onGenresListCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
           }
         }
       });
 
+      _socket!.on('authors:list', (data) {
+        for (var callback in _onAuthorsListCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
       _socket!.on('favorites:updated', (data) {
-        print('WebSocket: EVENT favorites:updated reçu!');
-        print('WebSocket: Data: $data');
         // Appeler tous les callbacks enregistrés
         for (var callback in _onFavoritesUpdatedCallbacks) {
           try {
             callback(data);
           } catch (e) {
-            print('Erreur dans callback favorites:updated: $e');
+          }
+        }
+      });
+
+      // Événements pour les abonnements
+      _socket!.on('subscription:updated', (data) {
+        for (var callback in _onSubscriptionUpdatedCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
+
+      _socket!.on('subscription:activated', (data) {
+        for (var callback in _onSubscriptionActivatedCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
+
+      _socket!.on('subscription:expired', (data) {
+        for (var callback in _onSubscriptionExpiredCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
+          }
+        }
+      });
+
+      _socket!.on('comment:added', (data) {
+        for (var callback in _onCommentAddedCallbacks) {
+          try {
+            callback(data);
+          } catch (e) {
           }
         }
       });
     } catch (e) {
-      print('WebSocket: Error initializing: $e');
     }
   }
 
@@ -199,7 +226,6 @@ class WebSocketService {
   void disconnect() {
     if (_socket?.connected == true) {
       _socket!.disconnect();
-      print('WebSocket: Disconnected');
     }
   }
 
@@ -212,44 +238,81 @@ class WebSocketService {
 
   // Écouter les notifications
   void onNotification(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback notification');
     _onNotificationCallbacks.add(callback);
   }
 
   // Écouter les nouvelles histoires
   void onNewStory(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback story:new');
     _onNewStoryCallbacks.add(callback);
   }
 
   // Écouter les nouveaux chapitres
   void onNewChapter(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback chapter:new');
     _onNewChapterCallbacks.add(callback);
   }
 
   // Écouter les mises à jour d'histoires
   void onStoryUpdated(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback story:updated');
     _onStoryUpdatedCallbacks.add(callback);
   }
 
   // Écouter l'ajout d'un favori
   void onFavoriteAdded(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback favorite:added');
     _onFavoriteAddedCallbacks.add(callback);
   }
 
   // Écouter la suppression d'un favori
   void onFavoriteRemoved(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback favorite:removed');
     _onFavoriteRemovedCallbacks.add(callback);
   }
 
   // Écouter les mises à jour globales des favoris
   void onFavoritesUpdated(Function(dynamic) callback) {
-    print('WebSocket: Enregistrement callback favorites:updated');
     _onFavoritesUpdatedCallbacks.add(callback);
+  }
+
+  // Écouter la liste des genres
+  void onGenresList(Function(dynamic) callback) {
+    _onGenresListCallbacks.add(callback);
+  }
+
+  // Écouter la liste des auteurs
+  void onAuthorsList(Function(dynamic) callback) {
+    _onAuthorsListCallbacks.add(callback);
+  }
+
+  // Écouter les mises à jour d'abonnement
+  void onSubscriptionUpdated(Function(dynamic) callback) {
+    _onSubscriptionUpdatedCallbacks.add(callback);
+  }
+
+  // Écouter les nouveaux abonnements activés
+  void onSubscriptionActivated(Function(dynamic) callback) {
+    _onSubscriptionActivatedCallbacks.add(callback);
+  }
+
+  // Écouter les abonnements expirés
+  void onSubscriptionExpired(Function(dynamic) callback) {
+    _onSubscriptionExpiredCallbacks.add(callback);
+  }
+
+  // Écouter les nouveaux commentaires
+  void onCommentAdded(Function(dynamic) callback) {
+    _onCommentAddedCallbacks.add(callback);
+  }
+
+  // Demander la liste des genres
+  void requestGenres() {
+    if (_socket?.connected == true) {
+      _socket!.emit('genres:request');
+    }
+  }
+
+  // Demander la liste des auteurs
+  void requestAuthors() {
+    if (_socket?.connected == true) {
+      _socket!.emit('authors:request');
+    }
   }
 
   // Écouter les utilisateurs qui tapent

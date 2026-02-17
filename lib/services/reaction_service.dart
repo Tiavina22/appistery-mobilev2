@@ -12,9 +12,6 @@ class ReactionService {
     String reactionType = 'like',
   }) async {
     try {
-      print(
-        '💚 [ReactionService.toggleReaction] storyId=$storyId, type=$reactionType',
-      );
       final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Non authentifié');
@@ -27,12 +24,10 @@ class ReactionService {
       );
 
       if (response.statusCode == 200 && response.data['success']) {
-        print('  ✅ Réaction toggle réussie');
         return response.data['data'];
       }
       throw Exception('Erreur lors de la réaction');
     } catch (e) {
-      print('  ❌ Erreur toggleReaction: $e');
       rethrow;
     }
   }
@@ -55,7 +50,6 @@ class ReactionService {
       }
       throw Exception('Erreur lors de la récupération des réactions');
     } catch (e) {
-      print('  ❌ Erreur getStoryReactions: $e');
       rethrow;
     }
   }
@@ -67,7 +61,6 @@ class ReactionService {
     int? parentCommentId,
   }) async {
     try {
-      print('💬 [ReactionService.addComment] storyId=$storyId');
       final token = await _authService.getToken();
       if (token == null) {
         throw Exception('Non authentifié');
@@ -83,12 +76,10 @@ class ReactionService {
       );
 
       if (response.statusCode == 201 && response.data['success']) {
-        print('  ✅ Commentaire ajouté');
         return response.data['data'];
       }
       throw Exception('Erreur lors de l\'ajout du commentaire');
     } catch (e) {
-      print('  ❌ Erreur addComment: $e');
       rethrow;
     }
   }
@@ -100,23 +91,16 @@ class ReactionService {
     int limit = 20,
   }) async {
     try {
-      print(
-        '📖 [ReactionService.getStoryComments] storyId=$storyId, page=$page',
-      );
       final response = await _dio.get(
         '/api/stories/$storyId/comments',
         queryParameters: {'page': page, 'limit': limit},
       );
-
-      print('  📦 Response status: ${response.statusCode}');
-      print('  📦 Response data: ${response.data}');
 
       if (response.statusCode == 200 && response.data['success']) {
         return response.data['data'];
       }
       throw Exception('Erreur lors de la récupération des commentaires');
     } catch (e) {
-      print('  ❌ Erreur getStoryComments: $e');
       rethrow;
     }
   }
@@ -139,7 +123,6 @@ class ReactionService {
         throw Exception('Erreur lors de la modification du commentaire');
       }
     } catch (e) {
-      print('  ❌ Erreur updateComment: $e');
       rethrow;
     }
   }
@@ -161,7 +144,57 @@ class ReactionService {
         throw Exception('Erreur lors de la suppression du commentaire');
       }
     } catch (e) {
-      print('  ❌ Erreur deleteComment: $e');
+      rethrow;
+    }
+  }
+
+  // Toggle comment like
+  Future<Map<String, dynamic>> toggleCommentLike(int commentId) async {
+    try {
+      final token = await _authService.getToken();
+      if (token == null) {
+        throw Exception('Non authentifié');
+      }
+
+      final response = await _dio.post(
+        '/api/comments/$commentId/like',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 && response.data['success']) {
+        return {
+          'liked': response.data['liked'],
+          'message': response.data['message'],
+        };
+      }
+      throw Exception('Erreur lors du like du commentaire');
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get comment likes
+  Future<Map<String, dynamic>> getCommentLikes(int commentId) async {
+    try {
+      final token = await _authService.getToken();
+      final options = token != null
+          ? Options(headers: {'Authorization': 'Bearer $token'})
+          : null;
+
+      final response = await _dio.get(
+        '/api/comments/$commentId/likes',
+        options: options,
+      );
+
+      if (response.statusCode == 200 && response.data['success']) {
+        return {
+          'likeCount': response.data['likeCount'] ?? 0,
+          'userLiked': response.data['userLiked'] ?? false,
+          'likes': response.data['likes'] ?? [],
+        };
+      }
+      throw Exception('Erreur lors de la récupération des likes');
+    } catch (e) {
       rethrow;
     }
   }

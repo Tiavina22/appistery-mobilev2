@@ -25,14 +25,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Rafraîchir le profil utilisateur pour avoir les dernières données
       final authProvider = context.read<AuthProvider>();
-      print('🔄 Rafraîchissement du profil utilisateur...');
       await authProvider.refreshLoginStatus();
-
-      // Afficher le pays détecté
-      print(
-        '📍 Utilisateur détecté: ${authProvider.isMadagascarUser ? "Madagascar" : "International"}',
-      );
-      print('📍 Country data: ${authProvider.userCountry}');
 
       // Charger les offres basées sur le pays de l'utilisateur
       final offerProvider = context.read<SubscriptionOfferProvider>();
@@ -55,13 +48,14 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
         : 'International';
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Mon abonnement')),
+      appBar: AppBar(
+        title: Text('my_subscription'.tr()),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: Consumer<SubscriptionOfferProvider>(
         builder: (context, provider, _) {
-          if (provider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
           // Si l'utilisateur a un abonnement actif, afficher ses détails
           if (authProvider.hasActiveSubscription) {
             return _buildActiveSubscriptionView(
@@ -89,13 +83,13 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Choisissez votre plan',
+                        'choose_your_plan'.tr(),
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Plans disponibles en $userCountryName',
+                        '${'plans_available_in'.tr()} $userCountryName',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: isDarkMode
                               ? Colors.grey[400]
@@ -115,17 +109,17 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
                       children: [
                         const Text('💳', style: TextStyle(fontSize: 64)),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Aucune offre disponible',
-                          style: TextStyle(
+                        Text(
+                          'no_offers_available'.tr(),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Réessayez plus tard',
-                          style: TextStyle(color: Colors.grey),
+                        Text(
+                          'try_again_later'.tr(),
+                          style: const TextStyle(color: Colors.grey),
                         ),
                       ],
                     ),
@@ -154,148 +148,285 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
     );
   }
 
-  // Widget pour afficher l'abonnement actif
+  // Widget pour afficher l'abonnement actif - Style Revolut
   Widget _buildActiveSubscriptionView(
     BuildContext context,
     AuthProvider authProvider,
     SubscriptionOfferProvider offerProvider,
     bool isDarkMode,
   ) {
-    final expiresAt = authProvider.subscriptionExpiresAt;
+    // Récupérer les détails de l'offre active
+    final subscription = offerProvider.activeSubscription;
+    
+    // Utiliser les dates du backend (dynamiques)
+    final expiresAt = subscription?['expires_at'] != null
+        ? DateTime.tryParse(subscription!['expires_at'].toString())
+        : null;
+    final startedAt = subscription?['started_at'] != null
+        ? DateTime.tryParse(subscription!['started_at'].toString())
+        : null;
+    
     final formattedDate = expiresAt != null
         ? '${expiresAt.day.toString().padLeft(2, '0')}/${expiresAt.month.toString().padLeft(2, '0')}/${expiresAt.year}'
+        : 'N/A';
+    
+    final formattedStartDate = startedAt != null
+        ? '${startedAt.day.toString().padLeft(2, '0')}/${startedAt.month.toString().padLeft(2, '0')}/${startedAt.year}'
         : 'N/A';
 
     final daysRemaining = expiresAt != null
         ? expiresAt.difference(DateTime.now()).inDays
         : 0;
-
-    // Récupérer les détails de l'offre active
-    final subscription = offerProvider.activeSubscription;
-    final offerName = subscription?['offer_name'] ?? 'Premium';
+    
+    // Gérer le nom de l'offre qui peut être un JSON ou une String
+    String offerName = 'Premium';
+    if (subscription?['offer_name'] != null) {
+      final nameData = subscription!['offer_name'];
+      if (nameData is Map) {
+        // Si c'est un Map, récupérer la langue appropriée
+        final languageCode = context.locale.languageCode;
+        offerName = nameData[languageCode]?.toString() ?? 
+                   nameData['fr']?.toString() ?? 
+                   nameData.values.first?.toString() ?? 
+                   'Premium';
+      } else if (nameData is String) {
+        offerName = nameData;
+      }
+    }
+    
     final offerDuration = subscription?['offer_duration'] ?? 1;
     final offerAmount = subscription?['amount'];
     final offerCurrency = subscription?['currency'] ?? 'MGA';
-    final startedAt = subscription?['started_at'] != null
-        ? DateTime.tryParse(subscription!['started_at'].toString())
-        : null;
-    final formattedStartDate = startedAt != null
-        ? '${startedAt.day.toString().padLeft(2, '0')}/${startedAt.month.toString().padLeft(2, '0')}/${startedAt.year}'
-        : 'N/A';
+
+    // Récupérer les avantages depuis le backend
+    List<String> advantages = [];
+    if (subscription?['offer_advantages'] != null) {
+      final advantagesData = subscription!['offer_advantages'];
+      if (advantagesData is List) {
+        final languageCode = context.locale.languageCode;
+        for (var item in advantagesData) {
+          if (item is Map && item['lang'] == languageCode) {
+            advantages = List<String>.from(item['advantages'] ?? []);
+            break;
+          }
+        }
+        // Fallback sur la première langue disponible si pas de correspondance
+        if (advantages.isEmpty && advantagesData.isNotEmpty) {
+          final firstItem = advantagesData[0];
+          if (firstItem is Map && firstItem['advantages'] != null) {
+            advantages = List<String>.from(firstItem['advantages']);
+          }
+        }
+      }
+    }
+    
+    // Fallback sur des avantages par défaut si aucun n'est défini
+    if (advantages.isEmpty) {
+      advantages = [
+        'unlimited_access'.tr(),
+        'offline_reading'.tr(),
+        'no_ads'.tr(),
+        'early_access'.tr(),
+      ];
+    }
+
+    // Couleurs Revolut-style
+    final cardGradient = isDarkMode
+        ? const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF2D3436),
+              Color(0xFF1E272E),
+            ],
+          )
+        : const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF667EEA),
+              Color(0xFF764BA2),
+            ],
+          );
+
+    final accentColor = isDarkMode ? const Color(0xFF667EEA) : Colors.white;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Badge Premium avec nom de l'offre
+          const SizedBox(height: 8),
+          // Titre
+          Text(
+            'your_subscription'.tr(),
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+              color: isDarkMode ? Colors.white : Colors.black,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Carte principale - Style Revolut
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              gradient: cardGradient,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFFFD700).withOpacity(0.3),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: isDarkMode
+                      ? Colors.black.withOpacity(0.3)
+                      : const Color(0xFF667EEA).withOpacity(0.3),
+                  blurRadius: 24,
+                  offset: const Offset(0, 12),
                 ),
               ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(
-                  Icons.workspace_premium,
-                  size: 80,
-                  color: Colors.white,
+                // Icône et type
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: accentColor.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.workspace_premium_outlined,
+                        size: 28,
+                        color: accentColor,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.green.withOpacity(0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'active'.tr(),
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
+
+                // Nom de l'offre
                 Text(
-                  '✨ $offerName ✨',
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                  offerName,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
+                    letterSpacing: -0.5,
                   ),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '$offerDuration mois',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.95),
-                  ),
-                ),
-                if (offerAmount != null) ...[
-                  const SizedBox(height: 4),
+
+                // Prix
+                if (offerAmount != null)
                   Text(
                     '$offerAmount $offerCurrency',
                     style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: accentColor.withOpacity(0.8),
                     ),
                   ),
-                ],
+                const SizedBox(height: 4),
+                Text(
+                  '$offerDuration ${'months'.tr()}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: accentColor.withOpacity(0.7),
+                  ),
+                ),
               ],
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 28),
 
-          // Détails de l'abonnement
+          // Détails - Style minimaliste
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: isDarkMode ? Colors.grey[850] : Colors.white,
+              color: isDarkMode
+                  ? const Color(0xFF1E272E)
+                  : Colors.grey[50],
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 5),
-                ),
-              ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildInfoRow(
+                Text(
+                  'subscription_details'.tr(),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                _buildDetailItem(
                   context,
-                  icon: Icons.play_arrow,
-                  label: 'Début',
+                  label: 'start_date'.tr(),
                   value: formattedStartDate,
                   isDarkMode: isDarkMode,
                 ),
-                const Divider(height: 24),
-                _buildInfoRow(
+                const SizedBox(height: 16),
+
+                _buildDetailItem(
                   context,
-                  icon: Icons.calendar_today,
-                  label: 'Expire le',
+                  label: 'expiration_date'.tr(),
                   value: formattedDate,
                   isDarkMode: isDarkMode,
                 ),
-                const Divider(height: 24),
-                _buildInfoRow(
+                const SizedBox(height: 16),
+
+                _buildDetailItem(
                   context,
-                  icon: Icons.timer,
-                  label: 'Jours restants',
-                  value: '$daysRemaining jours',
+                  label: 'days_remaining'.tr(),
+                  value: '$daysRemaining ${'days'.tr()}',
                   isDarkMode: isDarkMode,
-                  valueColor: daysRemaining <= 7 ? Colors.orange : Colors.green,
-                ),
-                const Divider(height: 24),
-                _buildInfoRow(
-                  context,
-                  icon: Icons.check_circle,
-                  label: 'Statut',
-                  value: 'Actif',
-                  isDarkMode: isDarkMode,
-                  valueColor: Colors.green,
+                  valueColor: daysRemaining <= 7
+                      ? Colors.orange
+                      : Colors.green,
                 ),
               ],
             ),
@@ -303,47 +434,66 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
 
           const SizedBox(height: 24),
 
-          // Note d'annulation
-          Text(
-            'Pour changer d\'offre, attendez l\'expiration de votre abonnement actuel.',
-            style: TextStyle(
-              fontSize: 14,
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          // Avantages
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: isDarkMode
+                  ? const Color(0xFF1E272E)
+                  : Colors.grey[50],
+              borderRadius: BorderRadius.circular(16),
             ),
-            textAlign: TextAlign.center,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'included_benefits'.tr(),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ...advantages.map((advantage) => 
+                  _buildBenefitItem('• $advantage', isDarkMode)
+                ).toList(),
+              ],
+            ),
           ),
-        ],
+
+          const SizedBox(height: 20),
+
+           ],
       ),
     );
   }
 
-  Widget _buildInfoRow(
+  Widget _buildDetailItem(
     BuildContext context, {
-    required IconData icon,
     required String label,
     required String value,
     required bool isDarkMode,
     Color? valueColor,
   }) {
     return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Icon(icon, size: 24, color: const Color(0xFFFFD700)),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-            ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
           ),
         ),
         Text(
           value,
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: valueColor ?? (isDarkMode ? Colors.white : Colors.black87),
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: valueColor ??
+                (isDarkMode ? Colors.white : Colors.black87),
           ),
         ),
       ],
@@ -479,7 +629,7 @@ class _OfferCardState extends State<OfferCard>
                         const Text('⭐', style: TextStyle(fontSize: 12)),
                         const SizedBox(width: 6),
                         Text(
-                          'Populaire',
+                          'popular'.tr(),
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: Colors.white,
@@ -527,7 +677,7 @@ class _OfferCardState extends State<OfferCard>
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              '/ mois',
+                              'per_month'.tr(),
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     color: isDarkMode
@@ -539,7 +689,7 @@ class _OfferCardState extends State<OfferCard>
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${widget.offer.duration} mois d\'accès',
+                          '${widget.offer.duration} ${'months_access'.tr()}',
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(
                                 color: isDarkMode
@@ -638,7 +788,7 @@ class _OfferCardState extends State<OfferCard>
                           );
                         },
                         child: Text(
-                          'S\'abonner maintenant',
+                          'subscribe_now'.tr(),
                           style: Theme.of(context).textTheme.labelLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
@@ -807,33 +957,28 @@ class _PaymentWebViewState extends State<PaymentWebView> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            print('🌐 Page started: $url');
             setState(() => _isLoading = true);
 
             // Check immediately when redirect URL is detected
             if (url.contains('/payment-callback') ||
                 url.contains('/payment/success') ||
                 url.contains('transaction=')) {
-              print('🎉 Payment redirect detected in onPageStarted!');
               Future.delayed(const Duration(seconds: 2), () {
                 _checkPaymentStatus();
               });
             }
           },
           onPageFinished: (url) {
-            print('✅ Page finished: $url');
             setState(() => _isLoading = false);
 
             // Check if payment completed - detect redirect URL from backend
             if (url.contains('/payment-callback') ||
                 url.contains('/payment/success') ||
                 url.contains('transaction=')) {
-              print('🎉 Payment callback detected, checking status...');
               _checkPaymentStatus();
             }
           },
           onWebResourceError: (error) {
-            print('❌ WebView error: ${error.description}');
             // Even on error, check payment status (404 on redirect is ok)
             _checkPaymentStatus();
           },
@@ -865,7 +1010,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
         }
       }
     } catch (e) {
-      print('❌ Error checking payment status: $e');
     }
   }
 
@@ -873,7 +1017,6 @@ class _PaymentWebViewState extends State<PaymentWebView> {
     // Rafraîchir le profil utilisateur pour mettre à jour isPremium
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.refreshLoginStatus();
-    print('✅ Profile refreshed after payment success');
 
     if (!mounted) return;
 

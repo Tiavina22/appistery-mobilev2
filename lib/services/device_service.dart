@@ -21,7 +21,6 @@ class DeviceService {
         return iosInfo.identifierForVendor ?? 'unknown';
       }
     } catch (e) {
-      print('Erreur obtention device ID: $e');
     }
     return 'unknown';
   }
@@ -37,7 +36,6 @@ class DeviceService {
         return iosInfo.utsname.machine;
       }
     } catch (e) {
-      print('Erreur obtention device name: $e');
     }
     return 'Unknown Device';
   }
@@ -55,7 +53,6 @@ class DeviceService {
         return data['ip'] as String?;
       }
     } catch (e) {
-      print('Erreur obtention IP publique: $e');
       // Essayer un service alternatif
       try {
         final response = await http
@@ -66,7 +63,6 @@ class DeviceService {
           return response.body.trim();
         }
       } catch (e2) {
-        print('Erreur service alternatif IP: $e2');
       }
     }
     return null;
@@ -83,7 +79,6 @@ class DeviceService {
         return 'iOS ${iosInfo.systemVersion} - ${iosInfo.model}';
       }
     } catch (e) {
-      print('Erreur obtention user agent: $e');
     }
     return 'Unknown';
   }

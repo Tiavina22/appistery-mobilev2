@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'dart:io';
 import 'device_service.dart';
 
 class AuthService {
@@ -26,11 +27,9 @@ class AuthService {
 
   // Supprimer le token
   Future<void> deleteToken() async {
-    print('🔴 AuthService: Suppression du token...');
     await _storage.delete(key: 'auth_token');
-    final check = await _storage.read(key: 'auth_token');
-    print('🔴 AuthService: Token après suppression: ${check ?? "null (OK)"}');
-  }
+    await _storage.read(key: 'auth_token');
+     }
 
   // Vérifier si l'utilisateur est connecté
   Future<bool> isLoggedIn() async {
@@ -80,11 +79,14 @@ class AuthService {
       return {
         'success': false,
         'message': response.data['message'] ?? 'Erreur de connexion',
+        'error_code': response.data['error_code'],
+        'field': response.data['field'],
       };
     } on DioException catch (e) {
       // Vérifier si c'est une erreur de device déjà connecté
       final errorCode = e.response?.data['error_code'];
       final deviceName = e.response?.data['device_name'];
+      final field = e.response?.data['field'];
 
       if (errorCode == 'DEVICE_ALREADY_CONNECTED') {
         return {
@@ -100,6 +102,8 @@ class AuthService {
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur de connexion',
+        'error_code': errorCode,
+        'field': field,
       };
     } catch (e) {
       return {'success': false, 'message': 'Erreur inattendue'};
@@ -164,55 +168,104 @@ class AuthService {
     }
   }
 
-  // Inscription - Étape 3: Finaliser avec mot de passe
+  // Inscription - Étape 3: Finaliser avec mot de passe + fichier avatar
   Future<Map<String, dynamic>> completeRegistration({
     required String username,
     required String email,
     required String password,
     String? telephone,
     String? language,
-    String? avatar,
+    File? avatarFile,
     int? countryId,
     bool? cguAccepted,
   }) async {
     try {
-      final response = await _dio.post(
-        '$apiUrl/api/auth/complete-registration',
-        data: {
+      // Si un fichier avatar est fourni, utiliser le nouvel endpoint avec upload
+      if (avatarFile != null) {
+        final formData = FormData.fromMap({
           'username': username,
           'email': email,
           'password': password,
           if (telephone != null) 'telephone': telephone,
           if (language != null) 'language': language,
-          if (avatar != null) 'avatar': avatar,
           if (countryId != null) 'country_id': countryId,
           if (cguAccepted != null) 'cgu_accepted': cguAccepted,
-        },
-      );
+          'avatar': await MultipartFile.fromFile(
+            avatarFile.path,
+            filename: 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
+          ),
+        });
 
-      if (response.statusCode == 201) {
-        final token = response.data['token'];
-        await saveToken(token);
-        return {'success': true, 'token': token, 'user': response.data['user']};
+        final response = await _dio.post(
+          '$apiUrl/api/auth/complete-registration-with-avatar',
+          data: formData,
+        );
+
+        if (response.statusCode == 201) {
+          final token = response.data['token'];
+          await saveToken(token);
+          return {'success': true, 'token': token, 'user': response.data['user']};
+        }
+
+        return {
+          'success': false,
+          'message': response.data['message'] ?? 'Erreur d\'inscription',
+        };
+      } else {
+        // Sinon, utiliser l'ancien endpoint sans avatar (backward compatibility)
+        final response = await _dio.post(
+          '$apiUrl/api/auth/complete-registration',
+          data: {
+            'username': username,
+            'email': email,
+            'password': password,
+            if (telephone != null) 'telephone': telephone,
+            if (language != null) 'language': language,
+            if (countryId != null) 'country_id': countryId,
+            if (cguAccepted != null) 'cgu_accepted': cguAccepted,
+          },
+        );
+
+        if (response.statusCode == 201) {
+          final token = response.data['token'];
+          await saveToken(token);
+          return {'success': true, 'token': token, 'user': response.data['user']};
+        }
+
+        return {
+          'success': false,
+          'message': response.data['message'] ?? 'Erreur d\'inscription',
+        };
       }
-
-      return {
-        'success': false,
-        'message': response.data['message'] ?? 'Erreur d\'inscription',
-      };
     } on DioException catch (e) {
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur d\'inscription',
       };
     } catch (e) {
-      return {'success': false, 'message': 'Erreur inattendue'};
+      return {'success': false, 'message': 'Erreur inattendue: $e'};
     }
   }
 
   // Déconnexion
   Future<void> logout() async {
-    await deleteToken();
+    try {
+      // Obtenir les infos d'appareil
+      final deviceService = DeviceService();
+      final deviceId = await deviceService.getDeviceId();
+      
+      // Appeler l'endpoint backend pour mettre à jour la session
+      final dio = await getDioWithAuth();
+      await dio.post(
+        '/api/auth/logout',
+        data: {'device_id': deviceId},
+      );
+    } catch (e) {
+      // Si l'appel API échoue, on supprime quand même le token local
+       } finally {
+      // Toujours supprimer le token local
+      await deleteToken();
+    }
   }
 
   // Récupérer le profil complet de l'utilisateur connecté
@@ -226,7 +279,6 @@ class AuthService {
       }
       return null;
     } catch (e) {
-      print('Error getting user profile: $e');
       return null;
     }
   }
@@ -289,28 +341,21 @@ class AuthService {
   Future<Map<String, dynamic>> getCGU(String language) async {
     try {
       final url = '$apiUrl/api/auth/cgu?language=$language';
-      print('CGU Request URL: $url');
       final response = await _dio.get(url);
 
-      print('CGU Response status: ${response.statusCode}');
-      print('CGU Response data: ${response.data}');
 
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        print('CGU data extracted: $data');
         return {'success': true, 'data': data};
       }
 
       return {'success': false, 'message': 'Erreur lors du chargement des CGU'};
     } on DioException catch (e) {
-      print('CGU DioException: ${e.message}');
-      print('CGU Response error: ${e.response?.data}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur réseau: ${e.message}',
       };
     } catch (e) {
-      print('CGU Unexpected error: $e');
       return {'success': false, 'message': 'Erreur inattendue: $e'};
     }
   }

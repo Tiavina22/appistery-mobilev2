@@ -34,16 +34,10 @@ class VersionProvider extends ChangeNotifier {
     try {
       final versionCode = VersionService.getAppVersionCode();
       final platform = VersionService.getAppPlatform();
-
-      print('📱 Checking version... Code: $versionCode, Platform: $platform');
-
       final versionInfo = await _versionService.checkVersion(
         versionCode: versionCode,
         platform: platform,
       );
-
-      print('✅ Version check response: $versionInfo');
-
       // Check if no active version is available
       if (versionInfo.isEmpty || versionInfo['currentVersion'] == null) {
         _noActiveVersion = true;
@@ -53,8 +47,7 @@ class VersionProvider extends ChangeNotifier {
         _downloadUrl = versionInfo['downloadUrl'];
         _versionName = versionInfo['versionName'];
         _description = versionInfo['description'];
-        print('⚠️ No active version found - app is blocked');
-      } else {
+          } else {
         _noActiveVersion = false;
         _isUpdateRequired = versionInfo['isUpdateRequired'] ?? false;
         _isVersionExpired = versionInfo['isVersionExpired'] ?? false;
@@ -66,20 +59,12 @@ class VersionProvider extends ChangeNotifier {
       if (versionInfo['endDate'] != null) {
         _endDate = DateTime.parse(versionInfo['endDate']);
       }
-
-      print('📊 Version state updated:');
-      print('   isUpdateRequired: $_isUpdateRequired');
-      print('   isVersionExpired: $_isVersionExpired');
-      print('   downloadUrl: $_downloadUrl');
-      print('   versionName: $_versionName');
     } catch (e) {
       _errorMessage = 'Failed to check version: $e';
-      print('❌ Error checking version: $e');
 
       // Check if error is due to no active version (404/400)
       if (e.toString().contains('404') || e.toString().contains('400')) {
         _noActiveVersion = true;
-        print('⚠️ No active version found - app blocked');
       } else {
         // Don't block the app on other version check failures
         _noActiveVersion = false;

@@ -30,7 +30,6 @@ class NotificationService {
         'count': response.data['count'] ?? 0,
       };
     } on DioException catch (e) {
-      print('❌ Erreur lors de la récupération des notifications: ${e.message}');
       return {'success': false, 'data': [], 'error': e.message};
     }
   }
@@ -49,10 +48,7 @@ class NotificationService {
       );
 
       return response.data['unread_count'] ?? 0;
-    } on DioException catch (e) {
-      print(
-        '❌ Erreur lors du comptage des notifications non lues: ${e.message}',
-      );
+    } on DioException {
       return 0;
     }
   }
@@ -71,8 +67,7 @@ class NotificationService {
       );
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
-      print('❌ Erreur lors du marquage de la notification: ${e.message}');
+    } on DioException {
       return false;
     }
   }
@@ -91,10 +86,7 @@ class NotificationService {
       );
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
-      print(
-        '❌ Erreur lors du marquage de toutes les notifications: ${e.message}',
-      );
+    } on DioException {
       return false;
     }
   }
@@ -113,8 +105,7 @@ class NotificationService {
       );
 
       return response.statusCode == 200;
-    } on DioException catch (e) {
-      print('❌ Erreur lors de la suppression de la notification: ${e.message}');
+    } on DioException {
       return false;
     }
   }

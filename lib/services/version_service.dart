@@ -25,7 +25,6 @@ class VersionService {
         return jsonData['data'] ?? {};
       } else if (response.statusCode == 400 || response.statusCode == 404) {
         // No active version found - but backend may return fallback data
-        print('No active version found on server');
         final jsonData = jsonDecode(response.body);
         final data = jsonData['data'] ?? {};
         // Return empty map with any available download data
@@ -34,7 +33,6 @@ class VersionService {
         throw Exception('Failed to check version: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error checking version: $e');
       rethrow;
     }
   }

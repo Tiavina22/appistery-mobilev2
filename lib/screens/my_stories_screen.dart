@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/reading_service.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
@@ -15,18 +17,32 @@ class MyStoriesScreen extends StatefulWidget {
 class _MyStoriesScreenState extends State<MyStoriesScreen> {
   final ReadingService _readingService = ReadingService();
   List<Map<String, dynamic>> _readStories = [];
-  bool _isLoading = true;
+  bool _isLoading = false; // Commencer à false
   String _selectedFilter = 'all'; // all, reading, completed
 
   @override
   void initState() {
     super.initState();
-    _loadReadStories();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Charger le cache de manière synchrone d'abord
+    final cachedStories = await _getCachedReadStories();
+    if (cachedStories != null && cachedStories.isNotEmpty) {
+      setState(() {
+        _readStories = cachedStories;
+      });
+      // Rafraîchir en arrière-plan
+      _refreshStoriesInBackground();
+    } else {
+      // Pas de cache, charger depuis le serveur
+      _loadReadStories();
+    }
   }
 
   Future<void> _loadReadStories() async {
     try {
-      print('📚 [MyStoriesScreen] Chargement des histoires lues');
       setState(() {
         _isLoading = true;
       });
@@ -37,10 +53,9 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         _readStories = stories;
         _isLoading = false;
       });
-
-      print('  ✅ ${stories.length} histoires chargées');
+      
+      await _cacheReadStories(stories);
     } catch (error) {
-      print('  ❌ Erreur: $error');
       setState(() {
         _isLoading = false;
       });
@@ -49,6 +64,53 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
           SnackBar(content: Text('Erreur lors du chargement: $error')),
         );
       }
+    }
+  }
+
+  Future<void> _refreshStoriesInBackground() async {
+    try {
+      final stories = await _readingService.getUserReadStories();
+      setState(() {
+        _readStories = stories;
+      });
+      await _cacheReadStories(stories);
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  Future<void> _cacheReadStories(List<Map<String, dynamic>> stories) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cached_read_stories', jsonEncode(stories));
+      await prefs.setInt(
+        'cached_read_stories_timestamp',
+        DateTime.now().millisecondsSinceEpoch,
+      );
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> _getCachedReadStories() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final timestamp = prefs.getInt('cached_read_stories_timestamp');
+      
+      if (timestamp == null) return null;
+      
+      final cacheAge = DateTime.now().millisecondsSinceEpoch - timestamp;
+      if (cacheAge > Duration(minutes: 10).inMilliseconds) {
+        return null;
+      }
+      
+      final storiesJson = prefs.getString('cached_read_stories');
+      if (storiesJson == null) return null;
+      
+      final List<dynamic> decoded = jsonDecode(storiesJson);
+      return decoded.cast<Map<String, dynamic>>();
+    } catch (e) {
+      return null;
     }
   }
 
@@ -96,8 +158,8 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                 ],
               ),
             ),
-            // Filter tabs with iOS pill style
-            if (!_isLoading && _readStories.isNotEmpty) ...[
+            // Filter tabs with iOS pill style - Keep visible once stories are loaded
+            if (_readStories.isNotEmpty) ...[
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
@@ -135,8 +197,12 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
               const SizedBox(height: 16),
             ],
             // Content
-            if (_isLoading)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
+            if (_isLoading && _readStories.isEmpty)
+              Expanded(
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              )
             else if (_readStories.isEmpty)
               Expanded(
                 child: Center(
@@ -227,10 +293,10 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 20,
-                          crossAxisSpacing: 16,
-                          childAspectRatio: 0.65,
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.7,
                         ),
                     itemCount: _filteredStories.length,
                     itemBuilder: (context, index) {
@@ -302,129 +368,81 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
 
   Widget _buildStoryCard(BuildContext context, Map<String, dynamic> story) {
     final isCompleted = story['is_completed'] == true;
-    final completedAt = story['completed_at'];
-    final formattedDate = completedAt != null
-        ? DateFormat(
-            'dd MMM',
-            'fr_FR',
-          ).format(DateTime.parse(completedAt.toString()))
-        : null;
-
-    // Extraire le titre depuis le JSON
-    String title = 'Sans titre';
-    if (story['title'] is String) {
-      title = story['title'];
-    } else if (story['title'] is Map) {
-      final titleMap = story['title'] as Map;
-      title =
-          titleMap['gasy'] ?? titleMap['fr'] ?? titleMap['en'] ?? 'Sans titre';
-    }
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () async {
-        // Convert story map to Story object
-        final storyObj = Story.fromJson(story);
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StoryDetailScreen(story: storyObj),
-          ),
-        );
-        // Refresh list on return
-        _loadReadStories();
+        // Load complete story data including author and avatar
+        try {
+          final storyService = StoryService();
+          final completeStory = await storyService.getStoryById(story['id']);
+          if (mounted) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StoryDetailScreen(story: completeStory),
+              ),
+            );
+            // Refresh list on return
+            _loadReadStories();
+          }
+        } catch (e) {
+          // Fallback: use available data
+          final storyObj = Story.fromJson(story);
+          if (mounted) {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => StoryDetailScreen(story: storyObj),
+              ),
+            );
+            // Refresh list on return
+            _loadReadStories();
+          }
+        }
       },
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDark
-                ? Colors.white.withOpacity(0.08)
-                : Colors.black.withOpacity(0.06),
-            width: 0.5,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
             // Cover image
-            Expanded(
-              child: Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(12),
+            _buildCoverImage(story),
+            // Status badge
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isCompleted
+                      ? Colors.green.withOpacity(0.9)
+                      : Colors.blue.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isCompleted
+                          ? Icons.check_circle
+                          : Icons.auto_stories,
+                      size: 12,
+                      color: Colors.white,
                     ),
-                    child: _buildCoverImage(story),
-                  ),
-                  // Status badge
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isCompleted
-                            ? Colors.green.withOpacity(0.9)
-                            : Colors.blue.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            isCompleted
-                                ? Icons.check_circle
-                                : Icons.auto_stories,
-                            size: 12,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            isCompleted ? 'Terminé' : 'En cours',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Title and date
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3,
-                    ),
-                  ),
-                  if (formattedDate != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(width: 4),
                     Text(
-                      formattedDate,
-                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      isCompleted ? 'Terminé' : 'En cours',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
-                ],
+                ),
               ),
             ),
           ],
@@ -442,6 +460,27 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
         height: double.infinity,
         color: Colors.grey[300],
         child: Icon(Icons.book, color: Colors.grey[600], size: 48),
+      );
+    }
+
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (coverUrl.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+      final imageUrl = '$apiUrl$coverUrl';
+      
+      return Image.network(
+        imageUrl,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.grey[300],
+            child: Icon(Icons.book, color: Colors.grey[600], size: 48),
+          );
+        },
       );
     }
 

@@ -23,13 +23,11 @@ class WebSocketProvider extends ChangeNotifier {
     _wsService.socket?.on('connect', (_) {
       _isConnected = true;
       notifyListeners();
-      print('WebSocketProvider: Connected');
     });
 
     _wsService.socket?.on('disconnect', (_) {
       _isConnected = false;
       notifyListeners();
-      print('WebSocketProvider: Disconnected');
     });
 
     // Écouter les notifications
@@ -39,7 +37,6 @@ class WebSocketProvider extends ChangeNotifier {
 
     // Écouter les nouvelles histoires
     _wsService.onNewStory((data) {
-      print('WebSocketProvider: New story received: $data');
       _addNotification({
         'type': 'new_story',
         'title': 'Nouvelle histoire',
@@ -51,7 +48,6 @@ class WebSocketProvider extends ChangeNotifier {
 
     // Écouter les nouveaux chapitres
     _wsService.onNewChapter((data) {
-      print('WebSocketProvider: New chapter received: $data');
       _addNotification({
         'type': 'new_chapter',
         'title': 'Nouveau chapitre',
@@ -63,7 +59,6 @@ class WebSocketProvider extends ChangeNotifier {
 
     // Écouter les mises à jour d'histoires
     _wsService.onStoryUpdated((data) {
-      print('WebSocketProvider: Story updated: $data');
       notifyListeners();
     });
   }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../providers/auth_provider.dart';
-import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 // author_service removed: no posts/followers in UI
 
@@ -26,8 +26,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Future<void> _loadExtras() async {
     try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = authProvider.user;
+      Provider.of<AuthProvider>(context, listen: false);
 
       // Load countries
       final authService = AuthService();
@@ -43,6 +42,26 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // No posts/followers loading (not used)
     } catch (e) {
       // ignore errors silently for now
+    }
+  }
+
+  ImageProvider? _getAvatarImageProvider(String? avatar) {
+    if (avatar == null || avatar.isEmpty) {
+      return null;
+    }
+
+    // Si c'est une URL (commence par /uploads/ ou http)
+    if (avatar.startsWith('/uploads/') || avatar.startsWith('http')) {
+      final apiUrl = dotenv.env['API_URL'] ?? '';
+      final imageUrl = avatar.startsWith('http') ? avatar : '$apiUrl$avatar';
+      return NetworkImage(imageUrl);
+    }
+
+    // Sinon, c'est du base64
+    try {
+      return MemoryImage(base64Decode(avatar));
+    } catch (e) {
+      return null;
     }
   }
 
@@ -105,9 +124,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   child: CircleAvatar(
                     radius: 70,
                     backgroundColor: Colors.grey.shade300,
-                    backgroundImage: avatar != null && avatar.isNotEmpty
-                        ? MemoryImage(base64Decode(avatar))
-                        : null,
+                    backgroundImage: _getAvatarImageProvider(avatar),
                     child: avatar == null || avatar.isEmpty
                         ? Icon(
                             Icons.person,
@@ -148,12 +165,12 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(Icons.star, color: Colors.white, size: 16),
-                        SizedBox(width: 4),
+                      children: [
+                        const Icon(Icons.star, color: Colors.white, size: 16),
+                        const SizedBox(width: 4),
                         Text(
-                          'Premium',
-                          style: TextStyle(
+                          'premium'.tr(),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -172,22 +189,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                     children: [
                       // Contact section
                       _buildSectionCard(
-                        'Coordonnées',
+                        'contact_info'.tr(),
                         Icons.contact_mail,
                         isDark,
                         [
-                          _buildInfoTile(Icons.email, 'Email', email, isDark),
+                          _buildInfoTile(Icons.email, 'email'.tr(), email, isDark),
                           if (telephone != '—')
                             _buildInfoTile(
                               Icons.phone,
-                              'Téléphone',
+                              'phone'.tr(),
                               telephone,
                               isDark,
                             ),
                           if (countryName != '—')
                             _buildInfoTile(
                               Icons.location_on,
-                              'Pays',
+                              'country'.tr(),
                               countryName,
                               isDark,
                             ),
@@ -295,45 +312,3 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     );
   }
 }
-
-Widget _buildDetailRow(String label, String value, bool isDark) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6.0),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDark ? Colors.white : Colors.black,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-String _formatDate(dynamic raw) {
-  if (raw == null) return '—';
-  try {
-    final dt = DateTime.parse(raw.toString());
-    return dt.toLocal().toString().split('.').first;
-  } catch (e) {
-    return raw.toString();
-  }
-}
-
-// counts removed: no posts/followers/following in profile UI

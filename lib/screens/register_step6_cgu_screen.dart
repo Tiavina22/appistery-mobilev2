@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
@@ -10,7 +11,7 @@ class RegisterStep6CGUScreen extends StatefulWidget {
   final String username;
   final String password;
   final String telephone;
-  final String? avatar;
+  final File? avatarFile;
   final int? countryId;
 
   const RegisterStep6CGUScreen({
@@ -19,7 +20,7 @@ class RegisterStep6CGUScreen extends StatefulWidget {
     required this.username,
     required this.password,
     required this.telephone,
-    this.avatar,
+    this.avatarFile,
     this.countryId,
   });
 
@@ -31,6 +32,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
   Map<String, dynamic>? _cgu;
   bool _cguAccepted = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -49,26 +51,18 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
         ? 'FR'
         : 'EN';
 
-    print('DEBUG: Loading CGU with language: $language');
-
     final result = await authService.getCGU(language);
-
-    print('DEBUG: getCGU result: $result');
 
     if (result['success'] == true && mounted) {
       setState(() {
         _cgu = result['data'];
-        print('DEBUG: CGU loaded successfully: $_cgu');
       });
     } else if (mounted) {
       // Fallback: si erreur, essayer avec FR
-      print('Erreur CGU: ${result['message']}');
       final fallbackResult = await authService.getCGU('FR');
-      print('DEBUG: Fallback result: $fallbackResult');
       if (fallbackResult['success'] == true && mounted) {
         setState(() {
           _cgu = fallbackResult['data'];
-          print('DEBUG: CGU loaded via fallback: $_cgu');
         });
       }
     }
@@ -76,12 +70,9 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
 
   void _showCGU() {
     if (_cgu == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Chargement des CGU...'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'loading_cgu'.tr();
+      });
       return;
     }
 
@@ -122,17 +113,15 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
 
   Future<void> _handleCompleteRegistration() async {
     if (!_cguAccepted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('cgu_acceptance_required'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'cgu_acceptance_required'.tr();
+      });
       return;
     }
 
     setState(() {
       _isLoading = true;
+      _errorMessage = null;
     });
 
     final authService = AuthService();
@@ -141,7 +130,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
       username: widget.username,
       password: widget.password,
       telephone: widget.telephone,
-      avatar: widget.avatar,
+      avatarFile: widget.avatarFile,
       countryId: widget.countryId,
       cguAccepted: _cguAccepted,
     );
@@ -241,12 +230,9 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
         },
       );
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result['message'] ?? 'registration_error'.tr()),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() {
+        _errorMessage = result['message'] ?? 'registration_error'.tr();
+      });
     }
   }
 
@@ -349,7 +335,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                       const CircularProgressIndicator(color: Color(0xFF1DB954)),
                       const SizedBox(height: 16),
                       Text(
-                        'Chargement des conditions...',
+                        'loading_conditions'.tr(),
                         style: TextStyle(color: textColor.withOpacity(0.7)),
                       ),
                     ],
@@ -384,7 +370,42 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
+
+              // Error message (Netflix style)
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              if (_errorMessage != null) const SizedBox(height: 24),
+              if (_errorMessage == null) const SizedBox(height: 24),
+
               SizedBox(
                 width: double.infinity,
                 height: 56,

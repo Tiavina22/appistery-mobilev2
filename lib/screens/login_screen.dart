@@ -20,6 +20,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  String? _emailError;
+  String? _passwordError;
 
   @override
   void dispose() {
@@ -29,6 +31,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    // Clear previous errors
+    setState(() {
+      _emailError = null;
+      _passwordError = null;
+    });
+
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isLoading = true;
@@ -51,20 +59,32 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else if (mounted) {
-        // Afficher l'erreur
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              authProvider.errorMessage ?? 'login_error'.tr(),
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
+        // Parser l'erreur selon le champ
+        final errorCode = authProvider.errorCode;
+        final errorField = authProvider.errorField;
+        
+        String errorMessage = authProvider.errorMessage ?? 'login_error'.tr();
+        
+        // Mapper les error_code aux clés de traduction
+        if (errorCode == 'INVALID_EMAIL_FORMAT') {
+          errorMessage = 'invalid_email_format'.tr();
+        } else if (errorCode == 'EMAIL_NOT_FOUND') {
+          errorMessage = 'email_not_found'.tr();
+        } else if (errorCode == 'INCORRECT_PASSWORD') {
+          errorMessage = 'incorrect_password'.tr();
+        }
+
+        // Assigner l'erreur au bon champ
+        setState(() {
+          if (errorField == 'email') {
+            _emailError = errorMessage;
+          } else if (errorField == 'password') {
+            _passwordError = errorMessage;
+          } else {
+            // Erreur générale - afficher sur l'email par défaut
+            _emailError = errorMessage;
+          }
+        });
       }
     }
   }
@@ -124,6 +144,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         style: TextStyle(color: textColor),
+                        onChanged: (value) {
+                          // Clear error when user types
+                          if (_emailError != null) {
+                            setState(() {
+                              _emailError = null;
+                            });
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: 'email'.tr(),
                           labelStyle: TextStyle(
@@ -139,6 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Icons.email_outlined,
                             color: textColor.withOpacity(0.7),
                           ),
+                          errorStyle: const TextStyle(height: 0, fontSize: 0),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -150,6 +179,30 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
+                      // Error message for email (Netflix style)
+                      if (_emailError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  _emailError!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 12),
 
                       // Mot de passe
@@ -157,6 +210,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
                         style: TextStyle(color: textColor),
+                        onChanged: (value) {
+                          // Clear error when user types
+                          if (_passwordError != null) {
+                            setState(() {
+                              _passwordError = null;
+                            });
+                          }
+                        },
                         decoration: InputDecoration(
                           labelText: 'password'.tr(),
                           labelStyle: TextStyle(
@@ -185,6 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               });
                             },
                           ),
+                          errorStyle: const TextStyle(height: 0, fontSize: 0),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -196,6 +258,30 @@ class _LoginScreenState extends State<LoginScreen> {
                           return null;
                         },
                       ),
+                      // Error message for password (Netflix style)
+                      if (_passwordError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0, left: 12.0),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: Colors.red,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  _passwordError!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       const SizedBox(height: 8),
 
                       // Mot de passe oublié

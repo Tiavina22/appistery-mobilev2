@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/story_service.dart';
 import '../services/reading_service.dart';
 import '../services/author_service.dart';
 import '../services/reaction_service.dart';
-import '../providers/story_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/facebook_notification.dart';
 import 'author_profile_screen.dart';
 import 'reader_screen.dart';
-import 'story_comments_screen.dart';
+import '../widgets/comments_bottom_sheet.dart';
 
 class StoryDetailScreen extends StatefulWidget {
   final Story story;
@@ -35,22 +35,23 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Map<String, dynamic>? _reactionsData;
   bool _isLoadingReactions = false;
   bool _hasUserReacted = false;
-  String? _userReactionType;
   int _commentsCount = 0;
 
   // Nouveaux états pour le suivi de lecture
   bool _isCompleted = false;
-  Map<String, dynamic>? _completionInfo;
   Map<String, dynamic>? _readingStats;
   bool _isLoadingStats = false;
 
   // États pour le statut de lecture
-  Map<String, dynamic>? _lastReadingPosition;
   bool _hasStartedReading = false;
 
   // États pour les favoris
   bool _isFavorite = false;
   bool _isLoadingFavorite = false;
+
+  // Story avec chapitres chargés
+  Story? _fullStory;
+  bool _isLoadingChapters = false;
 
   @override
   void initState() {
@@ -63,6 +64,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     _loadReadingStats();
     _loadLastReadingPosition();
     _loadReactions();
+    _loadFullStoryWithChapters();
   }
 
   @override
@@ -73,9 +75,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
   Future<void> _loadLastReadingPosition() async {
     try {
-      print(
-        '📍 [StoryDetailScreen._loadLastReadingPosition] Chargement dernière position...',
-      );
       final readingService = ReadingService();
       final lastPosition = await readingService.getLastPosition(
         widget.story.id,
@@ -83,19 +82,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
       if (mounted) {
         setState(() {
-          _lastReadingPosition = lastPosition;
           _hasStartedReading = lastPosition != null;
         });
         if (lastPosition != null) {
-          print(
-            '   ✅ Dernière position trouvée: chapitre ${lastPosition['chapter_id']}',
-          );
         } else {
-          print('   ℹ️ Aucune lecture antérieure');
         }
       }
     } catch (e) {
-      print('   ❌ Erreur: $e');
     }
   }
 
@@ -110,9 +103,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Future<void> _loadReadingStats() async {
     setState(() => _isLoadingStats = true);
     try {
-      print(
-        '📊 [StoryDetailScreen._loadReadingStats] story=${widget.story.id}',
-      );
       final readingService = ReadingService();
 
       // Charger les stats publiques
@@ -126,13 +116,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       if (mounted) {
         setState(() {
           _readingStats = stats;
-          _completionInfo = completionInfo;
           _isCompleted =
               completionInfo != null && completionInfo['is_completed'] == true;
         });
       }
-    } catch (e) {
-      print('❌ Erreur _loadReadingStats: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoadingStats = false);
@@ -157,9 +144,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     try {
       setState(() => _isLoadingReactions = true);
       final data = await _reactionService.getStoryReactions(widget.story.id);
-      print('📊 [_loadReactions] Données reçues: $data');
-      print('   userReaction: ${data['userReaction']}');
-      print('   totalCount: ${data['totalCount']}');
 
       // Charger aussi le nombre de commentaires
       final commentsData = await _reactionService.getStoryComments(
@@ -171,17 +155,12 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         setState(() {
           _reactionsData = data;
           _hasUserReacted = data['userReaction'] != null;
-          _userReactionType = data['userReaction']?['reaction_type'];
           _commentsCount =
               commentsData['pagination']?['total'] ?? comments.length;
           _isLoadingReactions = false;
         });
-        print('   _hasUserReacted mis à jour: $_hasUserReacted');
-        print('   _userReactionType mis à jour: $_userReactionType');
-        print('   _commentsCount mis à jour: $_commentsCount');
       }
     } catch (e) {
-      print('❌ Erreur _loadReactions: $e');
       if (mounted) {
         setState(() => _isLoadingReactions = false);
       }
@@ -219,11 +198,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         }
       }
     } catch (e) {
-      print('❌ Erreur _toggleReaction: $e');
       if (mounted) {
         NotificationOverlay.show(
           context,
-          message: 'Erreur: ${e.toString()}',
+          message: '${'error'.tr()}: ${e.toString()}',
           icon: Icons.error_outline,
           backgroundColor: Colors.red[600]!,
           duration: const Duration(seconds: 2),
@@ -233,23 +211,42 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   }
 
   void _openComments() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StoryCommentsScreen(
-          storyId: widget.story.id,
-          storyTitle: widget.story.title,
-        ),
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CommentsBottomSheet(
+        storyId: widget.story.id,
+        storyTitle: widget.story.title,
       ),
     );
     // Recharger le compteur de commentaires au retour
     _loadReactions();
   }
 
+  Future<void> _loadFullStoryWithChapters() async {
+    if (_isLoadingChapters) return;
+
+    setState(() => _isLoadingChapters = true);
+    try {
+      final storyService = StoryService();
+      final fullStory = await storyService.getStoryById(widget.story.id);
+      if (mounted) {
+        setState(() {
+          _fullStory = fullStory;
+          _isLoadingChapters = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoadingChapters = false);
+      }
+    }
+  }
+
   Future<void> _toggleFollow() async {
     setState(() => _isLoadingFollow = true);
     try {
-      final wasFollowing = _isFollowing;
       if (_isFollowing) {
         await _authorService.unfollowAuthor(1);
       } else {
@@ -264,7 +261,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         if (_isFollowing) {
           NotificationOverlay.show(
             context,
-            message: 'Vous suivez maintenant ${widget.story.author}',
+            message: '${'now_following'.tr()} ${widget.story.author}',
             icon: Icons.check_circle_outline,
             backgroundColor: Colors.green[600]!,
             duration: const Duration(seconds: 3),
@@ -272,7 +269,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         } else {
           NotificationOverlay.show(
             context,
-            message: 'Vous avez arrêté de suivre ${widget.story.author}',
+            message: '${'unfollowed'.tr()} ${widget.story.author}',
             icon: Icons.remove_circle_outline,
             backgroundColor: Colors.orange[600]!,
             duration: const Duration(seconds: 3),
@@ -283,7 +280,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       if (mounted) {
         NotificationOverlay.show(
           context,
-          message: 'Erreur: ${e.toString()}',
+          message: '${'error'.tr()}: ${e.toString()}',
           icon: Icons.error_outline,
           backgroundColor: Colors.red[600]!,
           duration: const Duration(seconds: 3),
@@ -302,7 +299,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     setState(() => _isLoadingFavorite = true);
     try {
       final storyService = StoryService();
-      final wasFavorite = _isFavorite;
 
       if (_isFavorite) {
         await storyService.removeFavorite(widget.story.id);
@@ -327,11 +323,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         );
       }
     } catch (e) {
-      print('❌ Erreur _toggleFavorite: $e');
       if (mounted) {
         NotificationOverlay.show(
           context,
-          message: 'Erreur: ${e.toString()}',
+          message: '${'error'.tr()}: ${e.toString()}',
           icon: Icons.error_outline,
           backgroundColor: Colors.red[600]!,
           duration: const Duration(seconds: 2),
@@ -377,95 +372,74 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             ),
             actions: [],
             flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Image de couverture
-                  widget.story.coverImage != null &&
-                          widget.story.coverImage!.isNotEmpty
-                      ? Image.memory(
-                          base64Decode(
-                            widget.story.coverImage!.split(',').last,
-                          ),
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[900],
-                              child: Icon(
-                                Icons.book,
-                                size: 100,
-                                color: isDarkMode
-                                    ? Colors.white24
-                                    : Colors.black26,
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: isDarkMode
-                              ? Colors.grey[900]
-                              : Colors.grey[200],
-                          child: Icon(
-                            Icons.book,
-                            size: 100,
-                            color: isDarkMode ? Colors.white24 : Colors.black26,
-                          ),
-                        ),
-                  // Gradient overlay (du bas vers le haut) - toujours noir pour le contraste avec l'image
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.7),
-                          Colors.black,
-                        ],
-                        stops: const [0.0, 0.7, 1.0],
-                      ),
-                    ),
-                  ),
-                  // Stats en overlay style Instagram
-                  if (_readingStats != null && !_isLoadingStats)
-                    Positioned(
-                      bottom: 16,
-                      right: 16,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.6),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
-                            width: 1,
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _buildCompactStat(
-                              Icons.visibility_outlined,
-                              '${_readingStats!['total_views'] ?? 0}',
-                            ),
-                            const SizedBox(width: 12),
-                            _buildCompactStat(
-                              Icons.people_outline,
-                              '${_readingStats!['unique_readers'] ?? 0}',
-                            ),
-                            const SizedBox(width: 12),
-                            _buildCompactStat(
-                              Icons.check_circle_outline,
-                              '${_readingStats!['completed_reads'] ?? 0}',
-                            ),
+              background: GestureDetector(
+                onTap: () {
+                  if (widget.story.coverImage != null &&
+                      widget.story.coverImage!.isNotEmpty) {
+                    _showFullScreenImage(context);
+                  }
+                },
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Image de couverture
+                    _buildCoverImage(fit: BoxFit.cover),
+                    // Gradient overlay (du bas vers le haut) - toujours noir pour le contraste avec l'image
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withOpacity(0.7),
+                            Colors.black,
                           ],
+                          stops: const [0.0, 0.7, 1.0],
                         ),
                       ),
                     ),
-                ],
+                    // Stats en overlay style Instagram
+                    if (_readingStats != null && !_isLoadingStats)
+                      Positioned(
+                        bottom: 16,
+                        right: 16,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.6),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildCompactStat(
+                                Icons.visibility_outlined,
+                                '${_readingStats!['total_views'] ?? 0}',
+                              ),
+                              const SizedBox(width: 12),
+                              _buildCompactStat(
+                                Icons.people_outline,
+                                '${_readingStats!['unique_readers'] ?? 0}',
+                              ),
+                              const SizedBox(width: 12),
+                              _buildCompactStat(
+                                Icons.check_circle_outline,
+                                '${_readingStats!['completed_reads'] ?? 0}',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -501,7 +475,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       ),
                       _buildMetaChip(
                         icon: Icons.menu_book_outlined,
-                        label: '${widget.story.chapters} chapitres',
+                        label: '${widget.story.chapters} ${'chapters'.tr()}',
                         isDarkMode: isDarkMode,
                       ),
                       if (widget.story.rating != null)
@@ -526,7 +500,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                   // Auteur avec avatar
                   GestureDetector(
                     onTap: () {
-                      // TODO: Naviguer vers le profil de l'auteur
+                      // Naviguer vers le profil de l'auteur
+                      if (widget.story.authorId != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AuthorProfileScreen(
+                              authorId: widget.story.authorId!,
+                              authorName: widget.story.author,
+                            ),
+                          ),
+                        );
+                      }
                     },
                     child: Row(
                       children: [
@@ -549,7 +534,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'By',
+                                'by'.tr(),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: textColorSecondary,
@@ -585,10 +570,16 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                               : () async {
                                   setState(() => _isLoadingStory = true);
                                   try {
-                                    // Charger les détails complets de l'histoire avec les chapitres
-                                    final storyService = StoryService();
-                                    final fullStory = await storyService
-                                        .getStoryById(widget.story.id);
+                                    // Utiliser _fullStory s'il est déjà chargé, sinon charger
+                                    Story fullStory;
+                                    if (_fullStory != null &&
+                                        _fullStory!.chaptersList.isNotEmpty) {
+                                      fullStory = _fullStory!;
+                                    } else {
+                                      final storyService = StoryService();
+                                      fullStory = await storyService
+                                          .getStoryById(widget.story.id);
+                                    }
 
                                     // Vérifier qu'il y a des chapitres
                                     if (fullStory.chaptersList.isEmpty) {
@@ -596,9 +587,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          const SnackBar(
+                                          SnackBar(
                                             content: Text(
-                                              'Cette histoire n\'a pas encore de chapitres',
+                                              'no_chapters_yet'.tr(),
                                             ),
                                             backgroundColor: Colors.orange,
                                           ),
@@ -632,9 +623,6 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                     }
 
                                     if (mounted) {
-                                      print(
-                                        '🚀 [StoryDetailScreen] Navigation vers ReaderScreen',
-                                      );
                                       await Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -645,10 +633,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         ),
                                       );
                                       // Rafraîchir les stats quand on revient
-                                      print(
-                                        '↩️ [StoryDetailScreen] Retour du ReaderScreen - Rafraîchissement',
-                                      );
-                                      await _loadReadingStats();
+                                       await _loadReadingStats();
                                       await _loadLastReadingPosition();
                                     }
                                   } catch (e) {
@@ -657,7 +642,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                         context,
                                       ).showSnackBar(
                                         SnackBar(
-                                          content: Text('Erreur: $e'),
+                                          content: Text('${'error'.tr()}: $e'),
                                           backgroundColor: Colors.red,
                                         ),
                                       );
@@ -689,10 +674,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                 ),
                           label: Text(
                             _isLoadingStory
-                                ? 'Chargement...'
+                                ? 'loading'.tr()
                                 : _isCompleted
-                                ? 'Relire'
-                                : (_hasStartedReading ? 'Continuer' : 'Lire'),
+                                ? 'reread'.tr()
+                                : (_hasStartedReading ? 'continue'.tr() : 'read'.tr()),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -732,7 +717,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             size: 24,
                           ),
                           label: Text(
-                            _isFavorite ? 'Ajouté' : 'Ma liste',
+                            _isFavorite ? 'added_to_favorites'.tr() : 'add_to_list'.tr(),
                             style: const TextStyle(fontSize: 14),
                           ),
                           style: OutlinedButton.styleFrom(
@@ -819,7 +804,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Synopsis',
+                        'synopsis'.tr(),
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -827,29 +812,19 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                         ),
                       ),
                       const SizedBox(height: 8),
-                      AnimatedCrossFade(
-                        firstChild: Text(
+                      AnimatedSize(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: Text(
                           widget.story.description,
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
+                          maxLines: _isExpanded ? null : 3,
+                          overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 14,
                             color: textColorSecondary,
                             height: 1.5,
                           ),
                         ),
-                        secondChild: Text(
-                          widget.story.description,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: textColorSecondary,
-                            height: 1.5,
-                          ),
-                        ),
-                        crossFadeState: _isExpanded
-                            ? CrossFadeState.showSecond
-                            : CrossFadeState.showFirst,
-                        duration: const Duration(milliseconds: 200),
                       ),
                       if (widget.story.description.length > 150)
                         TextButton(
@@ -859,7 +834,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                             });
                           },
                           child: Text(
-                            _isExpanded ? 'Voir moins' : 'Voir plus',
+                            _isExpanded ? 'see_less'.tr() : 'see_more'.tr(),
                             style: TextStyle(
                               color: textColor,
                               fontWeight: FontWeight.bold,
@@ -877,7 +852,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
                   // Liste des chapitres
                   Text(
-                    'Chapitres',
+                    'chapters_title'.tr(),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -891,7 +866,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
 
                   // À propos de l'auteur
                   Text(
-                    'À propos de l\'auteur',
+                    'about_author'.tr(),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -952,16 +927,64 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
     final dividerColor = isDarkMode ? Colors.white12 : Colors.black12;
 
-    // Pour l'instant, afficher des chapitres fictifs
-    // TODO: Récupérer les vrais chapitres depuis l'API
-    final chapters = List.generate(
-      widget.story.chapters,
-      (index) => {
-        'number': index + 1,
-        'title': 'Chapitre ${index + 1}',
-        'duration': '${(index % 3 + 1) * 5} min',
-      },
-    );
+    // Vérifier le statut premium de l'utilisateur et de l'histoire
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isUserPremium = authProvider.isPremium;
+    final isStoryPremium = widget.story.isPremium;
+
+    // Fonction helper pour gérer la navigation vers un chapitre
+    void navigateToChapter(int chapterIndex) {
+      // Bloquer l'accès aux chapitres si l'histoire est premium et l'utilisateur ne l'est pas
+      if (isStoryPremium && !isUserPremium) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('premium_chapter_message'.tr()),
+            backgroundColor: Colors.orange,
+            action: SnackBarAction(
+              label: 'subscribe'.tr(),
+              onPressed: () {
+                if (mounted) {
+                  Navigator.of(context).pushNamed('/subscription-offers');
+                }
+              },
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
+
+      // Utiliser _fullStory si disponible pour avoir les chapitres complets
+      final storyForReader = _fullStory ?? widget.story;
+
+      // Naviguer vers le lecteur
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ReaderScreen(
+            story: storyForReader,
+            initialChapterIndex: chapterIndex,
+          ),
+        ),
+      );
+    }
+
+    // Utiliser les chapitres réels de l'histoire (depuis _fullStory si disponible, sinon widget.story)
+    final storyToUse = _fullStory ?? widget.story;
+    
+    if (storyToUse.chaptersList.isNotEmpty) {
+   
+    }
+    final chapters = storyToUse.chaptersList.isNotEmpty
+        ? storyToUse.chaptersList
+        : List.generate(
+            storyToUse.chapters,
+            (index) => {
+              'chapter_number': index + 1,
+              'title': '${'chapter_title'.tr()} ${index + 1}',
+              'duration': '${(index % 3 + 1) * 5} ${'min_read'.tr()}',
+            },
+          );
 
     return ListView.separated(
       shrinkWrap: true,
@@ -971,67 +994,89 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           Divider(color: dividerColor, height: 1),
       itemBuilder: (context, index) {
         final chapter = chapters[index];
-        return ListTile(
-          contentPadding: const EdgeInsets.symmetric(vertical: 8),
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? Colors.white.withOpacity(0.1)
-                  : Colors.black.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Center(
-              child: Text(
-                '${chapter['number']}',
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-          ),
-          title: Text(
-            chapter['title'] as String,
-            style: TextStyle(
-              color: textColor,
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
-            ),
-          ),
-          subtitle: Text(
-            chapter['duration'] as String,
-            style: TextStyle(color: textColorSecondary, fontSize: 12),
-          ),
-          trailing: IconButton(
-            icon: Icon(Icons.play_circle_outline, color: textColorSecondary),
-            onPressed: () {
-              // Naviguer vers le lecteur à ce chapitre
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ReaderScreen(
-                    story: widget.story,
-                    initialChapterIndex: index,
+        // Gérer le titre du chapitre (peut être une map avec lang ou un string)
+        String chapterTitle = '';
+        final titleData = chapter['title'];
+        final currentLang = context.locale.languageCode; // 'fr' ou 'en'
+        if (titleData is Map) {
+          // Essayer d'abord la langue actuelle, puis les autres langues disponibles
+          chapterTitle = titleData[currentLang]?.toString() ?? 
+                        titleData['fr']?.toString() ?? 
+                        titleData['en']?.toString() ?? 
+                        titleData['gasy']?.toString() ??
+                        titleData.values.firstOrNull?.toString() ??
+                        '${'chapter_title'.tr()} ${index + 1}';
+        } else if (titleData is String) {
+          chapterTitle = titleData;
+        } else {
+          chapterTitle = '${'chapter_title'.tr()} ${index + 1}';
+        }
+
+        return InkWell(
+          onTap: () => navigateToChapter(index),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Numéro du chapitre
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? Colors.white.withOpacity(0.1)
+                        : Colors.black.withOpacity(0.05),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${chapter['chapter_number'] ?? chapter['number'] ?? index + 1}',
+                      style: TextStyle(
+                        color: textColor,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
-              );
-            },
-          ),
-          onTap: () {
-            // Naviguer vers le lecteur à ce chapitre
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ReaderScreen(
-                  story: widget.story,
-                  initialChapterIndex: index,
+                const SizedBox(width: 12),
+                // Titre du chapitre
+                Expanded(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          chapterTitle,
+                          style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 15,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // Afficher l'icône lock pour les histoires premium
+                      if (isStoryPremium && !isUserPremium)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 8.0),
+                          child: Icon(Icons.lock, color: Colors.amber, size: 16),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
+                const SizedBox(width: 8),
+                // Bouton play
+                IconButton(
+                  icon: Icon(Icons.play_circle_outline, color: textColorSecondary, size: 28),
+                  onPressed: () => navigateToChapter(index),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -1103,8 +1148,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                   // Afficher le nombre de followers
                   Text(
                     widget.story.authorFollowers != null
-                        ? '${widget.story.authorFollowers} followers'
-                        : 'Followers',
+                        ? '${widget.story.authorFollowers} ${'followers'.tr()}'
+                        : 'followers'.tr(),
                     style: TextStyle(color: textColorSecondary, fontSize: 13),
                   ),
                 ],
@@ -1129,8 +1174,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               ),
               child: Text(
                 _isLoadingFollow
-                    ? 'Chargement...'
-                    : (_isFollowing ? 'Suivi' : 'Suivre'),
+                    ? 'loading'.tr()
+                    : (_isFollowing ? 'followed'.tr() : 'follow'.tr()),
               ),
             ),
           ],
@@ -1139,67 +1184,106 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     );
   }
 
-  // Méthode pour construire l'avatar de l'auteur en base64 (version large pour la section "À propos")
+  // Méthode pour construire l'avatar de l'auteur (version large pour la section "À propos")
   Widget _buildAuthorAvatarLarge({required bool isDarkMode}) {
     final iconColor = isDarkMode ? Colors.white70 : Colors.black54;
+    final avatarData = widget.story.authorAvatar;
 
-    if (widget.story.authorAvatar != null &&
-        widget.story.authorAvatar!.isNotEmpty) {
-      try {
-        final base64String = widget.story.authorAvatar!.contains(',')
-            ? widget.story.authorAvatar!.split(',').last
-            : widget.story.authorAvatar!;
-
-        return Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(Icons.person, color: iconColor, size: 30);
-          },
-        );
-      } catch (e) {
-        return Icon(Icons.person, color: iconColor, size: 30);
-      }
+    if (avatarData == null || avatarData.isEmpty) {
+      return Icon(Icons.person, color: iconColor, size: 30);
     }
-    return Icon(Icons.person, color: iconColor, size: 30);
+
+    // Vérifier si c'est une URL (commence par /uploads/ ou http)
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = avatarData.startsWith('http')
+          ? avatarData
+          : '$apiUrl$avatarData';
+
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, color: iconColor, size: 30);
+        },
+      );
+    }
+
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = avatarData.contains(',')
+          ? avatarData.split(',').last
+          : avatarData;
+
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, color: iconColor, size: 30);
+        },
+      );
+    } catch (e) {
+      return Icon(Icons.person, color: iconColor, size: 30);
+    }
   }
 
-  // Méthode pour construire l'avatar de l'auteur en base64
+  // Méthode pour construire l'avatar de l'auteur (supporte URL et base64)
   Widget _buildAuthorAvatar({required bool isDarkMode}) {
     final iconColor = isDarkMode ? Colors.white70 : Colors.black54;
+    final avatarData = widget.story.authorAvatar;
 
-    // Afficher l'avatar en base64 s'il existe, sinon afficher une icône par défaut
-    if (widget.story.authorAvatar != null &&
-        widget.story.authorAvatar!.isNotEmpty) {
-      try {
-        // Décoder le base64
-        final base64String = widget.story.authorAvatar!.contains(',')
-            ? widget.story.authorAvatar!.split(',').last
-            : widget.story.authorAvatar!;
-
-        return Image.memory(
-          base64Decode(base64String),
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              color: Colors.grey.withOpacity(0.3),
-              child: Icon(Icons.person, color: iconColor, size: 24),
-            );
-          },
-        );
-      } catch (e) {
-        // En cas d'erreur de décodage, afficher l'icône par défaut
-        return Container(
-          color: Colors.grey.withOpacity(0.3),
-          child: Icon(Icons.person, color: iconColor, size: 24),
-        );
-      }
+    if (avatarData == null || avatarData.isEmpty) {
+      return Container(
+        color: Colors.grey.withOpacity(0.3),
+        child: Icon(Icons.person, color: iconColor, size: 24),
+      );
     }
-    // Si pas d'avatar, afficher l'icône par défaut
-    return Container(
-      color: Colors.grey.withOpacity(0.3),
-      child: Icon(Icons.person, color: iconColor, size: 24),
-    );
+
+    // Vérifier si c'est une URL (commence par /uploads/ ou http)
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = avatarData.startsWith('http')
+          ? avatarData
+          : '$apiUrl$avatarData';
+
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.withOpacity(0.3),
+            child: Icon(Icons.person, color: iconColor, size: 24),
+          );
+        },
+      );
+    }
+
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = avatarData.contains(',')
+          ? avatarData.split(',').last
+          : avatarData;
+
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.withOpacity(0.3),
+            child: Icon(Icons.person, color: iconColor, size: 24),
+          );
+        },
+      );
+    } catch (e) {
+      return Container(
+        color: Colors.grey.withOpacity(0.3),
+        child: Icon(Icons.person, color: iconColor, size: 24),
+      );
+    }
   }
 
   // Section pour afficher les stats et le statut de completion
@@ -1207,47 +1291,32 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Statut de lecture
+        // Badge de lecture complétée
         if (_isCompleted)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
-              border: Border.all(color: Colors.green, width: 1),
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.check_circle, color: Colors.green, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Vous avez complété cette histoire',
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (_completionInfo != null)
-                        Text(
-                          'Temps de lecture: ${_completionInfo!['total_reading_time_hours']} h',
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontSize: 12,
-                          ),
-                        ),
-                    ],
+                const Icon(Icons.check_circle, color: Colors.white, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  'already_read'.tr(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
                   ),
                 ),
               ],
             ),
           ),
 
-        const SizedBox(height: 16),
+        if (_isCompleted) const SizedBox(height: 16),
       ],
     );
   }
@@ -1268,5 +1337,132 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         ),
       ],
     );
+  }
+
+  // Méthode pour afficher l'image de couverture en plein écran
+  void _showFullScreenImage(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black87,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.zero,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // Image en plein écran
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: InteractiveViewer(
+                  child: Center(
+                    child: _buildCoverImage(fit: BoxFit.contain),
+                  ),
+                ),
+              ),
+              // Bouton de fermeture
+              Positioned(
+                top: 40,
+                right: 16,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.close,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Helper method to build cover image (supports both URL and base64)
+  Widget _buildCoverImage({required BoxFit fit}) {
+    final coverImage = widget.story.coverImage;
+    
+    if (coverImage == null || coverImage.isEmpty) {
+      return Container(
+        color: Colors.grey[900],
+        child: const Icon(
+          Icons.book,
+          size: 100,
+          color: Colors.white24,
+        ),
+      );
+    }
+
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (coverImage.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      final imageUrl = '$apiUrl$coverImage';
+      
+      return Image.network(
+        imageUrl,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[900],
+            child: const Icon(
+              Icons.book,
+              size: 100,
+              color: Colors.white24,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Vérifier si c'est une URL complète
+    if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+      return Image.network(
+        coverImage,
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[900],
+            child: const Icon(
+              Icons.book,
+              size: 100,
+              color: Colors.white24,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = coverImage.contains(',')
+          ? coverImage.split(',').last
+          : coverImage;
+      
+      return Image.memory(
+        base64Decode(base64String),
+        fit: fit,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[900],
+            child: const Icon(
+              Icons.book,
+              size: 100,
+              color: Colors.white24,
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      return Container(
+        color: Colors.grey[900],
+        child: const Icon(
+          Icons.book,
+          size: 100,
+          color: Colors.white24,
+        ),
+      );
+    }
   }
 }

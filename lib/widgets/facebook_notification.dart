@@ -312,8 +312,6 @@ class _FacebookNotificationState extends State<FacebookNotification>
 }
 
 class NotificationOverlay {
-  static final List<OverlayEntry> _entries = [];
-
   static void show(
     BuildContext context, {
     required String message,

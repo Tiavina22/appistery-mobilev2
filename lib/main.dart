@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'screens/language_selection_screen.dart';
 import 'screens/theme_selection_screen.dart';
-import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/subscription_offers_screen.dart';
@@ -16,8 +16,8 @@ import 'providers/websocket_provider.dart';
 import 'providers/version_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/subscription_offer_provider.dart';
-import 'widgets/force_update_dialog.dart';
 import 'widgets/home_with_version_check.dart';
+import 'widgets/netflix_splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,7 +26,7 @@ void main() async {
 
   runApp(
     EasyLocalization(
-      supportedLocales: const [Locale('en'), Locale('fr')],
+      supportedLocales: const [Locale('en'), Locale('fr'), Locale('mg')],
       path: 'assets/translations',
       fallbackLocale: const Locale('fr'),
       child: MultiProvider(
@@ -51,20 +51,38 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    
+    return Builder(
+      builder: (context) {
+        // Map 'mg' to 'fr' for Material localization since 'mg' is not supported by Flutter
+        final currentLocale = context.locale;
+        final materialLocale = currentLocale.languageCode == 'mg' 
+            ? const Locale('fr') 
+            : currentLocale;
 
-    return MaterialApp(
-      localizationsDelegates: context.localizationDelegates,
-      supportedLocales: context.supportedLocales,
-      locale: context.locale,
-      debugShowCheckedModeBanner: false,
-      theme: themeProvider.lightTheme,
-      darkTheme: themeProvider.darkTheme,
-      themeMode: themeProvider.themeMode,
-      routes: {
-        '/notifications': (context) => const NotificationsScreen(),
-        '/subscription-offers': (context) => const SubscriptionOffersScreen(),
-      },
-      home: const InitialScreenLoader(),
+        return MaterialApp(
+          localizationsDelegates: [
+            ...context.localizationDelegates,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('fr'),
+          ],
+          locale: materialLocale,
+          debugShowCheckedModeBanner: false,
+          theme: themeProvider.lightTheme,
+          darkTheme: themeProvider.darkTheme,
+          themeMode: themeProvider.themeMode,
+          routes: {
+            '/notifications': (context) => const NotificationsScreen(),
+            '/subscription-offers': (context) => const SubscriptionOffersScreen(),
+          },
+          home: const InitialScreenLoader(),
+        );
+      }
     );
   }
 }
@@ -79,6 +97,7 @@ class InitialScreenLoader extends StatefulWidget {
 class _InitialScreenLoaderState extends State<InitialScreenLoader> {
   Widget? _initialScreen;
   bool _isLoading = true;
+  bool _showSplash = true;
 
   @override
   void initState() {
@@ -90,6 +109,10 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
     final prefs = await SharedPreferences.getInstance();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final versionProvider = Provider.of<VersionProvider>(
+      context,
+      listen: false,
+    );
+    final storyProvider = Provider.of<StoryProvider>(
       context,
       listen: false,
     );
@@ -106,20 +129,33 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
     // Vérifier d'abord les étapes d'onboarding
     if (!languageSelected) {
       screen = const LanguageSelectionScreen();
+      _showSplash = false; // Pas de splash pour l'onboarding
     } else if (!themeSelected) {
       screen = const ThemeSelectionScreen();
+      _showSplash = false;
     } else if (!onboardingCompleted) {
       // Si onboarding non complété, aller au login
       screen = const LoginScreen();
+      _showSplash = false;
     } else {
       // Onboarding complété, vérifier si l'utilisateur est connecté
-      // Rafraîchir le statut de connexion au démarrage
       await authProvider.refreshLoginStatus();
 
       if (authProvider.isLoggedIn) {
         screen = const HomeWithVersionCheck();
+        // Pré-charger les stories et notifications en parallèle pendant le splash
+        Future.wait([
+          storyProvider.loadStories(),
+          storyProvider.loadGenres(),
+          storyProvider.loadAuthors(),
+          Provider.of<NotificationProvider>(
+            context,
+            listen: false,
+          ).loadNotifications(),
+        ]);
       } else {
         screen = const LoginScreen();
+        _showSplash = false;
       }
     }
 
@@ -131,10 +167,19 @@ class _InitialScreenLoaderState extends State<InitialScreenLoader> {
     }
   }
 
+  void _onSplashComplete() {
+    setState(() {
+      _showSplash = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    // Afficher le splash screen pendant le chargement initial ou si nécessaire
+    if (_isLoading || _showSplash) {
+      return NetflixSplashScreen(
+        onComplete: _onSplashComplete,
+      );
     }
 
     return _initialScreen ?? const LanguageSelectionScreen();

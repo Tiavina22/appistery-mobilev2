@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:async';
 import '../services/reading_service.dart';
 import '../services/story_service.dart';
@@ -52,10 +54,27 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
     _currentChapterIndex = widget.initialChapterIndex;
     _pageController = PageController(initialPage: _currentChapterIndex);
+    _loadReaderPreferences(); // Charger les préférences sauvegardées
     _loadChapterAndProgress();
     _recordView();
     _setupScrollListener();
     _startReadingTimer();
+  }
+
+  // Charger les préférences de lecture depuis SharedPreferences
+  Future<void> _loadReaderPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _fontSize = prefs.getDouble('reader_font_size') ?? 18.0;
+      _fontFamily = prefs.getString('reader_font_family') ?? 'Merriweather';
+    });
+  }
+
+  // Sauvegarder les préférences de lecture
+  Future<void> _saveReaderPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('reader_font_size', _fontSize);
+    await prefs.setString('reader_font_family', _fontFamily);
   }
 
   @override
@@ -119,20 +138,13 @@ class _ReaderScreenState extends State<ReaderScreen> {
         chapter = widget.story.chaptersList[_currentChapterIndex];
       }
 
-      print('DEBUG: Chapter data: $chapter');
-      print('DEBUG: Chapter ID: ${chapter['id']}');
-
       // Load chapter content
       final chapterData = await _readingService.getChapter(
         chapter['id'] as int,
       );
 
-      print('DEBUG: Chapter data from API: $chapterData');
-
       setState(() {
-        _currentChapter = chapterData is Map<String, dynamic>
-            ? chapterData
-            : {'content': chapterData.toString()};
+        _currentChapter = chapterData;
       });
 
       // Load last reading position for this chapter
@@ -152,7 +164,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
         );
       }
     } catch (e) {
-      print('DEBUG: Error in _loadChapterAndProgress: $e');
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -169,10 +180,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     final readingTime = DateTime.now().difference(_readingStartTime!).inSeconds;
     final isCompleted = _scrollPosition >= 95.0;
 
-    print(
-      '💾 [ReaderScreen._saveProgress] storyId=${widget.story.id}, chapterId=${_currentChapter!['id']}, scrollPos=${_scrollPosition.toStringAsFixed(1)}%, completed=$isCompleted',
-    );
-
     await _readingService.saveProgress(
       storyId: widget.story.id,
       chapterId: _currentChapter!['id'],
@@ -184,9 +191,6 @@ class _ReaderScreenState extends State<ReaderScreen> {
     // Si c'est le dernier chapitre et qu'il est complété, marquer l'histoire comme complète
     if (isCompleted &&
         _currentChapterIndex == widget.story.chaptersList.length - 1) {
-      print(
-        '🏆 [ReaderScreen._saveProgress] Dernier chapitre complété -> markStoryCompleted',
-      );
       await _readingService.markStoryCompleted(widget.story.id);
     }
   }
@@ -228,7 +232,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: _getBackgroundColor(),
         title: Text(
-          '🎉 Félicitations!',
+          'reader_congratulations'.tr(),
           style: TextStyle(color: _getTextColor(), fontSize: 24),
           textAlign: TextAlign.center,
         ),
@@ -236,14 +240,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Vous avez terminé cette histoire!',
+              'reader_finished_story'.tr(),
               style: TextStyle(color: _getTextColor(), fontSize: 16),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             if (_readingStartTime != null)
               Text(
-                'Temps de lecture: ${_formatReadingTime(DateTime.now().difference(_readingStartTime!).inSeconds)}',
+                '${'reader_reading_time'.tr()} ${_formatReadingTime(DateTime.now().difference(_readingStartTime!).inSeconds)}',
                 style: TextStyle(
                   color: _getTextColor().withOpacity(0.7),
                   fontSize: 14,
@@ -255,14 +259,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Retour'),
+            child: Text('reader_back'.tr()),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('Voir autres histoires'),
+            child: Text('reader_see_other_stories'.tr()),
           ),
         ],
       ),
@@ -308,7 +312,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Paramètres de lecture',
+                'reader_settings'.tr(),
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -319,7 +323,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
               // Thème synchronisé avec l'app
               Text(
-                'Thème',
+                'reader_theme'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -332,7 +336,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   children: [
                     Expanded(
                       child: _buildThemeOption(
-                        'Clair',
+                        'reader_theme_light'.tr(),
                         ReaderTheme.light,
                         Colors.white,
                         Colors.black,
@@ -343,7 +347,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _buildThemeOption(
-                        'Sombre',
+                        'reader_theme_dark'.tr(),
                         ReaderTheme.dark,
                         const Color(0xFF1a1a1a),
                         Colors.white,
@@ -358,7 +362,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
               // Taille de police
               Text(
-                'Taille du texte',
+                'reader_text_size'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -373,6 +377,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       if (_fontSize > 14) {
                         setState(() => _fontSize -= 2);
                         setModalState(() {});
+                        _saveReaderPreferences();
                       }
                     },
                     icon: const Icon(Icons.remove_circle_outline),
@@ -388,6 +393,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       onChanged: (value) {
                         setState(() => _fontSize = value);
                         setModalState(() {});
+                        _saveReaderPreferences();
                       },
                     ),
                   ),
@@ -396,6 +402,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                       if (_fontSize < 28) {
                         setState(() => _fontSize += 2);
                         setModalState(() {});
+                        _saveReaderPreferences();
                       }
                     },
                     icon: const Icon(Icons.add_circle_outline),
@@ -408,7 +415,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
               // Police
               Text(
-                'Police',
+                'reader_font'.tr(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -495,6 +502,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
       onTap: () {
         setState(() => _fontFamily = font);
         setModalState(() {});
+        _saveReaderPreferences();
       },
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -544,111 +552,14 @@ class _ReaderScreenState extends State<ReaderScreen> {
 
   String _getContent(dynamic content, String language) {
     if (content is Map) {
-      return content[language] ?? content['fr'] ?? content['gasy'] ?? '';
+      // Essayer d'abord la langue actuelle, puis les fallbacks
+      return content[language]?.toString() ?? 
+             content['fr']?.toString() ?? 
+             content['en']?.toString() ?? 
+             content['gasy']?.toString() ?? 
+             content.values.firstOrNull?.toString() ?? '';
     }
-    return content.toString();
-  }
-
-  // Calculer les caractères par page en fonction de la hauteur réelle disponible
-  int _calculateCharsPerPage(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Espace réservé aux contrôles et marges
-    final topPadding = _showControls ? 120.0 : 60.0;
-    final bottomPadding = _showControls
-        ? 200.0
-        : 160.0; // Plus d'espace pour le numéro de page + buffer
-    final availableHeight = screenHeight - topPadding - bottomPadding;
-
-    // Calculer le nombre de lignes qui peuvent tenir avec buffer de sécurité
-    final lineHeight = _fontSize * 1.8; // height: 1.8
-    // Réduire à 80% pour buffer supplémentaire
-    final linesPerPage = ((availableHeight * 0.80) / lineHeight)
-        .floor(); // 80% pour buffer maximum
-
-    // Calcul des caractères par ligne (réduit pour plus de sécurité)
-    final availableWidth = screenWidth - 48; // padding 24 + 24
-    final charsPerLine = (availableWidth / (_fontSize * 0.65)).floor();
-    final charsPerPage = (linesPerPage * charsPerLine).round();
-
-    return charsPerPage > 150
-        ? charsPerPage
-        : 150; // Minimum 150 chars seulement
-  }
-
-  // Calculer le nombre de pages en fonction de la taille du texte ET de l'espace dispo
-  int _getPageCount(String content, BuildContext context) {
-    if (content.isEmpty) return 1;
-
-    final charsPerPage = _calculateCharsPerPage(context);
-    int totalPages = 0;
-    int currentIndex = 0;
-
-    while (currentIndex < content.length) {
-      int endIndex = (currentIndex + charsPerPage).clamp(0, content.length);
-
-      // Chercher le dernier espace si on n'est pas à la fin
-      if (endIndex < content.length) {
-        int lastSpace = content.lastIndexOf(' ', endIndex);
-        if (lastSpace > currentIndex + (charsPerPage * 0.7)) {
-          // 70% minimum
-          endIndex = lastSpace + 1;
-        }
-      }
-
-      currentIndex = endIndex;
-      totalPages++;
-    }
-
-    return totalPages > 0 ? totalPages : 1;
-  }
-
-  // Récupérer le contenu d'une page spécifique
-  String _getPageContent(
-    String fullContent,
-    int pageIndex,
-    BuildContext context,
-  ) {
-    if (fullContent.isEmpty) return '';
-
-    final charsPerPage = _calculateCharsPerPage(context);
-
-    // Calculer la position de départ réelle pour cette page
-    int currentIndex = 0;
-    int currentPage = 0;
-
-    // Parcourir jusqu'à la page demandée
-    while (currentPage < pageIndex && currentIndex < fullContent.length) {
-      int endIndex = (currentIndex + charsPerPage).clamp(0, fullContent.length);
-
-      if (endIndex < fullContent.length) {
-        int lastSpace = fullContent.lastIndexOf(' ', endIndex);
-        if (lastSpace > currentIndex + (charsPerPage * 0.7)) {
-          endIndex = lastSpace + 1;
-        }
-      }
-
-      currentIndex = endIndex;
-      currentPage++;
-    }
-
-    if (currentIndex >= fullContent.length) {
-      return '';
-    }
-
-    // Extraire le contenu de cette page
-    int endIndex = (currentIndex + charsPerPage).clamp(0, fullContent.length);
-
-    // Si ce n'est pas la dernière page, couper au dernier espace
-    if (endIndex < fullContent.length) {
-      int lastSpace = fullContent.lastIndexOf(' ', endIndex);
-      if (lastSpace > currentIndex + (charsPerPage * 0.7)) {
-        endIndex = lastSpace;
-      }
-    }
-
-    return fullContent.substring(currentIndex, endIndex).trim();
+    return content?.toString() ?? '';
   }
 
   @override
@@ -659,7 +570,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
         onTap: _toggleControls,
         child: Stack(
           children: [
-            // Page view pour swipe entre chapitres
+            // Page view pour swipe entre chapitres (horizontal, style livre)
             PageView.builder(
               controller: _pageController,
               itemCount: widget.story.chaptersList.length,
@@ -670,6 +581,10 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   _scrollPosition = 0.0;
                   _readingStartTime = DateTime.now();
                 });
+                // Réinitialiser le scroll au début du nouveau chapitre
+                if (_scrollController.hasClients) {
+                  _scrollController.jumpTo(0);
+                }
                 _loadChapterAndProgress();
               },
               itemBuilder: (context, index) {
@@ -677,92 +592,98 @@ class _ReaderScreenState extends State<ReaderScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // Pagination style livre - diviser le texte en pages
-                final content = _getContent(_currentChapter?['content'], 'fr');
-                final title = _getContent(_currentChapter?['title'], 'fr');
+                // Contenu du chapitre avec scroll vertical
+                final currentLang = context.locale.languageCode;
+                final content = _getContent(_currentChapter?['content'], currentLang);
+                final title = _getContent(_currentChapter?['title'], currentLang);
                 final chapterNum = _currentChapter?['chapter_number'] ?? '';
-                final pageCount = _getPageCount(content, context);
 
-                return PageView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: pageCount,
-                  onPageChanged: (pageIndex) {
-                    setState(() {
-                      _scrollPosition = ((pageIndex + 1) / pageCount * 100)
-                          .clamp(0.0, 100.0);
-                    });
-                  },
-                  itemBuilder: (context, pageIndex) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        left: 24,
-                        right: 24,
-                        top: _showControls ? 120 : 60,
-                        bottom: _showControls ? 200 : 160,
+                return SingleChildScrollView(
+                  controller: _scrollController,
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    top: _showControls ? 120 : 60,
+                    bottom: _showControls ? 120 : 80,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Titre du chapitre
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: _fontSize + 10,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: _fontFamily,
+                          color: _getTextColor(),
+                          height: 1.3,
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Titre du chapitre (seulement sur la première page)
-                          if (pageIndex == 0) ...[
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontSize: _fontSize + 10,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: _fontFamily,
-                                color: _getTextColor(),
-                                height: 1.3,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Chapitre $chapterNum',
-                              style: TextStyle(
-                                fontSize: _fontSize - 4,
-                                color: _getTextColor().withOpacity(0.6),
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                            Divider(
-                              height: 40,
-                              thickness: 1,
-                              color: _getTextColor().withOpacity(0.2),
-                            ),
-                          ],
+                      const SizedBox(height: 8),
+                      Text(
+                        '${'chapter_title'.tr()} $chapterNum',
+                        style: TextStyle(
+                          fontSize: _fontSize - 4,
+                          color: _getTextColor().withOpacity(0.6),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                      Divider(
+                        height: 40,
+                        thickness: 1,
+                        color: _getTextColor().withOpacity(0.2),
+                      ),
 
-                          // Contenu de la page
-                          Expanded(
-                            child: Text(
-                              _getPageContent(content, pageIndex, context),
-                              style: TextStyle(
-                                fontSize: _fontSize,
-                                height: 1.8,
-                                fontFamily: _fontFamily,
-                                color: _getTextColor(),
-                                letterSpacing: 0.3,
-                              ),
-                              textAlign: TextAlign.justify,
+                      // Contenu du chapitre (scroll vertical)
+                      Text(
+                        content,
+                        style: TextStyle(
+                          fontSize: _fontSize,
+                          height: 1.8,
+                          fontFamily: _fontFamily,
+                          color: _getTextColor(),
+                          letterSpacing: 0.3,
+                        ),
+                        textAlign: TextAlign.justify,
+                      ),
+                      
+                      // Espace et indication de fin de chapitre
+                      const SizedBox(height: 40),
+                      Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.more_horiz,
+                              color: _getTextColor().withOpacity(0.3),
+                              size: 32,
                             ),
-                          ),
-
-                          // Numéro de page en bas
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 16),
-                              child: Text(
-                                '${pageIndex + 1} / $pageCount',
+                            const SizedBox(height: 16),
+                            if (_currentChapterIndex < widget.story.chaptersList.length - 1)
+                              Text(
+                                'reader_swipe_next'.tr(),
                                 style: TextStyle(
                                   fontSize: 12,
+                                  color: _getTextColor().withOpacity(0.4),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              )
+                            else
+                              Text(
+                                'reader_end_of_story'.tr(),
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  // ignore: deprecated_member_use
                                   color: _getTextColor().withOpacity(0.5),
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    );
-                  },
+                      const SizedBox(height: 40),
+                    ],
+                  ),
                 );
               },
             ),
@@ -817,7 +738,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  'Chapitre ${_currentChapterIndex + 1}/${widget.story.chaptersList.length}',
+                                  '${'chapter_title'.tr()} ${_currentChapter?['chapter_number'] ?? _currentChapterIndex + 1}/${widget.story.chaptersList.length}',
                                   style: TextStyle(
                                     color: _getTextColor().withOpacity(0.6),
                                     fontSize: 12,
@@ -897,7 +818,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             ? _goToPreviousChapter
                             : null,
                         icon: const Icon(Icons.chevron_left, size: 20),
-                        label: const Text('Précédent'),
+                        label: Text('reader_previous'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _getTextColor(),
                           foregroundColor: _getBackgroundColor(),
@@ -926,7 +847,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             ? _goToNextChapter
                             : null,
                         icon: const Icon(Icons.chevron_right, size: 20),
-                        label: const Text('Suivant'),
+                        label: Text('reader_next'.tr()),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _getTextColor(),
                           foregroundColor: _getBackgroundColor(),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/author_service.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
@@ -24,7 +25,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
   final AuthorService _authorService = AuthorService();
   late TabController _tabController;
 
-  bool _isLoading = true;
   bool _isFollowing = false;
   int _followersCount = 0;
   Map<String, dynamic>? _authorProfile;
@@ -45,7 +45,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
   }
 
   Future<void> _loadAuthorData() async {
-    setState(() => _isLoading = true);
 
     try {
       // Charger en parallèle
@@ -65,11 +64,8 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
             .map((json) => Story.fromJson(json))
             .toList();
         _stats = results[4] as Map<String, dynamic>;
-        _isLoading = false;
       });
     } catch (e) {
-      print('Erreur lors du chargement du profil: $e');
-      setState(() => _isLoading = false);
     }
   }
 
@@ -113,20 +109,19 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
     final backgroundColor = Theme.of(context).scaffoldBackgroundColor;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
-    final cardColor = isDarkMode ? Colors.grey[900] : Colors.grey[200];
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : NestedScrollView(
+      body: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) {
                 return [
-                  // AppBar avec avatar
                   SliverAppBar(
-                    expandedHeight: 200,
+                    expandedHeight: 0,
                     pinned: true,
-                    backgroundColor: cardColor,
+                    backgroundColor: backgroundColor,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    forceElevated: false,
                     leading: IconButton(
                       icon: Container(
                         padding: const EdgeInsets.all(8),
@@ -141,81 +136,72 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                       ),
                       onPressed: () => Navigator.pop(context),
                     ),
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          // Fond dégradé
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: isDarkMode
-                                    ? [Colors.grey[800]!, Colors.black]
-                                    : [Colors.grey[400]!, Colors.grey[200]!],
-                              ),
-                            ),
-                          ),
-                          // Avatar centré
-                          Center(child: _buildAvatar(isDarkMode: isDarkMode)),
-                        ],
-                      ),
-                    ),
                   ),
 
-                  // Informations du profil
+                  // Informations du profil avec avatar à gauche
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
-                          // Nom de l'auteur
-                          Text(
-                            widget.authorName,
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 8),
-
-                          // Spécialité
-                          if (_authorProfile?['speciality'] != null)
-                            Text(
-                              _authorProfile!['speciality'],
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: textColorSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          const SizedBox(height: 20),
-
-                          // Stats
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildStatItem(
-                                'Histoires',
-                                _stats['total_stories']?.toString() ?? '0',
-                                isDarkMode: isDarkMode,
-                              ),
-                              _buildStatItem(
-                                'Followers',
-                                _followersCount.toString(),
-                                isDarkMode: isDarkMode,
-                              ),
-                              _buildStatItem(
-                                'Vues',
-                                _stats['total_views']?.toString() ?? '0',
-                                isDarkMode: isDarkMode,
+                              // Avatar à gauche
+                              _buildAvatar(isDarkMode: isDarkMode),
+                              const SizedBox(width: 16),
+                              // Infos à droite
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    // Nom de l'auteur
+                                    Text(
+                                      widget.authorName,
+                                      style: TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    // Spécialité
+                                    if (_authorProfile?['speciality'] != null)
+                                      Text(
+                                        _authorProfile!['speciality'],
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: textColorSecondary,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 12),
+                                    // Stats en colonne
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        _buildStatItemCompact(
+                                          'Histoires',
+                                          _stats['total_stories']?.toString() ?? '0',
+                                          isDarkMode: isDarkMode,
+                                        ),
+                                        _buildStatItemCompact(
+                                          'Followers',
+                                          _followersCount.toString(),
+                                          isDarkMode: isDarkMode,
+                                        ),
+                                        _buildStatItemCompact(
+                                          'Vues',
+                                          _stats['total_views']?.toString() ?? '0',
+                                          isDarkMode: isDarkMode,
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 20),
 
                           // Bouton Suivre/Abonné
                           SizedBox(
@@ -300,7 +286,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                       ),
                     ),
                   ),
-                ];
+              ];
               },
               body: TabBarView(
                 controller: _tabController,
@@ -330,19 +316,51 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
       ),
       child: ClipOval(
         child: avatarData != null && avatarData.isNotEmpty
-            ? Image.memory(
-                base64Decode(avatarData.split(',').last),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Icon(Icons.person, size: 60, color: iconColor);
-                },
-              )
+            ? _buildAvatarImage(avatarData, iconColor)
             : Icon(Icons.person, size: 60, color: iconColor),
       ),
     );
   }
 
-  Widget _buildStatItem(
+  Widget _buildAvatarImage(String avatarData, Color iconColor) {
+    // Vérifier si c'est une URL (commence par /uploads/ ou http)
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+      final imageUrl = avatarData.startsWith('http')
+          ? avatarData
+          : '$apiUrl$avatarData';
+
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, size: 60, color: iconColor);
+        },
+      );
+    }
+
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = avatarData.contains(',')
+          ? avatarData.split(',').last
+          : avatarData;
+
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Icon(Icons.person, size: 60, color: iconColor);
+        },
+      );
+    } catch (e) {
+      return Icon(Icons.person, size: 60, color: iconColor);
+    }
+  }
+
+
+  Widget _buildStatItemCompact(
     String label,
     String value, {
     required bool isDarkMode,
@@ -355,13 +373,13 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         Text(
           value,
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: textColor,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(label, style: TextStyle(fontSize: 14, color: textColorSecondary)),
+        const SizedBox(height: 2),
+        Text(label, style: TextStyle(fontSize: 12, color: textColorSecondary)),
       ],
     );
   }
@@ -407,15 +425,7 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: story.coverImage != null && story.coverImage!.isNotEmpty
-                  ? Image.memory(
-                      base64Decode(story.coverImage!.split(',').last),
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Icon(Icons.book, color: Colors.grey, size: 60),
-                        );
-                      },
-                    )
+                  ? _buildCoverImage(story.coverImage!)
                   : const Center(
                       child: Icon(Icons.book, color: Colors.grey, size: 60),
                     ),
@@ -436,20 +446,6 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Email',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _authorProfile?['email'] ?? 'Non disponible',
-            style: TextStyle(fontSize: 14, color: textColorSecondary),
-          ),
-          const SizedBox(height: 20),
-          Text(
             'Membre depuis',
             style: TextStyle(
               fontSize: 16,
@@ -469,5 +465,74 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         ],
       ),
     );
+  }
+
+  // Helper method to build cover image (supports both URL and base64)
+  Widget _buildCoverImage(String coverImage) {
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (coverImage.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+      final imageUrl = '$apiUrl$coverImage';
+      
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey,
+              size: 60,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Vérifier si c'est une URL complète
+    if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+      return Image.network(
+        coverImage,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey,
+              size: 60,
+            ),
+          );
+        },
+      );
+    }
+    
+    // Sinon, c'est du base64 (backward compatibility)
+    try {
+      final base64String = coverImage.contains(',')
+          ? coverImage.split(',').last
+          : coverImage;
+      
+      return Image.memory(
+        base64Decode(base64String),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return const Center(
+            child: Icon(
+              Icons.image_not_supported,
+              color: Colors.grey,
+              size: 60,
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      return const Center(
+        child: Icon(
+          Icons.image_not_supported,
+          color: Colors.grey,
+          size: 60,
+        ),
+      );
+    }
   }
 }

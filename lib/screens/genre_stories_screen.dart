@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:provider/provider.dart';
 import 'dart:convert';
-import '../providers/story_provider.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
 
@@ -57,7 +55,6 @@ class _GenreStoriesScreenState extends State<GenreStoriesScreen> {
         _error = e.toString();
         _isLoading = false;
       });
-      print('Error loading stories: $e');
     }
   }
 
@@ -165,6 +162,25 @@ class _GenreStoriesScreenState extends State<GenreStoriesScreen> {
   }
 
   Widget _buildImageFromString(String imageString) {
+    // Vérifier si c'est une URL relative (commence par /uploads/)
+    if (imageString.startsWith('/uploads/')) {
+      final apiUrl = const String.fromEnvironment('API_URL', defaultValue: 'http://localhost:5500');
+      final imageUrl = '$apiUrl$imageString';
+      
+      return Image.network(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey.shade900,
+            child: const Center(
+              child: Icon(Icons.image_not_supported, color: Colors.grey),
+            ),
+          );
+        },
+      );
+    }
+    
     if (imageString.startsWith('data:image')) {
       // Base64 image
       final base64String = imageString.split(',').last;

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../services/story_service.dart';
 import '../services/websocket_service.dart';
+import '../services/cache_service.dart';
 
 class StoryProvider extends ChangeNotifier {
   final StoryService _storyService = StoryService();
   final WebSocketService _wsService = WebSocketService();
+  final CacheService _cacheService = CacheService();
 
   List<Story> _stories = [];
   List<Story> _favorites = [];
@@ -39,8 +41,6 @@ class StoryProvider extends ChangeNotifier {
   void _initializeWebSocketListeners() {
     // Écouter les nouvelles histoires en temps réel
     _wsService.onNewStory((data) {
-      print('📚 StoryProvider: Nouvelle histoire reçue via WebSocket');
-      print('Data: $data');
 
       try {
         // Créer une Story à partir des données WebSocket
@@ -50,19 +50,23 @@ class StoryProvider extends ChangeNotifier {
         final exists = _stories.any((s) => s.id == newStory.id);
         if (!exists) {
           _stories.insert(0, newStory); // Ajouter au début de la liste
+          
+          // Invalider le cache pour forcer un rafraîchissement lors du prochain chargement
+          _cacheService.invalidateStoriesCache();
+          
+          // Mettre à jour le cache avec les nouvelles données
+          _cacheService.cacheStories(_stories);
+          
+          _storiesByGenreCache = null; // Invalider le cache par genre
           notifyListeners();
-          print('✅ Histoire ajoutée à la liste');
         } else {
-          print('ℹ️ Histoire déjà présente dans la liste');
         }
       } catch (e) {
-        print('❌ Erreur lors de l\'ajout de la nouvelle histoire: $e');
       }
     });
 
     // Écouter les nouveaux chapitres
     _wsService.onNewChapter((data) {
-      print('📖 StoryProvider: Nouveau chapitre reçu via WebSocket');
       // Mettre à jour le nombre de chapitres de l'histoire concernée
       try {
         final storyId = data['story_id'] as int?;
@@ -74,20 +78,16 @@ class StoryProvider extends ChangeNotifier {
           }
         }
       } catch (e) {
-        print('❌ Erreur lors de la mise à jour des chapitres: $e');
       }
     });
 
     // Écouter les mises à jour d'histoires
     _wsService.onStoryUpdated((data) {
-      print('🔄 StoryProvider: Histoire mise à jour via WebSocket');
       loadStories(); // Recharger toutes les histoires
     });
 
     // Écouter l'ajout d'un favori
     _wsService.onFavoriteAdded((data) {
-      print('❤️ StoryProvider: Favori ajouté via WebSocket');
-      print('Data: $data');
 
       try {
         final storyId = data['story_id'] as int?;
@@ -110,42 +110,78 @@ class StoryProvider extends ChangeNotifier {
           // Marquer comme favori
           if (!_favorites.any((s) => s.id == storyId)) {
             _favorites.add(story);
+            
+            // Invalider et mettre à jour le cache des favoris
+            _cacheService.invalidateFavoritesCache();
+            _cacheService.cacheFavorites(_favorites);
+            
             notifyListeners();
-            print('✅ Favori ajouté à la liste');
           }
         }
       } catch (e) {
-        print('❌ Erreur lors de l\'ajout du favori: $e');
       }
     });
 
     // Écouter la suppression d'un favori
     _wsService.onFavoriteRemoved((data) {
-      print('💔 StoryProvider: Favori supprimé via WebSocket');
-      print('Data: $data');
-
       try {
         final storyId = data['story_id'] as int?;
         if (storyId != null) {
           // Retirer de la liste des favoris
           _favorites.removeWhere((s) => s.id == storyId);
+          
+          // Invalider et mettre à jour le cache des favoris
+          _cacheService.invalidateFavoritesCache();
+          _cacheService.cacheFavorites(_favorites);
+          
           notifyListeners();
-          print('✅ Favori supprimé de la liste');
         }
       } catch (e) {
-        print('❌ Erreur lors de la suppression du favori: $e');
       }
     });
 
     // Écouter les mises à jour globales des favoris
     _wsService.onFavoritesUpdated((data) {
-      print('🔄 StoryProvider: Favoris mis à jour via WebSocket');
       loadFavorites(); // Recharger tous les favoris
+    });
+
+    // Écouter la liste des genres
+    _wsService.onGenresList((data) {
+      
+      try {
+        if (data is List) {
+          _genres = List<Map<String, dynamic>>.from(
+            data.map((genre) => Map<String, dynamic>.from(genre))
+          );
+          _isLoading = false;
+          notifyListeners();
+        }
+      } catch (e) {
+        _error = 'Erreur lors du traitement des genres';
+        _isLoading = false;
+        notifyListeners();
+      }
+    });
+
+    // Écouter la liste des auteurs
+    _wsService.onAuthorsList((data) {
+      try {
+        if (data is List) {
+          _authors = data
+            .map((author) => Author.fromJson(Map<String, dynamic>.from(author)))
+            .toList();
+          _isLoading = false;
+          notifyListeners();
+        }
+      } catch (e) {
+        _error = 'Erreur lors du traitement des auteurs';
+        _isLoading = false;
+        notifyListeners();
+      }
     });
   }
 
   Future<void> loadStories() async {
-    print('📚 StoryProvider.loadStories: Début du chargement...');
     final startTime = DateTime.now();
     _isLoading = true;
     _error = null;
@@ -155,34 +191,64 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Charger depuis le cache d'abord (ultra-rapide)
+      final cachedStories = await _cacheService.getCachedStories();
+      if (cachedStories != null && cachedStories.isNotEmpty) {
+        _stories = cachedStories;
+        _isLoading = false;
+        _hasMoreStories = cachedStories.length >= _pageSize;
+        _currentPage = 1;
+        notifyListeners();
+        
+        // 2. Charger depuis le serveur en arrière-plan pour rafraîchir
+        _refreshStoriesInBackground();
+        return;
+      }
+      
+      // 3. Si pas de cache, charger depuis le serveur
       _stories = await _storyService.getAllStoriesPaginated(
         limit: _pageSize,
         offset: 0,
       );
-      final duration = DateTime.now().difference(startTime);
-      print(
-        '📚 StoryProvider.loadStories: ${_stories.length} histoires chargées en ${duration.inMilliseconds}ms',
-      );
+      
+      // 4. Sauvegarder dans le cache
+      await _cacheService.cacheStories(_stories);
+      
+      DateTime.now().difference(startTime);
       _error = null;
       _hasMoreStories = _stories.length >= _pageSize;
       _currentPage = 1;
     } catch (e) {
-      print('❌ StoryProvider.loadStories: Erreur - $e');
       _error = e.toString();
       _stories = [];
     }
 
     _isLoading = false;
     notifyListeners();
-    print(
-      '📚 StoryProvider.loadStories: Terminé (${_stories.length} histoires)',
-    );
+  }
+
+  // Rafraîchir les stories en arrière-plan
+  Future<void> _refreshStoriesInBackground() async {
+    try {
+      final freshStories = await _storyService.getAllStoriesPaginated(
+        limit: _pageSize,
+        offset: 0,
+      );
+      
+      if (freshStories.isNotEmpty) {
+        _stories = freshStories;
+        await _cacheService.cacheStories(_stories);
+        _hasMoreStories = freshStories.length >= _pageSize;
+        _currentPage = 1;
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silencieusement échouer - on a déjà les données du cache
+    }
   }
 
   Future<void> loadMoreStories() async {
     if (_isLoadingMore || !_hasMoreStories) return;
-
-    print('📚 StoryProvider.loadMoreStories: Chargement page $_currentPage...');
     _isLoadingMore = true;
     notifyListeners();
 
@@ -198,15 +264,14 @@ class StoryProvider extends ChangeNotifier {
         _storiesByGenreCache = null; // Invalider le cache
         _currentPage++;
         _hasMoreStories = newStories.length >= _pageSize;
-        print(
-          '✅ ${newStories.length} histoires ajoutées (Total: ${_stories.length})',
-        );
+        
+        // Mettre à jour le cache avec toutes les stories
+        await _cacheService.cacheStories(_stories);
       } else {
         _hasMoreStories = false;
-        print('🚫 Plus d\'histoires à charger');
       }
     } catch (e) {
-      print('❌ StoryProvider.loadMoreStories: Erreur - $e');
+      // Silencieusement échouer
     }
 
     _isLoadingMore = false;
@@ -219,7 +284,21 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      // 1. Charger depuis le cache d'abord
+      final cachedFavorites = await _cacheService.getCachedFavorites();
+      if (cachedFavorites != null) {
+        _favorites = cachedFavorites;
+        _isLoading = false;
+        notifyListeners();
+        
+        // 2. Rafraîchir en arrière-plan
+        _refreshFavoritesInBackground();
+        return;
+      }
+      
+      // 3. Si pas de cache, charger depuis le serveur
       _favorites = await _storyService.getFavorites();
+      await _cacheService.cacheFavorites(_favorites);
       _error = null;
     } catch (e) {
       _error = e.toString();
@@ -228,6 +307,17 @@ class StoryProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> _refreshFavoritesInBackground() async {
+    try {
+      final freshFavorites = await _storyService.getFavorites();
+      _favorites = freshFavorites;
+      await _cacheService.cacheFavorites(_favorites);
+      notifyListeners();
+    } catch (e) {
+      // Silencieusement échouer
+    }
   }
 
   Future<void> searchStories(String query) async {
@@ -295,39 +385,107 @@ class StoryProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Charger tous les genres
+  // Charger tous les genres via cache puis WebSocket/HTTP
   Future<void> loadGenres() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      _genres = await _storyService.getGenres();
-      print('✅ ${_genres.length} genres loaded');
+      // 1. Charger depuis le cache d'abord
+      final cachedGenres = await _cacheService.getCachedGenres();
+      if (cachedGenres != null && cachedGenres.isNotEmpty) {
+        _genres = cachedGenres;
+        _isLoading = false;
+        notifyListeners();
+        
+        // 2. Rafraîchir en arrière-plan
+        _refreshGenresInBackground();
+        return;
+      }
+
+      // 3. Demander les genres via WebSocket
+      _wsService.requestGenres();
+      
+      // 4. Attendre 2 secondes max pour la réponse WebSocket
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // 5. Si toujours vide après 2s, utiliser HTTP en fallback
+      if (_genres.isEmpty) {
+        _genres = await _storyService.getGenres();
+        await _cacheService.cacheGenres(_genres);
+        _isLoading = false;
+        notifyListeners();
+      }
     } catch (e) {
       _error = e.toString();
-      print('❌ Error loading genres: $e');
-    } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  // Charger tous les auteurs
+  Future<void> _refreshGenresInBackground() async {
+    try {
+      final freshGenres = await _storyService.getGenres();
+      if (freshGenres.isNotEmpty) {
+        _genres = freshGenres;
+        await _cacheService.cacheGenres(_genres);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silencieusement échouer
+    }
+  }
+
+  // Charger tous les auteurs via cache puis WebSocket/HTTP
   Future<void> loadAuthors() async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      _authors = await _storyService.getAuthors();
-      print('✅ ${_authors.length} authors loaded');
+      // 1. Charger depuis le cache d'abord
+      final cachedAuthors = await _cacheService.getCachedAuthors();
+      if (cachedAuthors != null && cachedAuthors.isNotEmpty) {
+        _authors = cachedAuthors;
+        _isLoading = false;
+        notifyListeners();
+        
+        // 2. Rafraîchir en arrière-plan
+        _refreshAuthorsInBackground();
+        return;
+      }
+
+      // 3. Demander les auteurs via WebSocket
+      _wsService.requestAuthors();
+      
+      // 4. Attendre 2 secondes max pour la réponse WebSocket
+      await Future.delayed(const Duration(seconds: 2));
+      
+      // 5. Si toujours vide après 2s, utiliser HTTP en fallback
+      if (_authors.isEmpty) {
+        _authors = await _storyService.getAuthors();
+        await _cacheService.cacheAuthors(_authors);
+        _isLoading = false;
+        notifyListeners();
+      }
     } catch (e) {
       _error = e.toString();
-      print('❌ Error loading authors: $e');
-    } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _refreshAuthorsInBackground() async {
+    try {
+      final freshAuthors = await _storyService.getAuthors();
+      if (freshAuthors.isNotEmpty) {
+        _authors = freshAuthors;
+        await _cacheService.cacheAuthors(_authors);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Silencieusement échouer
     }
   }
 }

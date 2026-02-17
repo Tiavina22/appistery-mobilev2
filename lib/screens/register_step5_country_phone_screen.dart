@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'dart:io';
 import '../providers/theme_provider.dart';
 import '../services/auth_service.dart';
 import 'register_step6_cgu_screen.dart';
@@ -9,14 +10,14 @@ class RegisterStep5CountryPhoneScreen extends StatefulWidget {
   final String email;
   final String username;
   final String password;
-  final String? avatar;
+  final File? avatarFile;
 
   const RegisterStep5CountryPhoneScreen({
     super.key,
     required this.email,
     required this.username,
     required this.password,
-    this.avatar,
+    this.avatarFile,
   });
 
   @override
@@ -72,7 +73,7 @@ class _RegisterStep5CountryPhoneScreenState
           username: widget.username,
           password: widget.password,
           telephone: _phoneController.text,
-          avatar: widget.avatar,
+          avatarFile: widget.avatarFile,
           countryId: _selectedCountry?['id'],
         ),
       ),
