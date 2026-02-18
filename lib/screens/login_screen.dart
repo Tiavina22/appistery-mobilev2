@@ -3,6 +3,8 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
+import '../providers/story_provider.dart';
+import '../providers/notification_provider.dart';
 import 'home_screen.dart';
 import 'register_step1_email_screen.dart';
 import 'forgot_password_email_screen.dart';
@@ -48,17 +50,32 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
 
-      setState(() {
-        _isLoading = false;
-      });
-
       if (success && mounted) {
+        // Pré-charger les stories et notifications comme dans le splash screen
+        final storyProvider = Provider.of<StoryProvider>(context, listen: false);
+        final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+        
+        await Future.wait([
+          storyProvider.loadStories(),
+          storyProvider.loadGenres(),
+          storyProvider.loadAuthors(),
+          notificationProvider.loadNotifications(),
+        ]);
+
+        setState(() {
+          _isLoading = false;
+        });
+
         // Rediriger vers HomeScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
       } else if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        
         // Parser l'erreur selon le champ
         final errorCode = authProvider.errorCode;
         final errorField = authProvider.errorField;
