@@ -10,9 +10,10 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerProviderStateMixin {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+  late AnimationController _animationController;
 
   final List<OnboardingData> _pages = [
     OnboardingData(
@@ -35,6 +36,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     ),
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_completed', true);
@@ -50,9 +60,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void _nextPage() {
     if (_currentPage < _pages.length - 1) {
       _pageController.nextPage(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOutCubic,
       );
+      _animationController.forward(from: 0);
     } else {
       _completeOnboarding();
     }
@@ -71,6 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               setState(() {
                 _currentPage = index;
               });
+              _animationController.forward(from: 0);
             },
             itemCount: _pages.length,
             itemBuilder: (context, index) {
@@ -78,19 +90,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
           
-          // Top gradient overlay for better text visibility
+          // Top gradient overlay - plus subtil
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 100,
+              height: 150,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withOpacity(0.6),
+                    Colors.black.withOpacity(0.3),
                     Colors.transparent,
                   ],
                 ),
@@ -98,104 +111,215 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           
-          // Skip button at top right
+          // Logo en haut
+          Positioned(
+            top: 50,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Hero(
+                tag: 'app_logo',
+                child: Image.asset(
+                  'assets/logo/logo-appistery-no.png',
+                  width: 50,
+                  height: 50,
+                ),
+              ),
+            ),
+          ),
+          
+          // Skip button at top right - amélioration design
           if (_currentPage < _pages.length - 1)
             Positioned(
-              top: 40,
-              right: 20,
-              child: TextButton(
-                onPressed: _completeOnboarding,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.black.withOpacity(0.3),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                ),
-                child: Text(
-                  'skip'.tr(),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+              top: 50,
+              right: 24,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _completeOnboarding,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      'skip'.tr(),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           
-          // Bottom section with dots and button
+          // Bottom section avec dots et bouton - design amélioré
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: SafeArea(
               child: Container(
-                padding: const EdgeInsets.all(32.0),
+                padding: const EdgeInsets.fromLTRB(32, 40, 32, 32),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.8),
-                      Colors.black,
+                      Colors.black.withOpacity(0.7),
+                      Colors.black.withOpacity(0.95),
                     ],
+                    stops: const [0.0, 0.3, 1.0],
                   ),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Page indicators
+                    // Page indicators - design amélioré
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
                         _pages.length,
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: _currentPage == index ? 24 : 8,
+                          curve: Curves.easeInOut,
+                          margin: const EdgeInsets.symmetric(horizontal: 5),
+                          width: _currentPage == index ? 32 : 8,
                           height: 8,
                           decoration: BoxDecoration(
-                            color: _currentPage == index
-                                ? const Color(0xFF1DB954)
-                                : Colors.grey.shade700,
+                            gradient: _currentPage == index
+                                ? const LinearGradient(
+                                    colors: [
+                                      Color(0xFF1DB954),
+                                      Color(0xFF1AA34A),
+                                    ],
+                                  )
+                                : null,
+                            color: _currentPage != index
+                                ? Colors.white.withOpacity(0.3)
+                                : null,
                             borderRadius: BorderRadius.circular(4),
+                            boxShadow: _currentPage == index
+                                ? [
+                                    BoxShadow(
+                                      color: const Color(0xFF1DB954).withOpacity(0.5),
+                                      blurRadius: 8,
+                                      spreadRadius: -2,
+                                    ),
+                                  ]
+                                : null,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 40),
                     
-                    // Main button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _currentPage == _pages.length - 1
-                            ? _completeOnboarding
-                            : _nextPage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1DB954),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                    // Boutons - design amélioré
+                    Row(
+                      children: [
+                        // Bouton Back (si pas sur la première page)
+                        if (_currentPage > 0)
+                          Expanded(
+                            flex: 1,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                _pageController.previousPage(
+                                  duration: const Duration(milliseconds: 400),
+                                  curve: Curves.easeInOutCubic,
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.white,
+                                side: BorderSide(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 1.5,
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.arrow_back_rounded, size: 18),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'previous'.tr(),
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          _currentPage == _pages.length - 1
-                              ? 'start'.tr()
-                              : 'next'.tr(),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                        if (_currentPage > 0) const SizedBox(width: 16),
+                        
+                        // Bouton Next/Start
+                        Expanded(
+                          flex: _currentPage > 0 ? 2 : 1,
+                          child: ElevatedButton(
+                            onPressed: _currentPage == _pages.length - 1
+                                ? _completeOnboarding
+                                : _nextPage,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1DB954),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 6,
+                              shadowColor: const Color(0xFF1DB954).withOpacity(0.4),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  _currentPage == _pages.length - 1
+                                      ? 'start'.tr()
+                                      : 'next'.tr(),
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  _currentPage == _pages.length - 1
+                                      ? Icons.check_rounded
+                                      : Icons.arrow_forward_rounded,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -210,6 +334,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 }
@@ -228,17 +353,55 @@ class OnboardingData {
   });
 }
 
-class _OnboardingPage extends StatelessWidget {
+class _OnboardingPage extends StatefulWidget {
   final OnboardingData data;
 
   const _OnboardingPage({required this.data});
+
+  @override
+  State<_OnboardingPage> createState() => _OnboardingPageState();
+}
+
+class _OnboardingPageState extends State<_OnboardingPage>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: AssetImage(data.imagePath),
+          image: AssetImage(widget.data.imagePath),
           fit: BoxFit.cover,
         ),
       ),
@@ -248,9 +411,9 @@ class _OnboardingPage extends StatelessWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Colors.black.withOpacity(0.2),
-              Colors.black.withOpacity(0.4),
-              Colors.black.withOpacity(0.8),
+              Colors.black.withOpacity(0.1),
+              Colors.black.withOpacity(0.3),
+              Colors.black.withOpacity(0.85),
             ],
             stops: const [0.0, 0.5, 1.0],
           ),
@@ -262,31 +425,60 @@ class _OnboardingPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Spacer(),
-                // Title
-                Text(
-                  data.titleKey.tr(),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: -0.5,
-                    height: 1.2,
+                
+                // Contenu texte avec animations
+                FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      children: [
+                        // Title avec background subtil
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Text(
+                            widget.data.titleKey.tr(),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 32,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: -0.5,
+                              height: 1.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        
+                        // Description
+                        Text(
+                          widget.data.descriptionKey.tr(),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.white.withOpacity(0.95),
+                            height: 1.6,
+                            fontWeight: FontWeight.w400,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                // Description
-                Text(
-                  data.descriptionKey.tr(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white.withOpacity(0.9),
-                    height: 1.5,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                const SizedBox(height: 140), // Space for bottom controls
+                
+                const SizedBox(height: 180), // Space pour bottom controls
               ],
             ),
           ),
