@@ -180,6 +180,10 @@ class AuthService {
     bool? cguAccepted,
   }) async {
     try {
+      // Obtenir les infos d'appareil
+      final deviceService = DeviceService();
+      final deviceInfo = await deviceService.getDeviceInfo();
+
       // Si un fichier avatar est fourni, utiliser le nouvel endpoint avec upload
       if (avatarFile != null) {
         final formData = FormData.fromMap({
@@ -190,6 +194,7 @@ class AuthService {
           if (language != null) 'language': language,
           if (countryId != null) 'country_id': countryId,
           if (cguAccepted != null) 'cgu_accepted': cguAccepted,
+          ...deviceInfo,
           'avatar': await MultipartFile.fromFile(
             avatarFile.path,
             filename: 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
@@ -223,6 +228,7 @@ class AuthService {
             if (language != null) 'language': language,
             if (countryId != null) 'country_id': countryId,
             if (cguAccepted != null) 'cgu_accepted': cguAccepted,
+            ...deviceInfo,
           },
         );
 
