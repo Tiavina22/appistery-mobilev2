@@ -922,6 +922,181 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     );
   }
 
+  void _showPremiumLockedDialog() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final bgColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
+    final subtitleColor = isDark ? Colors.white60 : Colors.black54;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: bgColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Icon container
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFB300), Color(0xFFFFA000)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.amber.withOpacity(0.35),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.workspace_premium_rounded,
+                  color: Colors.white,
+                  size: 38,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Title
+              Text(
+                'premium_locked_title'.tr(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Subtitle
+              Text(
+                'premium_chapter_message'.tr(),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: subtitleColor,
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Feature list
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.05)
+                      : Colors.amber.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: isDark
+                        ? Colors.white.withOpacity(0.08)
+                        : Colors.amber.withOpacity(0.2),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    _premiumFeatureRow(
+                      Icons.all_inclusive_rounded,
+                      'premium_feature_unlimited'.tr(),
+                      subtitleColor,
+                      textColor,
+                    ),
+                    Divider(height: 16, color: dividerColor),
+                    _premiumFeatureRow(
+                      Icons.download_rounded,
+                      'premium_feature_offline'.tr(),
+                      subtitleColor,
+                      textColor,
+                    ),
+                    Divider(height: 16, color: dividerColor),
+                    _premiumFeatureRow(
+                      Icons.block_flipped,
+                      'premium_feature_no_ads'.tr(),
+                      subtitleColor,
+                      textColor,
+                    ),
+                  ],
+                ),
+              ),
+
+              // Subscribe button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).pushNamed('/subscription-offers');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFFFB300),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: Text(
+                    'subscribe'.tr(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Cancel
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  'cancel'.tr(),
+                  style: TextStyle(color: subtitleColor, fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _premiumFeatureRow(
+    IconData icon,
+    String label,
+    Color iconColor,
+    Color textColor,
+  ) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFFFFB300)),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(color: textColor, fontSize: 13),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildChaptersList({required bool isDarkMode}) {
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
@@ -936,21 +1111,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     void navigateToChapter(int chapterIndex) {
       // Bloquer l'accès aux chapitres si l'histoire est premium et l'utilisateur ne l'est pas
       if (isStoryPremium && !isUserPremium) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('premium_chapter_message'.tr()),
-            backgroundColor: Colors.orange,
-            action: SnackBarAction(
-              label: 'subscribe'.tr(),
-              onPressed: () {
-                if (mounted) {
-                  Navigator.of(context).pushNamed('/subscription-offers');
-                }
-              },
-            ),
-            duration: const Duration(seconds: 5),
-          ),
-        );
+        _showPremiumLockedDialog();
         return;
       }
 
