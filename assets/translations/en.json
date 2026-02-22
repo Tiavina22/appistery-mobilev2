@@ -329,5 +329,10 @@
   "activity_load_error": "Unable to load the feed. Please try again.",
   "activity_empty": "No activity yet",
   "activity_empty_desc": "Stories and reactions will appear here.",
+  "activity_and_others": "and {count} others",
+  "activity_and_one_other": "and 1 other",
+  "reaction_list_title": "Reactions",
+  "reaction_list_empty": "No reactions yet",
+  "reaction_all": "All",
   "comments": "comments"
 }

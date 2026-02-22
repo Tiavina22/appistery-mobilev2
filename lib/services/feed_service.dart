@@ -111,21 +111,52 @@ class FeedReactions {
   final int total;
   final Map<String, int> counts;
   final String? userReaction;
+  final List<FeedReactor> recentReactors;
 
   FeedReactions({
     this.total = 0,
     this.counts = const {},
     this.userReaction,
+    this.recentReactors = const [],
   });
 
   factory FeedReactions.fromJson(Map<String, dynamic> json) {
     final countsRaw = json['counts'] as Map<String, dynamic>? ?? {};
     final counts = countsRaw.map((k, v) => MapEntry(k, v is int ? v : int.tryParse(v.toString()) ?? 0));
 
+    final reactorsRaw = json['recent_reactors'] as List? ?? [];
+    final reactors = reactorsRaw
+        .map((r) => FeedReactor.fromJson(r as Map<String, dynamic>))
+        .toList();
+
     return FeedReactions(
       total: json['total'] ?? 0,
       counts: counts,
       userReaction: json['user_reaction'],
+      recentReactors: reactors,
+    );
+  }
+}
+
+class FeedReactor {
+  final int id;
+  final String username;
+  final String? avatar;
+  final String reactionType;
+
+  FeedReactor({
+    required this.id,
+    required this.username,
+    this.avatar,
+    required this.reactionType,
+  });
+
+  factory FeedReactor.fromJson(Map<String, dynamic> json) {
+    return FeedReactor(
+      id: json['id'] ?? 0,
+      username: json['username'] ?? '',
+      avatar: json['avatar'],
+      reactionType: json['reaction_type'] ?? 'like',
     );
   }
 }

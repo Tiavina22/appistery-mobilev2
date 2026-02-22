@@ -328,5 +328,10 @@
   "activity_load_error": "Impossible de charger le fil. Veuillez réessayer.",
   "activity_empty": "Aucune activité",
   "activity_empty_desc": "Les histoires et réactions apparaîtront ici.",
+  "activity_and_others": "et {count} autres",
+  "activity_and_one_other": "et 1 autre",
+  "reaction_list_title": "Réactions",
+  "reaction_list_empty": "Aucune réaction",
+  "reaction_all": "Tous",
   "comments": "commentaires"
 }

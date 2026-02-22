@@ -198,4 +198,32 @@ class ReactionService {
       rethrow;
     }
   }
+
+  // Get detailed reaction list for a story (with user info, filterable by type)
+  Future<Map<String, dynamic>> getStoryReactionsList(
+    int storyId, {
+    String type = 'all',
+    int page = 1,
+    int limit = 30,
+  }) async {
+    try {
+      final token = await _authService.getToken();
+      final options = token != null
+          ? Options(headers: {'Authorization': 'Bearer $token'})
+          : null;
+
+      final response = await _dio.get(
+        '/api/stories/$storyId/reactions/list',
+        queryParameters: {'type': type, 'page': page, 'limit': limit},
+        options: options,
+      );
+
+      if (response.statusCode == 200 && response.data['success']) {
+        return response.data['data'];
+      }
+      throw Exception('Erreur lors de la récupération des réactions');
+    } catch (e) {
+      rethrow;
+    }
+  }
 }

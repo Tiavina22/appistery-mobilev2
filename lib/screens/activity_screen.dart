@@ -9,6 +9,7 @@ import '../services/reaction_service.dart';
 import '../services/story_service.dart';
 import '../widgets/lazy_image.dart';
 import '../widgets/comments_bottom_sheet.dart';
+import '../widgets/reaction_list_bottom_sheet.dart';
 import 'story_detail_screen.dart';
 import 'author_profile_screen.dart';
 
@@ -228,6 +229,27 @@ class _ActivityScreenState extends State<ActivityScreen> {
             return CommentsBottomSheet(
               storyId: item.id,
               storyTitle: item.title,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showReactionsList(FeedItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.65,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (_, controller) {
+            return ReactionListBottomSheet(
+              storyId: item.id,
+              initialCounts: item.reactions.counts,
             );
           },
         );
@@ -687,29 +709,64 @@ class _ActivityScreenState extends State<ActivityScreen> {
     // Top 3 reaction emojis
     final topEmojis = _getTopReactionEmojis(item);
 
+    // Build "Username and X others" text
+    String reactionText = '';
+    if (totalReactions > 0) {
+      final reactors = item.reactions.recentReactors;
+      if (reactors.isNotEmpty) {
+        final firstName = reactors.first.username;
+        final othersCount = totalReactions - 1;
+        if (othersCount <= 0) {
+          reactionText = firstName;
+        } else if (othersCount == 1) {
+          reactionText = '$firstName ${'activity_and_one_other'.tr()}';
+        } else {
+          reactionText =
+              '$firstName ${'activity_and_others'.tr(namedArgs: {'count': _formatCount(othersCount)})}';
+        }
+      } else {
+        reactionText = _formatCount(totalReactions);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
       child: Row(
         children: [
-          if (totalReactions > 0) ...[
-            // Emoji icons
-            Row(
-              children: topEmojis
-                  .map((e) => Padding(
-                        padding: const EdgeInsets.only(right: 2),
-                        child: Text(e, style: const TextStyle(fontSize: 16)),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(width: 6),
-            Text(
-              _formatCount(totalReactions),
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark ? Colors.white54 : Colors.black54,
+          if (totalReactions > 0)
+            Flexible(
+              child: GestureDetector(
+                onTap: () => _showReactionsList(item),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Emoji icons
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: topEmojis
+                          .map((e) => Padding(
+                                padding: const EdgeInsets.only(right: 2),
+                                child:
+                                    Text(e, style: const TextStyle(fontSize: 16)),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        reactionText,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
           const Spacer(),
           if (commentCount > 0)
             GestureDetector(
