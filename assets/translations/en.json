@@ -244,6 +244,7 @@
   "mobile_money_providers": "MVola, Orange Money, Airtel Money",
   "bank_card": "Bank Card",
   "card_types": "Visa, Mastercard",
+  "proceed_to_payment": "Proceed to payment",
   "payment": "Payment",
   "payment_success": "✅ Payment Successful",
   "premium_activated": "Your premium subscription has been activated!",

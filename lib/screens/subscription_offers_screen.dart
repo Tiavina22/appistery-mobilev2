@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../providers/subscription_offer_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/auth_service.dart';
@@ -656,47 +657,194 @@ class _OfferCardState extends State<OfferCard> {
   ) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final isMadagascar = authProvider.isMadagascarUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showDialog(
+    final sheetBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
+    final secondaryColor = isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93);
+    final separatorColor = isDark ? const Color(0xFF38383A) : const Color(0xFFE5E5EA);
+    final accentPink = isDark ? const Color(0xFFFF375F) : const Color(0xFFFF2D55);
+
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('payment_mode'.tr()),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('${'plan'.tr()}: $planName'),
-            Text('${'price'.tr()}: $price'),
-            const SizedBox(height: 24),
-            // Madagascar: show only Mobile Money
-            if (isMadagascar)
-              ListTile(
-                leading: const Icon(Icons.phone_android, color: Colors.green),
-                title: Text('mobile_money'.tr()),
-                subtitle: Text('mobile_money_providers'.tr()),
-                onTap: () {
-                  Navigator.pop(context);
-                  _initiatePayment(context, offerId, 'mobile_money');
-                },
-              ),
-            // International: show only Bank Card
-            if (!isMadagascar)
-              ListTile(
-                leading: const Icon(Icons.credit_card, color: Colors.blue),
-                title: Text('bank_card'.tr()),
-                subtitle: Text('card_types'.tr()),
-                onTap: () {
-                  Navigator.pop(context);
-                  _initiatePayment(context, offerId, 'international');
-                },
-              ),
-          ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        decoration: BoxDecoration(
+          color: sheetBg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('cancel'.tr()),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 36,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF48484A) : const Color(0xFFC7C7CC),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Title
+                Text(
+                  'payment_mode'.tr(),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: titleColor,
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // Plan + price
+                Text(
+                  '$planName · $price',
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: secondaryColor,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Payment provider logos
+                if (isMadagascar) ...[
+                  // Mobile Money logos
+                  Text(
+                    'mobile_money'.tr(),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: secondaryColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _PaymentLogo(
+                        svgAsset: 'assets/logo/logo Mvola.svg',
+                        label: 'MVola',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(width: 20),
+                      _PaymentLogo(
+                        svgAsset: 'assets/logo/logo orange.svg',
+                        label: 'Orange Money',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(width: 20),
+                      _PaymentLogo(
+                        svgAsset: 'assets/logo/logo airtel.svg',
+                        label: 'Airtel Money',
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  // Bank card logos
+                  Text(
+                    'bank_card'.tr(),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: secondaryColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _PaymentLogo(
+                        svgAsset: 'assets/logo/logo visa.svg',
+                        label: 'Visa',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(width: 20),
+                      _PaymentLogo(
+                        svgAsset: 'assets/logo/logo master card.svg',
+                        label: 'Mastercard',
+                        isDark: isDark,
+                      ),
+                      const SizedBox(width: 20),
+                      _PaymentLogo(
+                        svgAsset: 'assets/logo/logo paypal.svg',
+                        label: 'PayPal',
+                        isDark: isDark,
+                      ),
+                    ],
+                  ),
+                ],
+
+                const SizedBox(height: 28),
+
+                // Separator
+                Container(height: 0.5, color: separatorColor),
+                const SizedBox(height: 20),
+
+                // CTA – Proceed to payment
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _initiatePayment(
+                        context,
+                        offerId,
+                        isMadagascar ? 'mobile_money' : 'international',
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentPink,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      'proceed_to_payment'.tr(),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // Cancel
+                GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Text(
+                      'cancel'.tr(),
+                      style: TextStyle(
+                        color: isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -768,6 +916,55 @@ class _OfferCardState extends State<OfferCard> {
         ),
       );
     }
+  }
+}
+
+// ── Payment provider logo widget ──
+class _PaymentLogo extends StatelessWidget {
+  final String svgAsset;
+  final String label;
+  final bool isDark;
+
+  const _PaymentLogo({
+    required this.svgAsset,
+    required this.label,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bgColor = isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF2F2F7);
+    final labelColor = isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93);
+
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 44,
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: SvgPicture.asset(
+              svgAsset,
+              width: 36,
+              height: 36,
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: labelColor,
+            fontWeight: FontWeight.w500,
+            letterSpacing: -0.1,
+          ),
+        ),
+      ],
+    );
   }
 }
 
