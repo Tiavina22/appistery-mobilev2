@@ -84,6 +84,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+    final h = size.height;
+    // Scale factor based on reference width 375 (iPhone X)
+    final s = (w / 375).clamp(0.75, 1.3);
+    final verticalS = (h / 812).clamp(0.7, 1.3);
+    final hPad = (w * 0.064).clamp(16.0, 32.0); // ~24 on 375
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -106,7 +114,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                 children: [
                   // Header avec logo
                   Padding(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.all(hPad),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -114,8 +122,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                           tag: 'app_logo',
                           child: Image.asset(
                             'assets/logo/logo-appistery-no.png',
-                            width: 60,
-                            height: 60,
+                            width: 50 * s,
+                            height: 50 * s,
                           ),
                         ),
                       ],
@@ -125,11 +133,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                   // Contenu principal
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: EdgeInsets.symmetric(horizontal: hPad),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 20),
+                          SizedBox(height: 16 * verticalS),
                           
                           // Titre avec animation
                           TweenAnimationBuilder<double>(
@@ -148,12 +156,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 RichText(
-                                  text: const TextSpan(
+                                  text: TextSpan(
                                     children: [
                                       TextSpan(
                                         text: 'Welcome to\n',
                                         style: TextStyle(
-                                          fontSize: 36,
+                                          fontSize: (28 * s).clamp(22.0, 40.0),
                                           fontWeight: FontWeight.w300,
                                           color: Colors.white70,
                                           height: 1.2,
@@ -162,7 +170,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                                       TextSpan(
                                         text: 'Appistery',
                                         style: TextStyle(
-                                          fontSize: 44,
+                                          fontSize: (36 * s).clamp(28.0, 50.0),
                                           fontWeight: FontWeight.bold,
                                           color: Colors.white,
                                           height: 1.2,
@@ -171,10 +179,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: 10 * verticalS),
                                 Container(
-                                  width: 60,
-                                  height: 4,
+                                  width: 50 * s,
+                                  height: 3.5,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
                                       colors: [Color(0xFF1DB954), Colors.transparent],
@@ -182,11 +190,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                                     borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
-                                const SizedBox(height: 16),
+                                SizedBox(height: 12 * verticalS),
                                 Text(
                                   'Choose your preferred language',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: (14 * s).clamp(12.0, 18.0),
                                     color: Colors.grey[400],
                                     height: 1.5,
                                   ),
@@ -195,7 +203,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                             ),
                           ),
                           
-                          const SizedBox(height: 40),
+                          SizedBox(height: 28 * verticalS),
                           
                           // Options de langue avec animations échelonnées
                           ..._languages.asMap().entries.map((entry) {
@@ -213,11 +221,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                                   ),
                                 );
                               },
-                              child: _buildLanguageOption(lang),
+                              child: _buildLanguageOption(lang, s, verticalS),
                             );
                           }),
                           
-                          const SizedBox(height: 40),
+                          SizedBox(height: 24 * verticalS),
                         ],
                       ),
                     ),
@@ -225,7 +233,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                   
                   // Bouton continuer
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16 * verticalS),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
@@ -251,7 +259,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey[900],
                             disabledForegroundColor: Colors.grey[600],
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                            padding: EdgeInsets.symmetric(
+                              vertical: (12 * s).clamp(10.0, 16.0),
+                              horizontal: (28 * s).clamp(20.0, 40.0),
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -263,18 +274,18 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Text(
+                              Text(
                                 'Continue',
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: (14 * s).clamp(12.0, 18.0),
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.3,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              SizedBox(width: 6 * s),
                               Icon(
                                 Icons.arrow_forward_rounded,
-                                size: 18,
+                                size: (16 * s).clamp(14.0, 22.0),
                                 color: _selectedLanguage != null 
                                     ? Colors.white 
                                     : Colors.grey[600],
@@ -294,11 +305,13 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
     );
   }
 
-  Widget _buildLanguageOption(Map<String, String> lang) {
+  Widget _buildLanguageOption(Map<String, String> lang, double s, double verticalS) {
     final isSelected = _selectedLanguage == lang['code'];
+    final flagSize = (52 * s).clamp(40.0, 72.0);
+    final checkSize = (30 * s).clamp(24.0, 40.0);
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: EdgeInsets.only(bottom: 12 * verticalS),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -306,13 +319,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
             setState(() {
               _selectedLanguage = lang['code'];
             });
-            // Haptic feedback
           },
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18 * s),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all((16 * s).clamp(12.0, 24.0)),
             decoration: BoxDecoration(
               gradient: isSelected 
                   ? LinearGradient(
@@ -325,7 +337,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                     )
                   : null,
               color: isSelected ? null : const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18 * s),
               border: Border.all(
                 color: isSelected 
                     ? const Color(0xFF1DB954)
@@ -347,8 +359,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                 // Flag avec effet
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
-                  width: 64,
-                  height: 64,
+                  width: flagSize,
+                  height: flagSize,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
@@ -363,7 +375,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                               Colors.grey[900]!,
                             ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(14 * s),
                     border: Border.all(
                       color: isSelected 
                           ? const Color(0xFF1DB954).withOpacity(0.5)
@@ -374,11 +386,11 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                   child: Center(
                     child: Text(
                       lang['flag']!,
-                      style: const TextStyle(fontSize: 36),
+                      style: TextStyle(fontSize: (28 * s).clamp(22.0, 40.0)),
                     ),
                   ),
                 ),
-                const SizedBox(width: 20),
+                SizedBox(width: 16 * s),
                 // Infos langue
                 Expanded(
                   child: Column(
@@ -387,13 +399,13 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                       Text(
                         lang['nativeName']!,
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: (17 * s).clamp(14.0, 24.0),
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                           color: Colors.white,
                           letterSpacing: 0.3,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 3 * s),
                       Row(
                         children: [
                           Container(
@@ -406,15 +418,17 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                               shape: BoxShape.circle,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            lang['description']!,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: isSelected 
-                                  ? Colors.grey[300]
-                                  : Colors.grey[500],
-                              fontWeight: FontWeight.w500,
+                          SizedBox(width: 6 * s),
+                          Flexible(
+                            child: Text(
+                              lang['description']!,
+                              style: TextStyle(
+                                fontSize: (13 * s).clamp(11.0, 16.0),
+                                color: isSelected 
+                                    ? Colors.grey[300]
+                                    : Colors.grey[500],
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
@@ -428,8 +442,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutBack,
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: checkSize,
+                    height: checkSize,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
@@ -448,10 +462,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                         ),
                       ],
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.check_rounded,
                       color: Colors.white,
-                      size: 22,
+                      size: (18 * s).clamp(14.0, 24.0),
                     ),
                   ),
                 ),
