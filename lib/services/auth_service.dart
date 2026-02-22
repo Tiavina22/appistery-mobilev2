@@ -296,18 +296,25 @@ class AuthService {
       // Obtenir les infos d'appareil
       final deviceService = DeviceService();
       final deviceId = await deviceService.getDeviceId();
-      
+
+      debugPrint('[AuthService] logout - device_id: "$deviceId"');
+
       // Appeler l'endpoint backend pour mettre à jour la session
       final dio = await getDioWithAuth();
-      await dio.post(
+      final response = await dio.post(
         '/api/auth/logout',
         data: {'device_id': deviceId},
       );
+
+      debugPrint('[AuthService] logout - réponse: ${response.statusCode}');
+    } on DioException catch (e) {
+      debugPrint('[AuthService] logout - DioException (session non désactivée serveur): ${e.response?.statusCode} - ${e.response?.data}');
     } catch (e) {
-      // Si l'appel API échoue, on supprime quand même le token local
-       } finally {
+      debugPrint('[AuthService] logout - erreur inattendue: $e');
+    } finally {
       // Toujours supprimer le token local
       await deleteToken();
+      debugPrint('[AuthService] logout - token local supprimé');
     }
   }
 
