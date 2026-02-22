@@ -317,5 +317,16 @@
   "author_badge": "Mpanoratra",
   "like_button": "Tiako",
   "reply_button": "Hamaly",
-  "edited_label": "(novaina)"
+  "edited_label": "(novaina)",
+  "activity": "Hetsika",
+  "activity_love": "Tiako be",
+  "activity_haha": "Haha",
+  "activity_wow": "Hay",
+  "activity_sad": "Malahelo",
+  "activity_angry": "Tezitra",
+  "activity_just_now": "Vao haingana",
+  "activity_load_error": "Tsy afaka nampiditra ny feed. Andramo indray.",
+  "activity_empty": "Tsy misy hetsika",
+  "activity_empty_desc": "Hiseho eto ny tantara sy ny fihetsikana.",
+  "comments": "fanehoan-kevitra"
 }

@@ -318,5 +318,16 @@
   "author_badge": "Author",
   "like_button": "Like",
   "reply_button": "Reply",
-  "edited_label": "(edited)"
+  "edited_label": "(edited)",
+  "activity": "Activity",
+  "activity_love": "Love",
+  "activity_haha": "Haha",
+  "activity_wow": "Wow",
+  "activity_sad": "Sad",
+  "activity_angry": "Angry",
+  "activity_just_now": "Just now",
+  "activity_load_error": "Unable to load the feed. Please try again.",
+  "activity_empty": "No activity yet",
+  "activity_empty_desc": "Stories and reactions will appear here.",
+  "comments": "comments"
 }

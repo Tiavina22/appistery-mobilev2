@@ -20,6 +20,7 @@ import 'cgu_screen.dart';
 import 'subscription_offers_screen.dart';
 import 'change_password_screen.dart';
 import 'category_view_all_screen.dart';
+import 'activity_screen.dart';
 import '../widgets/lazy_image.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -311,9 +312,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 isDarkMode: isDarkMode,
               ),
               _buildNavItem(
+                icon: Icons.dynamic_feed_rounded,
+                label: 'activity'.tr(),
+                index: 2,
+                isDarkMode: isDarkMode,
+              ),
+              _buildNavItem(
                 icon: Icons.person_rounded,
                 label: 'settings'.tr(),
-                index: 2,
+                index: 3,
                 isDarkMode: isDarkMode,
               ),
             ],
@@ -380,6 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildHomeTab(),
         _buildSearchTab(),
+        const ActivityScreen(),
         _buildSettingsTab(),
       ],
     );

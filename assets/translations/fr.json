@@ -317,5 +317,16 @@
   "author_badge": "Auteur",
   "like_button": "J'aime",
   "reply_button": "Répondre",
-  "edited_label": "(modifié)"
+  "edited_label": "(modifié)",
+  "activity": "Activité",
+  "activity_love": "J'adore",
+  "activity_haha": "Haha",
+  "activity_wow": "Waouh",
+  "activity_sad": "Triste",
+  "activity_angry": "Grrr",
+  "activity_just_now": "À l'instant",
+  "activity_load_error": "Impossible de charger le fil. Veuillez réessayer.",
+  "activity_empty": "Aucune activité",
+  "activity_empty_desc": "Les histoires et réactions apparaîtront ici.",
+  "comments": "commentaires"
 }
