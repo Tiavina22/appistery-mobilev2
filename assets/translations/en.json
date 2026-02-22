@@ -57,6 +57,8 @@
   "phone_optional": "Phone (optional)",
   "phone": "Phone",
   "phone_required": "Phone number is required",
+  "phone_digits_only": "Phone number must contain only digits",
+  "phone_invalid_length": "Phone number must be between 7 and 15 digits",
   "confirm_password": "Confirm password",
   "register_error": "Registration error. Please try again.",
   "already_have_account": "Already have an account?",

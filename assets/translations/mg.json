@@ -57,6 +57,8 @@
   "phone_optional": "Telefaona (tsy voatery)",
   "phone": "Telefaona",
   "phone_required": "Ilaina ny laharana telefaona",
+  "phone_digits_only": "Ny laharana dia tsy maintsy tarehimarika ihany",
+  "phone_invalid_length": "Ny laharana dia tsy maintsy misy tarehimarika 7 ka hatramin'ny 15",
   "confirm_password": "Hamafisina ny teny miafina",
   "confirm_password_required": "Ilaina ny fanamafisana ny teny miafina",
   "passwords_not_match": "Tsy mitovy ny teny miafina",
