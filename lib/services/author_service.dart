@@ -130,4 +130,36 @@ class AuthorService {
       return {};
     }
   }
+
+  // Obtenir la liste des followers d'un auteur (avec avatar + pseudo)
+  Future<List<Map<String, dynamic>>> getFollowersList(int authorId) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/api/authors/$authorId/followers',
+      );
+      if (response.statusCode == 200 && response.data['success']) {
+        final followers = response.data['data']['followers'] as List;
+        return followers.map((f) => Map<String, dynamic>.from(f)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // Obtenir la liste des lecteurs (viewers) d'un auteur (avec avatar + pseudo)
+  Future<List<Map<String, dynamic>>> getViewersList(int authorId) async {
+    try {
+      final response = await _dio.get(
+        '$baseUrl/api/authors/$authorId/viewers',
+      );
+      if (response.statusCode == 200 && response.data['success']) {
+        final viewers = response.data['data']['viewers'] as List;
+        return viewers.map((v) => Map<String, dynamic>.from(v)).toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
 }

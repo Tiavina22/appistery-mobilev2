@@ -200,11 +200,22 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
                                           'Followers',
                                           _followersCount.toString(),
                                           isDarkMode: isDarkMode,
+                                          onTap: () => _showUsersBottomSheet(
+                                            title: 'Followers',
+                                            icon: Icons.people,
+                                            loader: () => _authorService.getFollowersList(widget.authorId),
+                                          ),
                                         ),
                                         _buildStatItemCompact(
                                           'Vues',
                                           _stats['total_views']?.toString() ?? '0',
                                           isDarkMode: isDarkMode,
+                                          onTap: () => _showUsersBottomSheet(
+                                            title: 'Lecteurs uniques',
+                                            icon: Icons.remove_red_eye,
+                                            subtitle: '${_stats['total_views'] ?? 0} vues au total (1 vue par histoire lue)',
+                                            loader: () => _authorService.getViewersList(widget.authorId),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -372,15 +383,35 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
   }
 
 
+  void _showUsersBottomSheet({
+    required String title,
+    required IconData icon,
+    required Future<List<Map<String, dynamic>>> Function() loader,
+    String? subtitle,
+  }) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _UsersListBottomSheet(
+        title: title,
+        icon: icon,
+        loader: loader,
+        subtitle: subtitle,
+      ),
+    );
+  }
+
   Widget _buildStatItemCompact(
     String label,
     String value, {
     required bool isDarkMode,
+    VoidCallback? onTap,
   }) {
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final textColorSecondary = isDarkMode ? Colors.grey[400] : Colors.grey[600];
 
-    return Column(
+    final child = Column(
       children: [
         Text(
           value,
@@ -391,9 +422,23 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
           ),
         ),
         const SizedBox(height: 2),
-        Text(label, style: TextStyle(fontSize: 12, color: textColorSecondary)),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: TextStyle(fontSize: 12, color: textColorSecondary)),
+            if (onTap != null) ...[  
+              const SizedBox(width: 2),
+              Icon(Icons.chevron_right, size: 14, color: textColorSecondary),
+            ],
+          ],
+        ),
       ],
     );
+
+    if (onTap != null) {
+      return GestureDetector(onTap: onTap, child: child);
+    }
+    return child;
   }
 
   Widget _buildStoriesTab({required bool isDarkMode}) {
@@ -546,5 +591,206 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         ),
       );
     }
+  }
+}
+
+// ── Bottom sheet: list of users (followers or viewers) ──────────────────────
+
+class _UsersListBottomSheet extends StatefulWidget {
+  final String title;
+  final IconData icon;
+  final Future<List<Map<String, dynamic>>> Function() loader;
+  final String? subtitle;
+
+  const _UsersListBottomSheet({
+    required this.title,
+    required this.icon,
+    required this.loader,
+    this.subtitle,
+  });
+
+  @override
+  State<_UsersListBottomSheet> createState() => _UsersListBottomSheetState();
+}
+
+class _UsersListBottomSheetState extends State<_UsersListBottomSheet> {
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _users = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final users = await widget.loader();
+    if (mounted) {
+      setState(() {
+        _users = users;
+        _isLoading = false;
+      });
+    }
+  }
+
+  Widget _buildUserAvatar(String? avatarData) {
+    final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
+    if (avatarData == null || avatarData.isEmpty) {
+      return const Icon(Icons.person, color: Colors.grey, size: 24);
+    }
+    if (avatarData.startsWith('/uploads/') ||
+        avatarData.startsWith('http://') ||
+        avatarData.startsWith('https://')) {
+      final url = avatarData.startsWith('http') ? avatarData : '$apiUrl$avatarData';
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.person, color: Colors.grey, size: 24),
+      );
+    }
+    try {
+      final b64 = avatarData.contains(',') ? avatarData.split(',').last : avatarData;
+      return Image.memory(
+        base64Decode(b64),
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) =>
+            const Icon(Icons.person, color: Colors.grey, size: 24),
+      );
+    } catch (_) {
+      return const Icon(Icons.person, color: Colors.grey, size: 24);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final textColor = isDark ? Colors.white : Colors.black;
+    final textColorSec = isDark ? Colors.grey[400]! : Colors.grey[600]!;
+    final dividerColor = isDark ? Colors.white12 : Colors.black12;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.6,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      child: Column(
+        children: [
+          // Handle bar
+          Container(
+            margin: const EdgeInsets.only(top: 10),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: isDark ? Colors.white24 : Colors.black26,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Header
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(widget.icon, color: textColor, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                    if (!_isLoading) ...[
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withOpacity(0.1)
+                              : Colors.black.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${_users.length}',
+                          style: TextStyle(fontSize: 13, color: textColorSec),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (widget.subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    widget.subtitle!,
+                    style: TextStyle(fontSize: 12, color: textColorSec),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          Divider(color: dividerColor, height: 20),
+          // List
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _users.isEmpty
+                    ? Center(
+                        child: Text(
+                          'Aucun résultat',
+                          style: TextStyle(color: textColorSec),
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        separatorBuilder: (_, __) =>
+                            Divider(color: dividerColor, height: 1),
+                        itemCount: _users.length,
+                        itemBuilder: (context, index) {
+                          final user = _users[index];
+                          return ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 4,
+                            ),
+                            leading: Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.1)
+                                    : Colors.black.withOpacity(0.05),
+                              ),
+                              child: ClipOval(
+                                child: _buildUserAvatar(
+                                    user['avatar'] as String?),
+                              ),
+                            ),
+                            title: Text(
+                              user['pseudo'] as String? ??
+                                  user['username'] as String? ??
+                                  'Utilisateur',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: textColor,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+          ),
+        ],
+      ),
+    );
   }
 }
