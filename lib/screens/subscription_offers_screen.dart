@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../providers/subscription_offer_provider.dart';
-import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../services/auth_service.dart';
 import '../config/api_config.dart';
@@ -19,118 +18,148 @@ class SubscriptionOffersScreen extends StatefulWidget {
 }
 
 class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
+  bool _initialLoading = true;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // Rafraîchir le profil utilisateur pour avoir les dernières données
-      final authProvider = context.read<AuthProvider>();
-      await authProvider.refreshLoginStatus();
+    _loadData();
+  }
 
-      // Charger les offres basées sur le pays de l'utilisateur
-      final offerProvider = context.read<SubscriptionOfferProvider>();
-      offerProvider.loadOffersByUserCountry(authProvider);
+  Future<void> _loadData() async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.refreshLoginStatus();
 
-      // Charger l'abonnement actif si l'utilisateur est premium
-      if (authProvider.hasActiveSubscription) {
-        await offerProvider.loadActiveSubscription();
-      }
-    });
+    final offerProvider = context.read<SubscriptionOfferProvider>();
+
+    // Load offers and active subscription in parallel
+    final futures = <Future>[
+      offerProvider.loadOffersByUserCountry(authProvider),
+    ];
+    if (authProvider.hasActiveSubscription) {
+      futures.add(offerProvider.loadActiveSubscription());
+    }
+    await Future.wait(futures);
+
+    if (mounted) setState(() => _initialLoading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = Provider.of<ThemeProvider>(context).isDarkMode;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final authProvider = Provider.of<AuthProvider>(context);
     final offerProvider = Provider.of<SubscriptionOfferProvider>(context);
-    final userCountryName = authProvider.isMadagascarUser
-        ? 'Madagascar'
-        : 'International';
 
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
       appBar: AppBar(
-        title: Text('my_subscription'.tr()),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text(
+          'my_subscription'.tr(),
+          style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: -0.4),
+        ),
+        backgroundColor: isDark ? const Color(0xFF000000) : const Color(0xFFF2F2F7),
         surfaceTintColor: Colors.transparent,
         elevation: 0,
       ),
       body: Consumer<SubscriptionOfferProvider>(
         builder: (context, provider, _) {
-          // Si l'utilisateur a un abonnement actif, afficher ses détails
+          // Active subscription → show details
           if (authProvider.hasActiveSubscription) {
             return _buildActiveSubscriptionView(
-              context,
-              authProvider,
-              offerProvider,
-              isDarkMode,
+              context, authProvider, offerProvider, isDark,
             );
           }
 
-          // Sinon, afficher les offres disponibles
+          // No active sub → show offers list (with shimmer while loading)
           final displayOffers = authProvider.isMadagascarUser
               ? provider.madagascarOffers
               : provider.internationalOffers;
+          final isLoading = _initialLoading || provider.isLoading;
 
           return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Description/Header
+                const SizedBox(height: 8),
+                // Header
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 24,
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        'choose_your_plan'.tr(),
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${'plans_available_in'.tr()} $userCountryName',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: isDarkMode
-                              ? Colors.grey[400]
-                              : Colors.grey[600],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    'choose_your_plan'.tr(),
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.6,
+                      color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                    ),
                   ),
                 ),
-                // Liste des offres
-                if (displayOffers.isEmpty)
+                const SizedBox(height: 6),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    '${'plans_available_in'.tr()} ${authProvider.isMadagascarUser ? 'Madagascar' : 'International'}',
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93),
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // Shimmer skeleton while loading
+                if (isLoading)
                   Padding(
-                    padding: const EdgeInsets.all(32),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('💳', style: TextStyle(fontSize: 64)),
-                        const SizedBox(height: 16),
-                        Text(
-                          'no_offers_available'.tr(),
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'try_again_later'.tr(),
-                          style: const TextStyle(color: Colors.grey),
-                        ),
-                      ],
+                      children: List.generate(3, (i) => Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: _OfferShimmer(isDark: isDark),
+                      )),
                     ),
                   )
+                // Empty state
+                else if (displayOffers.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.credit_card_off_rounded,
+                            size: 56,
+                            color: isDark ? const Color(0xFF48484A) : const Color(0xFFC7C7CC),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'no_offers_available'.tr(),
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : const Color(0xFF1C1C1E),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'try_again_later'.tr(),
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                // Offers list – Apple Music cards
                 else
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: List.generate(displayOffers.length, (index) {
                         final offer = displayOffers[index];
-                        // Le plan intermédiaire est mis en avant
                         final isPopular = index == (displayOffers.length ~/ 2);
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
@@ -139,7 +168,7 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
                       }),
                     ),
                   ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
               ],
             ),
           );
@@ -148,57 +177,51 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
     );
   }
 
-  // Widget pour afficher l'abonnement actif - Style Revolut
+  // Widget pour afficher l'abonnement actif - Style Apple Music
   Widget _buildActiveSubscriptionView(
     BuildContext context,
     AuthProvider authProvider,
     SubscriptionOfferProvider offerProvider,
-    bool isDarkMode,
+    bool isDark,
   ) {
-    // Récupérer les détails de l'offre active
     final subscription = offerProvider.activeSubscription;
-    
-    // Utiliser les dates du backend (dynamiques)
+
     final expiresAt = subscription?['expires_at'] != null
         ? DateTime.tryParse(subscription!['expires_at'].toString())
         : null;
     final startedAt = subscription?['started_at'] != null
         ? DateTime.tryParse(subscription!['started_at'].toString())
         : null;
-    
+
     final formattedDate = expiresAt != null
         ? '${expiresAt.day.toString().padLeft(2, '0')}/${expiresAt.month.toString().padLeft(2, '0')}/${expiresAt.year}'
         : 'N/A';
-    
     final formattedStartDate = startedAt != null
         ? '${startedAt.day.toString().padLeft(2, '0')}/${startedAt.month.toString().padLeft(2, '0')}/${startedAt.year}'
         : 'N/A';
-
     final daysRemaining = expiresAt != null
         ? expiresAt.difference(DateTime.now()).inDays
         : 0;
-    
-    // Gérer le nom de l'offre qui peut être un JSON ou une String
+
     String offerName = 'Premium';
     if (subscription?['offer_name'] != null) {
       final nameData = subscription!['offer_name'];
       if (nameData is Map) {
-        // Si c'est un Map, récupérer la langue appropriée
         final languageCode = context.locale.languageCode;
-        offerName = nameData[languageCode]?.toString() ?? 
-                   nameData['fr']?.toString() ?? 
-                   nameData.values.first?.toString() ?? 
-                   'Premium';
+        offerName = nameData[languageCode]?.toString() ??
+            nameData['fr']?.toString() ??
+            nameData.values.first?.toString() ??
+            'Premium';
       } else if (nameData is String) {
         offerName = nameData;
       }
     }
-    
+
     final offerDuration = subscription?['offer_duration'] ?? 1;
     final offerAmount = subscription?['amount'];
     final offerCurrency = subscription?['currency'] ?? 'MGA';
 
-    // Récupérer les avantages depuis le backend
+    // Avantages
     List<String> advantages = [];
     if (subscription?['offer_advantages'] != null) {
       final advantagesData = subscription!['offer_advantages'];
@@ -210,7 +233,6 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
             break;
           }
         }
-        // Fallback sur la première langue disponible si pas de correspondance
         if (advantages.isEmpty && advantagesData.isNotEmpty) {
           final firstItem = advantagesData[0];
           if (firstItem is Map && firstItem['advantages'] != null) {
@@ -219,8 +241,6 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
         }
       }
     }
-    
-    // Fallback sur des avantages par défaut si aucun n'est défini
     if (advantages.isEmpty) {
       advantages = [
         'unlimited_access'.tr(),
@@ -230,291 +250,204 @@ class _SubscriptionOffersScreenState extends State<SubscriptionOffersScreen> {
       ];
     }
 
-    // Couleurs Revolut-style
-    final cardGradient = isDarkMode
-        ? const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF2D3436),
-              Color(0xFF1E272E),
-            ],
-          )
-        : const LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF667EEA),
-              Color(0xFF764BA2),
-            ],
-          );
-
-    final accentColor = isDarkMode ? const Color(0xFF667EEA) : Colors.white;
+    // Colors
+    final cardBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
+    final secondaryColor = isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93);
+    final separatorColor = isDark ? const Color(0xFF38383A) : const Color(0xFFE5E5EA);
+    final accentPink = isDark ? const Color(0xFFFF375F) : const Color(0xFFFF2D55);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
-          // Titre
+          // Title
           Text(
             'your_subscription'.tr(),
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.w700,
-              color: isDarkMode ? Colors.white : Colors.black,
-              letterSpacing: -0.5,
+              color: titleColor,
+              letterSpacing: -0.6,
             ),
           ),
           const SizedBox(height: 24),
 
-          // Carte principale - Style Revolut
+          // ── Main card ──
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              gradient: cardGradient,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: isDarkMode
-                      ? Colors.black.withOpacity(0.3)
-                      : const Color(0xFF667EEA).withOpacity(0.3),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                ),
-              ],
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
             ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Icône et type
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(
-                        Icons.workspace_premium_outlined,
-                        size: 28,
-                        color: accentColor,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: Colors.green.withOpacity(0.3),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  child: Row(
+                    children: [
+                      // Plan icon
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [accentPink, accentPink.withOpacity(0.7)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.workspace_premium_rounded,
+                          color: Colors.white,
+                          size: 26,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Colors.green,
-                              shape: BoxShape.circle,
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              offerName,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: titleColor,
+                                letterSpacing: -0.3,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'active'.tr(),
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            if (offerAmount != null)
+                              Text(
+                                '$offerAmount $offerCurrency · $offerDuration ${'months'.tr()}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: secondaryColor,
+                                  letterSpacing: -0.1,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-
-                // Nom de l'offre
-                Text(
-                  offerName,
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: accentColor,
-                    letterSpacing: -0.5,
+                      // Active badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF34C759).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'active'.tr(),
+                          style: const TextStyle(
+                            color: Color(0xFF34C759),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+
+                // Separator
+                Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(horizontal: 20)),
+
+                // Details rows
+                _buildAppleDetailRow('start_date'.tr(), formattedStartDate, titleColor, secondaryColor),
+                Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(horizontal: 20)),
+                _buildAppleDetailRow('expiration_date'.tr(), formattedDate, titleColor, secondaryColor),
+                Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(horizontal: 20)),
+                _buildAppleDetailRow(
+                  'days_remaining'.tr(),
+                  '$daysRemaining ${'days'.tr()}',
+                  titleColor,
+                  daysRemaining <= 7 ? Colors.orange : const Color(0xFF34C759),
                 ),
                 const SizedBox(height: 8),
-
-                // Prix
-                if (offerAmount != null)
-                  Text(
-                    '$offerAmount $offerCurrency',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: accentColor.withOpacity(0.8),
-                    ),
-                  ),
-                const SizedBox(height: 4),
-                Text(
-                  '$offerDuration ${'months'.tr()}',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: accentColor.withOpacity(0.7),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 28),
-
-          // Détails - Style minimaliste
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? const Color(0xFF1E272E)
-                  : Colors.grey[50],
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'subscription_details'.tr(),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                _buildDetailItem(
-                  context,
-                  label: 'start_date'.tr(),
-                  value: formattedStartDate,
-                  isDarkMode: isDarkMode,
-                ),
-                const SizedBox(height: 16),
-
-                _buildDetailItem(
-                  context,
-                  label: 'expiration_date'.tr(),
-                  value: formattedDate,
-                  isDarkMode: isDarkMode,
-                ),
-                const SizedBox(height: 16),
-
-                _buildDetailItem(
-                  context,
-                  label: 'days_remaining'.tr(),
-                  value: '$daysRemaining ${'days'.tr()}',
-                  isDarkMode: isDarkMode,
-                  valueColor: daysRemaining <= 7
-                      ? Colors.orange
-                      : Colors.green,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Avantages
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: isDarkMode
-                  ? const Color(0xFF1E272E)
-                  : Colors.grey[50],
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'included_benefits'.tr(),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isDarkMode ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ...advantages.map((advantage) => 
-                  _buildBenefitItem('• $advantage', isDarkMode)
-                ).toList(),
               ],
             ),
           ),
 
           const SizedBox(height: 20),
 
-           ],
+          // ── Advantages card ──
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
+                  child: Text(
+                    'included_benefits'.tr(),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: secondaryColor,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+                ...advantages.asMap().entries.map((entry) {
+                  final isLast = entry.key == advantages.length - 1;
+                  return Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.check_rounded,
+                              size: 18,
+                              color: accentPink,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                entry.value,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: titleColor,
+                                  letterSpacing: -0.2,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!isLast)
+                        Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.only(left: 50, right: 20)),
+                    ],
+                  );
+                }),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildDetailItem(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required bool isDarkMode,
-    Color? valueColor,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
-          ),
-        ),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: valueColor ??
-                (isDarkMode ? Colors.white : Colors.black87),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildBenefitItem(String text, bool isDarkMode) {
+  Widget _buildAppleDetailRow(String label, String value, Color titleColor, Color valueColor) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Icon(Icons.check_circle, size: 20, color: Color(0xFFFFD700)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 15,
-                color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
-              ),
-            ),
+          Text(
+            label,
+            style: TextStyle(fontSize: 15, color: titleColor, letterSpacing: -0.2),
+          ),
+          Text(
+            value,
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: valueColor, letterSpacing: -0.2),
           ),
         ],
       ),
@@ -533,276 +466,184 @@ class OfferCard extends StatefulWidget {
   State<OfferCard> createState() => _OfferCardState();
 }
 
-class _OfferCardState extends State<OfferCard>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _scaleAnimation = Tween<double>(
-      begin: 1.0,
-      end: 1.02,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
+class _OfferCardState extends State<OfferCard> {
   @override
   Widget build(BuildContext context) {
     final languageCode = context.locale.languageCode;
-    final isDarkMode = Provider.of<ThemeProvider>(context).isDarkMode;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final offerName = widget.offer.getNameByLanguage(languageCode);
     final advantages = widget.offer.getAdvantagesByLanguage(languageCode);
-    final primary = Theme.of(context).colorScheme.primary;
 
-    return MouseRegion(
-      onEnter: (_) => _controller.forward(),
-      onExit: (_) => _controller.reverse(),
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            gradient: widget.isPopular
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      primary.withOpacity(0.15),
-                      primary.withOpacity(0.05),
-                    ],
-                  )
-                : null,
-            color: !widget.isPopular
-                ? (isDarkMode ? Colors.grey[900] : Colors.white)
-                : null,
-            border: Border.all(
-              color: widget.isPopular
-                  ? primary.withOpacity(0.3)
-                  : (isDarkMode ? Colors.grey[700]! : Colors.grey[200]!),
-              width: widget.isPopular ? 2 : 1,
-            ),
-            boxShadow: [
-              if (widget.isPopular)
-                BoxShadow(
-                  color: primary.withOpacity(0.2),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
-                )
-              else
-                BoxShadow(
-                  color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              // Badge "Populaire"
-              if (widget.isPopular)
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text('⭐', style: TextStyle(fontSize: 12)),
-                        const SizedBox(width: 6),
-                        Text(
-                          'popular'.tr(),
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
+    // Apple Music adaptive palette
+    final cardBg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
+    final titleColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
+    final secondaryColor = isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93);
+    final separatorColor = isDark ? const Color(0xFF38383A) : const Color(0xFFE5E5EA);
+    final accentPink = isDark ? const Color(0xFFFF375F) : const Color(0xFFFF2D55);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: widget.isPopular
+            ? Border.all(color: accentPink.withOpacity(0.4), width: 1.5)
+            : null,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Popular badge
+                      if (widget.isPopular)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: accentPink,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'popular'.tr(),
+                              style: const TextStyle(
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2,
                               ),
+                            ),
+                          ),
                         ),
-                      ],
-                    ),
+                      Text(
+                        offerName,
+                        style: TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w700,
+                          color: titleColor,
+                          letterSpacing: -0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${widget.offer.duration} ${'months_access'.tr()}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: secondaryColor,
+                          letterSpacing: -0.1,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              // Contenu
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Entête avec nom et prix
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
+                // Price
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    if (widget.isPopular) const SizedBox(height: 20),
+                    Text(
+                      '${widget.offer.amount.toStringAsFixed(0)}',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: titleColor,
+                        letterSpacing: -0.8,
+                      ),
+                    ),
+                    Text(
+                      '${widget.offer.currency} / ${'per_month'.tr()}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: secondaryColor,
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Advantages
+          if (advantages.isNotEmpty) ...[
+            Container(height: 0.5, color: separatorColor, margin: const EdgeInsets.symmetric(horizontal: 20)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 4),
+              child: Column(
+                children: advantages.map((advantage) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          offerName,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.baseline,
-                          textBaseline: TextBaseline.alphabetic,
-                          children: [
-                            Text(
-                              '${widget.offer.amount.toStringAsFixed(0)}',
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: primary,
-                                  ),
+                        Icon(Icons.check_rounded, size: 17, color: accentPink),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            advantage,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: titleColor.withOpacity(0.85),
+                              letterSpacing: -0.1,
+                              height: 1.3,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${widget.offer.currency}',
-                              style: Theme.of(
-                                context,
-                              ).textTheme.bodyMedium?.copyWith(color: primary),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'per_month'.tr(),
-                              style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(
-                                    color: isDarkMode
-                                        ? Colors.grey[400]
-                                        : Colors.grey[600],
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${widget.offer.duration} ${'months_access'.tr()}',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: isDarkMode
-                                    ? Colors.grey[400]
-                                    : Colors.grey[600],
-                              ),
+                          ),
                         ),
                       ],
                     ),
-                  ),
-                  // Divider
-                  Divider(
-                    height: 1,
-                    color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
-                  ),
-                  // Avantages
-                  if (advantages.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...advantages.map((advantage) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 4),
-                                    child: Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: primary.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(50),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          '✓',
-                                          style: TextStyle(
-                                            color: primary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      advantage,
-                                      style: Theme.of(
-                                        context,
-                                      ).textTheme.bodySmall,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                        ],
-                      ),
-                    ),
-                  // Bouton d'action
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: widget.isPopular ? primary : null,
-                          foregroundColor: widget.isPopular
-                              ? Colors.white
-                              : (isDarkMode ? Colors.white : Colors.black),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(50),
-                            side: widget.isPopular
-                                ? BorderSide.none
-                                : BorderSide(
-                                    color: isDarkMode
-                                        ? Colors.grey[600]!
-                                        : Colors.grey[300]!,
-                                  ),
-                          ),
-                          elevation: 0,
-                        ),
-                        onPressed: () {
-                          _showPaymentModeDialog(
-                            context,
-                            widget.offer.id,
-                            offerName,
-                            '${widget.offer.amount} ${widget.offer.currency}',
-                          );
-                        },
-                        child: Text(
-                          'subscribe_now'.tr(),
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                }).toList(),
               ),
-            ],
+            ),
+          ],
+
+          // CTA button
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+            child: SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: widget.isPopular
+                      ? accentPink
+                      : (isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE5E5EA)),
+                  foregroundColor: widget.isPopular
+                      ? Colors.white
+                      : titleColor,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () {
+                  _showPaymentModeDialog(
+                    context,
+                    widget.offer.id,
+                    offerName,
+                    '${widget.offer.amount} ${widget.offer.currency}',
+                  );
+                },
+                child: Text(
+                  'subscribe_now'.tr(),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -927,6 +768,119 @@ class _OfferCardState extends State<OfferCard>
         ),
       );
     }
+  }
+}
+
+// ── Shimmer skeleton for lazy loading ──
+class _OfferShimmer extends StatefulWidget {
+  final bool isDark;
+  const _OfferShimmer({required this.isDark});
+
+  @override
+  State<_OfferShimmer> createState() => _OfferShimmerState();
+}
+
+class _OfferShimmerState extends State<_OfferShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cardBg = widget.isDark ? const Color(0xFF1C1C1E) : Colors.white;
+
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final shimmerColor = widget.isDark
+            ? Color.lerp(const Color(0xFF2C2C2E), const Color(0xFF3A3A3C), _controller.value)!
+            : Color.lerp(const Color(0xFFE5E5EA), const Color(0xFFF2F2F7), _controller.value)!;
+
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 120, height: 18,
+                        decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(6)),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        width: 80, height: 14,
+                        decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(6)),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Container(
+                        width: 60, height: 22,
+                        decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(6)),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        width: 50, height: 12,
+                        decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(6)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Container(height: 0.5, color: shimmerColor),
+              const SizedBox(height: 14),
+              ...List.generate(3, (_) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 16, height: 16,
+                      decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(4)),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 160, height: 14,
+                      decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(6)),
+                    ),
+                  ],
+                ),
+              )),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity, height: 48,
+                decoration: BoxDecoration(color: shimmerColor, borderRadius: BorderRadius.circular(14)),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

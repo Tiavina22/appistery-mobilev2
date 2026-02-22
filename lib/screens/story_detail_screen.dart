@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'dart:ui' as ui;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../services/story_service.dart';
 import '../services/reading_service.dart';
@@ -922,178 +923,57 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     );
   }
 
-  void _showPremiumLockedDialog() {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+  /// Resolves the story cover image URL for use in the premium dialog
+  ImageProvider? _getCoverImageProvider() {
+    final coverImage = widget.story.coverImage;
+    if (coverImage == null || coverImage.isEmpty) return null;
 
-    final bgColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF1A1A2E);
-    final subtitleColor = isDark ? Colors.white60 : Colors.black54;
-    final dividerColor = isDark ? Colors.white12 : Colors.black12;
-
-    showDialog(
-      context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: bgColor,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Icon container
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFFB300), Color(0xFFFFA000)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.amber.withOpacity(0.35),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.workspace_premium_rounded,
-                  color: Colors.white,
-                  size: 38,
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Title
-              Text(
-                'premium_locked_title'.tr(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const SizedBox(height: 10),
-
-              // Subtitle
-              Text(
-                'premium_chapter_message'.tr(),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: subtitleColor,
-                  fontSize: 14,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Feature list
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withOpacity(0.05)
-                      : Colors.amber.withOpacity(0.06),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.white.withOpacity(0.08)
-                        : Colors.amber.withOpacity(0.2),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _premiumFeatureRow(
-                      Icons.all_inclusive_rounded,
-                      'premium_feature_unlimited'.tr(),
-                      subtitleColor,
-                      textColor,
-                    ),
-                    Divider(height: 16, color: dividerColor),
-                    _premiumFeatureRow(
-                      Icons.download_rounded,
-                      'premium_feature_offline'.tr(),
-                      subtitleColor,
-                      textColor,
-                    ),
-                    Divider(height: 16, color: dividerColor),
-                    _premiumFeatureRow(
-                      Icons.block_flipped,
-                      'premium_feature_no_ads'.tr(),
-                      subtitleColor,
-                      textColor,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Subscribe button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(ctx).pop();
-                    Navigator.of(context).pushNamed('/subscription-offers');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFB300),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: Text(
-                    'subscribe'.tr(),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // Cancel
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(
-                  'cancel'.tr(),
-                  style: TextStyle(color: subtitleColor, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    if (coverImage.startsWith('/uploads/')) {
+      final apiUrl = dotenv.env['API_URL'] ?? 'http://localhost:5500';
+      return NetworkImage('$apiUrl$coverImage');
+    }
+    if (coverImage.startsWith('http://') || coverImage.startsWith('https://')) {
+      return NetworkImage(coverImage);
+    }
+    // base64 fallback
+    try {
+      final b64 = coverImage.contains(',') ? coverImage.split(',').last : coverImage;
+      return MemoryImage(base64Decode(b64));
+    } catch (_) {
+      return null;
+    }
   }
 
-  Widget _premiumFeatureRow(
-    IconData icon,
-    String label,
-    Color iconColor,
-    Color textColor,
-  ) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFFFFB300)),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            label,
-            style: TextStyle(color: textColor, fontSize: 13),
+  void _showPremiumLockedDialog() {
+    final coverProvider = _getCoverImageProvider();
+
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'premium',
+      barrierColor: Colors.black87,
+      transitionDuration: const Duration(milliseconds: 350),
+      transitionBuilder: (context, anim, secondAnim, child) {
+        final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.92, end: 1.0).animate(curved),
+            child: child,
           ),
+        );
+      },
+      pageBuilder: (ctx, _, __) => Center(
+        child: _PremiumLockedDialogContent(
+          coverProvider: coverProvider,
+          storyTitle: widget.story.title,
+          onChooseOffer: () {
+            Navigator.of(ctx).pop();
+            Navigator.of(context).pushNamed('/subscription-offers');
+          },
+          onCancel: () => Navigator.of(ctx).pop(),
         ),
-      ],
+      ),
     );
   }
 
@@ -1625,5 +1505,228 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         ),
       );
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Apple Music–style Premium Locked Dialog
+// ---------------------------------------------------------------------------
+class _PremiumLockedDialogContent extends StatelessWidget {
+  final ImageProvider? coverProvider;
+  final String storyTitle;
+  final VoidCallback onChooseOffer;
+  final VoidCallback onCancel;
+
+  const _PremiumLockedDialogContent({
+    required this.coverProvider,
+    required this.storyTitle,
+    required this.onChooseOffer,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final screenW = MediaQuery.of(context).size.width;
+    final dialogW = screenW * 0.82;
+    final artSize = dialogW * 0.52;
+
+    // Adaptive Apple-style palette
+    final bgColor = isDark ? const Color(0xFF1C1C1E) : const Color(0xFFF2F2F7);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1C1C1E);
+    final subtitleColor =
+        isDark ? const Color(0xFF98989D) : const Color(0xFF8E8E93);
+    final cancelColor =
+        isDark ? const Color(0xFF0A84FF) : const Color(0xFF007AFF);
+    final ctaColor =
+        isDark ? const Color(0xFFFF375F) : const Color(0xFFFF2D55);
+    final placeholderBg =
+        isDark ? const Color(0xFF2C2C2E) : const Color(0xFFE0E0E0);
+    final placeholderIcon =
+        isDark ? Colors.white24 : Colors.black26;
+    final blurTint = isDark
+        ? Colors.black.withOpacity(0.50)
+        : Colors.white.withOpacity(0.45);
+
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        width: dialogW,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: bgColor,
+        ),
+        child: Stack(
+          children: [
+            // ── Blurred tint background ──
+            if (coverProvider != null)
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: ImageFiltered(
+                    imageFilter: ui.ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+                    child: ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        blurTint,
+                        BlendMode.srcOver,
+                      ),
+                      child: Image(
+                        image: coverProvider!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+            // ── Foreground content ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Cover art with shadow
+                  Container(
+                    width: artSize,
+                    height: artSize,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(isDark ? 0.45 : 0.18),
+                          blurRadius: 28,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: coverProvider != null
+                          ? Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                Image(
+                                  image: coverProvider!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: placeholderBg,
+                                    child: Icon(
+                                      Icons.auto_stories_rounded,
+                                      size: 48,
+                                      color: placeholderIcon,
+                                    ),
+                                  ),
+                                ),
+                                // Subtle lock overlay
+                                Positioned(
+                                  bottom: 8,
+                                  right: 8,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.55),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.lock_rounded,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Container(
+                              color: placeholderBg,
+                              child: Icon(
+                                Icons.auto_stories_rounded,
+                                size: 48,
+                                color: placeholderIcon,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+
+                  // Story title
+                  Text(
+                    storyTitle,
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: titleColor,
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      height: 1.2,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle
+                  Text(
+                    'premium_cta_subtitle'.tr(),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: subtitleColor,
+                      fontSize: 14,
+                      height: 1.4,
+                      letterSpacing: -0.1,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // CTA Button – Apple-style filled rounded
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: onChooseOffer,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ctaColor,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        'premium_go_choose_offer'.tr(),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Cancel
+                  GestureDetector(
+                    onTap: onCancel,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text(
+                        'cancel'.tr(),
+                        style: TextStyle(
+                          color: cancelColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w400,
+                          letterSpacing: -0.2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
