@@ -56,13 +56,25 @@ class _AuthorProfileScreenState extends State<AuthorProfileScreen>
         _authorService.getAuthorStats(widget.authorId),
       ]);
 
+      final authorProfile = results[0] as Map<String, dynamic>;
       setState(() {
-        _authorProfile = results[0] as Map<String, dynamic>;
+        _authorProfile = authorProfile;
         _isFollowing = results[1] as bool;
         _followersCount = results[2] as int;
-        _authorStories = (results[3] as List)
-            .map((json) => Story.fromJson(json))
-            .toList();
+        _authorStories = (results[3] as List).map((json) {
+          final storyJson = Map<String, dynamic>.from(json as Map);
+          // Inject author data so story_detail_screen can show name & avatar
+          if (storyJson['author'] == null || storyJson['author'] is! Map) {
+            storyJson['author'] = {
+              'id': authorProfile['id'] ?? widget.authorId,
+              'pseudo': authorProfile['pseudo'] ?? widget.authorName,
+              'avatar': authorProfile['avatar'],
+              'biography': authorProfile['biography'],
+              'followers_count': _followersCount,
+            };
+          }
+          return Story.fromJson(storyJson);
+        }).toList();
         _stats = results[4] as Map<String, dynamic>;
       });
     } catch (e) {

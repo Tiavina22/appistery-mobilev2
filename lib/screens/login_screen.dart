@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/story_provider.dart';
@@ -51,6 +52,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (success && mounted) {
+        // Marquer l'onboarding comme complété pour ne plus revenir au login au redémarrage
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_completed', true);
+
         // Pré-charger les stories et notifications comme dans le splash screen
         final storyProvider = Provider.of<StoryProvider>(context, listen: false);
         final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
