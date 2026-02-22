@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shimmer/shimmer.dart';
 import '../services/author_service.dart';
 import '../services/story_service.dart';
 import 'story_detail_screen.dart';
@@ -633,6 +634,63 @@ class _UsersListBottomSheetState extends State<_UsersListBottomSheet> {
     }
   }
 
+  Widget _buildSkeletonList(bool isDark) {
+    final baseColor = isDark ? Colors.white10 : Colors.black12;
+    final highlightColor = isDark
+        ? Colors.white.withOpacity(0.18)
+        : Colors.black.withOpacity(0.06);
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      itemCount: 8,
+      separatorBuilder: (_, __) => Divider(
+        color: isDark ? Colors.white12 : Colors.black12,
+        height: 1,
+      ),
+      itemBuilder: (_, __) => Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 130,
+                    height: 13,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 80,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildUserAvatar(String? avatarData) {
     final apiUrl = dotenv.env['API_URL'] ?? 'https://mistery.pro';
     if (avatarData == null || avatarData.isEmpty) {
@@ -740,7 +798,7 @@ class _UsersListBottomSheetState extends State<_UsersListBottomSheet> {
           // List
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? _buildSkeletonList(isDark)
                 : _users.isEmpty
                     ? Center(
                         child: Text(
