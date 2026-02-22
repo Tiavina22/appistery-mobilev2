@@ -356,7 +356,14 @@ class Story {
       'description': description,
       'cover_image': coverImage,
       'coverImage': coverImage,
-      'author': author,
+      // Save author as a full object so fromJson can restore avatar/id/bio
+      'author': {
+        'id': authorId,
+        'pseudo': author,
+        'avatar': authorAvatar,
+        'biography': authorBio,
+        'followers_count': authorFollowers,
+      },
       'author_id': authorId,
       'author_name': author,
       'genre': genre,
