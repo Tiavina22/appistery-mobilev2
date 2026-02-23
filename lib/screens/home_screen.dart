@@ -476,7 +476,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isDarkMode
-                        ? Colors.grey.shade900
+                        ? const Color.fromARGB(79, 2, 49, 53)
                         : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -724,11 +724,11 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? Colors.grey.shade900 : Colors.white,
+          color: isDarkMode ? const Color.fromARGB(37, 79, 116, 108) : const Color.fromARGB(255, 255, 255, 255),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDarkMode
-                ? Colors.white.withOpacity(0.08)
+                ? const Color.fromARGB(255, 255, 255, 255).withOpacity(0.08)
                 : Colors.black.withOpacity(0.06),
             width: 1,
           ),
@@ -790,9 +790,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           genre['title'] ?? 'Unknown',
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
+                            color: isDarkMode ? const Color.fromARGB(255, 191, 243, 221) : Colors.black87,
                             letterSpacing: -0.3,
                             height: 1.2,
                           ),
@@ -808,7 +808,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: isDarkMode
-                                    ? Colors.grey.shade400
+                                    ? const Color.fromARGB(255, 6, 164, 146)
                                     : Colors.grey.shade600,
                               ),
                             ),
@@ -861,7 +861,7 @@ class _HomeScreenState extends State<HomeScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isDarkMode
-                    ? Colors.grey.shade800
+                    ? const Color.fromARGB(77, 2, 74, 75)
                     : Colors.grey.shade200,
                 border: Border.all(
                   color: isDarkMode
@@ -1206,8 +1206,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.transparent,
-                            Colors.black.withOpacity(0.7),
+                            const Color.fromARGB(22, 1, 56, 52),
+                            const Color.fromARGB(255, 1, 34, 38).withOpacity(0.7),
                             Colors.black.withOpacity(0.95),
                           ],
                           stops: const [0.3, 0.7, 1.0],

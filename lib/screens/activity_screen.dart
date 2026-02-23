@@ -155,7 +155,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color.fromARGB(213, 0, 0, 0),
       builder: (ctx) {
         return Container(
           margin: const EdgeInsets.all(16),
@@ -228,7 +228,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           builder: (_, controller) {
             return CommentsBottomSheet(
               storyId: item.id,
-              storyTitle: item.title,
+              storyTitle: item.title, onCommentAdded: () {  },
             );
           },
         );
@@ -400,21 +400,23 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (item.isPremium) ...[
+                     if (item.isPremium) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
+                              horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1DB954).withOpacity(0.15),
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFFFFD700), Color(0xFFFFA500)],
+                            ),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
                             'Premium',
                             style: TextStyle(
-                              fontSize: 9,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF1DB954),
+                              color: Color.fromARGB(255, 0, 0, 0),
                             ),
                           ),
                         ),
@@ -443,7 +445,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           item.genre!.title,
                           style: TextStyle(
                             fontSize: 12,
-                            color: const Color(0xFF1DB954).withOpacity(0.8),
+                            color: const Color.fromARGB(255, 119, 255, 153).withOpacity(0.8),
                             fontWeight: FontWeight.w500,
                           ),
                         ),

@@ -218,7 +218,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
       backgroundColor: Colors.transparent,
       builder: (context) => CommentsBottomSheet(
         storyId: widget.story.id,
-        storyTitle: widget.story.title,
+        storyTitle: widget.story.title, onCommentAdded: () {  },
       ),
     );
     // Recharger le compteur de commentaires au retour

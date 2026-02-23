@@ -16,7 +16,7 @@ class CommentsBottomSheet extends StatefulWidget {
   const CommentsBottomSheet({
     super.key,
     required this.storyId,
-    required this.storyTitle,
+    required this.storyTitle, required Null Function() onCommentAdded,
   });
 
   @override
