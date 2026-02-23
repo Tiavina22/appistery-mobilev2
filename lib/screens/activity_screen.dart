@@ -445,7 +445,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                           item.genre!.title,
                           style: TextStyle(
                             fontSize: 12,
-                            color: const Color.fromARGB(255, 119, 255, 153).withOpacity(0.8),
+                            color: const Color.fromARGB(255, 243, 75, 240).withOpacity(0.8),
                             fontWeight: FontWeight.w500,
                           ),
                         ),

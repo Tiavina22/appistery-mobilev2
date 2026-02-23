@@ -673,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(
                         fontSize: 14,
                         color: isDarkMode
-                            ? Colors.grey.shade500
+                            ? const Color.fromARGB(255, 255, 255, 255)
                             : Colors.grey.shade600,
                       ),
                     ),
@@ -724,7 +724,7 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: isDarkMode ? const Color.fromARGB(37, 79, 116, 108) : const Color.fromARGB(255, 255, 255, 255),
+          color: isDarkMode ? const Color.fromARGB(69, 43, 63, 59) : const Color.fromARGB(255, 255, 255, 255),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDarkMode
@@ -736,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> {
             BoxShadow(
               color: isDarkMode
                   ? Colors.black.withOpacity(0.4)
-                  : Colors.grey.withOpacity(0.12),
+                  : const Color.fromARGB(255, 255, 255, 255).withOpacity(0.12),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -751,7 +751,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CustomPaint(
                   painter: _GenrePatternPainter(
                     color: isDarkMode
-                        ? Colors.white.withOpacity(0.03)
+                        ? const Color.fromARGB(255, 0, 0, 0).withOpacity(0.03)
                         : Colors.black.withOpacity(0.02),
                   ),
                 ),
@@ -770,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: isDarkMode
-                              ? Colors.white.withOpacity(0.08)
+                              ? const Color.fromARGB(255, 241, 245, 244).withOpacity(0.08)
                               : Colors.black.withOpacity(0.04),
                           shape: BoxShape.circle,
                         ),
@@ -792,7 +792,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
-                            color: isDarkMode ? const Color.fromARGB(255, 191, 243, 221) : Colors.black87,
+                            color: isDarkMode ? const Color.fromARGB(255, 223, 245, 236) : Colors.black87,
                             letterSpacing: -0.3,
                             height: 1.2,
                           ),
@@ -817,7 +817,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icons.arrow_forward_rounded,
                               size: 12,
                               color: isDarkMode
-                                  ? Colors.grey.shade400
+                                  ? const Color.fromARGB(255, 3, 255, 238)
                                   : Colors.grey.shade600,
                             ),
                           ],
@@ -865,7 +865,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     : Colors.grey.shade200,
                 border: Border.all(
                   color: isDarkMode
-                      ? Colors.white.withOpacity(0.1)
+                      ? const Color.fromARGB(255, 214, 17, 17).withOpacity(0.1)
                       : Colors.black.withOpacity(0.05),
                   width: 2,
                 ),
@@ -887,7 +887,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isDarkMode ? Colors.white : Colors.black87,
+                color: isDarkMode ? const Color.fromARGB(255, 255, 255, 255) : Colors.black87,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
@@ -1393,8 +1393,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
+                              backgroundColor: const Color.fromARGB(255, 12, 146, 141),
+                              foregroundColor: const Color.fromARGB(255, 255, 250, 250),
                               padding: const EdgeInsets.symmetric(
                                 vertical: 14,
                                 horizontal: 24,
