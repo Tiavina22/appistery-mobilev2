@@ -11,21 +11,26 @@ class ThemeSelectionScreen extends StatefulWidget {
   State<ThemeSelectionScreen> createState() => _ThemeSelectionScreenState();
 }
 
-class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with SingleTickerProviderStateMixin {
-  bool _selectedTheme = true; // true = dark, false = light
+class _ThemeSelectionScreenState extends State<ThemeSelectionScreen>
+    with SingleTickerProviderStateMixin {
+  bool _selectedTheme = true;
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 800),
+      duration: const Duration(milliseconds: 1000),
     );
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
     );
+
     _animationController.forward();
   }
 
@@ -37,6 +42,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
 
   Future<void> _confirmTheme(BuildContext context) async {
     final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+
     await themeProvider.setTheme(
       _selectedTheme ? ThemeMode.dark : ThemeMode.light,
     );
@@ -47,7 +53,9 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
     if (context.mounted) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+        MaterialPageRoute(
+          builder: (context) => const OnboardingScreen(),
+        ),
       );
     }
   }
@@ -57,9 +65,11 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
     final size = MediaQuery.of(context).size;
     final w = size.width;
     final h = size.height;
+
     final s = (w / 375).clamp(0.75, 1.3);
     final verticalS = (h / 812).clamp(0.7, 1.3);
     final hPad = (w * 0.064).clamp(16.0, 32.0);
+    final isSmallPhone = w < 360;
 
     return Scaffold(
       body: Container(
@@ -79,25 +89,21 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
             opacity: _fadeAnimation,
             child: Column(
               children: [
-                // Header avec logo
+                /// Logo
                 Padding(
                   padding: EdgeInsets.all(hPad),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Hero(
-                        tag: 'app_logo',
-                        child: Image.asset(
-                          'assets/logo/logo-appistery-no.png',
-                          width: 50 * s,
-                          height: 50 * s,
-                        ),
+                  child: Center(
+                    child: Hero(
+                      tag: 'app_logo',
+                      child: Image.asset(
+                        'assets/logo/logo-appistery-no.png',
+                        width: 50 * s,
+                        height: 50 * s,
                       ),
-                    ],
+                    ),
                   ),
                 ),
 
-                // Contenu principal
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(horizontal: hPad),
@@ -105,10 +111,10 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: 16 * verticalS),
-                        
-                        // Titre
+
+                        /// Animation titre
                         TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
+                          tween: Tween(begin: 0, end: 1),
                           duration: const Duration(milliseconds: 600),
                           builder: (context, value, child) {
                             return Opacity(
@@ -128,7 +134,6 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                                   fontSize: (28 * s).clamp(22.0, 40.0),
                                   fontWeight: FontWeight.w300,
                                   color: Colors.white70,
-                                  height: 1.2,
                                 ),
                               ),
                               Text(
@@ -137,38 +142,44 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                                   fontSize: (36 * s).clamp(28.0, 50.0),
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
-                                  height: 1.2,
                                 ),
                               ),
+
                               SizedBox(height: 10 * verticalS),
+
+                              /// Trait bleu comme ton ancien code
                               Container(
                                 width: 50 * s,
-                                height: 3.5,
+                                height: 5,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFF1DB954), Colors.transparent],
+                                    colors: [
+                                      Color.fromARGB(255, 10, 213, 196),
+                                      Colors.transparent
+                                    ],
                                   ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
+
                               SizedBox(height: 12 * verticalS),
+
                               Text(
                                 'Select your preferred appearance',
                                 style: TextStyle(
                                   fontSize: (14 * s).clamp(12.0, 18.0),
                                   color: Colors.grey[400],
-                                  height: 1.5,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        
+
                         SizedBox(height: 28 * verticalS),
-                        
-                        // Options de thème avec preview
+
+                        /// Dark Mode Animation
                         TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
+                          tween: Tween(begin: 0, end: 1),
                           duration: const Duration(milliseconds: 500),
                           builder: (context, value, child) {
                             return Opacity(
@@ -185,14 +196,15 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                             description: 'Easy on the eyes',
                             icon: Icons.dark_mode_rounded,
                             s: s,
-                            verticalS: verticalS,
+                            isSmallPhone: isSmallPhone,
                           ),
                         ),
-                        
+
                         SizedBox(height: 16 * verticalS),
-                        
+
+                        /// Light Mode Animation
                         TweenAnimationBuilder<double>(
-                          tween: Tween(begin: 0.0, end: 1.0),
+                          tween: Tween(begin: 0, end: 1),
                           duration: const Duration(milliseconds: 600),
                           builder: (context, value, child) {
                             return Opacity(
@@ -209,64 +221,48 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                             description: 'Clear and bright',
                             icon: Icons.light_mode_rounded,
                             s: s,
-                            verticalS: verticalS,
+                            isSmallPhone: isSmallPhone,
                           ),
                         ),
-                        
+
                         SizedBox(height: 24 * verticalS),
                       ],
                     ),
                   ),
                 ),
-                
-                // Bouton continuer
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16 * verticalS),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black,
-                        Colors.black.withOpacity(0.8),
-                        Colors.transparent,
-                      ],
-                    ),
+
+                /// Bouton Continue
+                Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: hPad,
+                    vertical: 16 * verticalS,
                   ),
-                  child: Center(
-                    child: ElevatedButton(
-                      onPressed: () => _confirmTheme(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1DB954),
-                        foregroundColor: Colors.white,
-                        padding: EdgeInsets.symmetric(
-                          vertical: (12 * s).clamp(10.0, 16.0),
-                          horizontal: (28 * s).clamp(20.0, 40.0),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 6,
-                        shadowColor: const Color(0xFF1DB954).withOpacity(0.4),
+                  child: ElevatedButton(
+                    onPressed: () => _confirmTheme(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1DB954),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(
+                        vertical: (12 * s).clamp(10.0, 16.0),
+                        horizontal: (28 * s).clamp(20.0, 40.0),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Continue',
-                            style: TextStyle(
-                              fontSize: (14 * s).clamp(12.0, 18.0),
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          SizedBox(width: 6 * s),
-                          Icon(
-                            Icons.arrow_forward_rounded,
-                            size: (16 * s).clamp(14.0, 22.0),
-                          ),
-                        ],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(Icons.arrow_forward_rounded),
+                      ],
                     ),
                   ),
                 ),
@@ -284,238 +280,139 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
     required String description,
     required IconData icon,
     required double s,
-    required double verticalS,
+    required bool isSmallPhone,
   }) {
     final isSelected = _selectedTheme == isDark;
-    final previewSize = (65 * s).clamp(50.0, 90.0);
-    final checkSize = (30 * s).clamp(24.0, 40.0);
-    
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          setState(() {
-            _selectedTheme = isDark;
-          });
-        },
-        borderRadius: BorderRadius.circular(20 * s),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          padding: EdgeInsets.all((18 * s).clamp(14.0, 28.0)),
-          decoration: BoxDecoration(
-            gradient: isSelected
-                ? LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      const Color(0xFF1DB954).withOpacity(0.2),
-                      const Color(0xFF1DB954).withOpacity(0.05),
-                    ],
-                  )
-                : null,
-            color: isSelected ? null : const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(20 * s),
-            border: Border.all(
-              color: isSelected 
-                  ? const Color(0xFF1DB954)
-                  : Colors.grey[800]!,
-              width: isSelected ? 2.5 : 1.5,
-            ),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF1DB954).withOpacity(0.3),
-                      blurRadius: 20,
-                      spreadRadius: -5,
-                    ),
-                  ]
-                : null,
+    final previewSize = isSmallPhone ? 60.0 : 75.0;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedTheme = isDark;
+        });
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: EdgeInsets.all(16 * s),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color:
+                isSelected ? const Color(0xFF1DB954) : Colors.grey.shade800,
+            width: isSelected ? 2 : 1,
           ),
-          child: Row(
-            children: [
-              // Preview box
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: previewSize,
-                height: previewSize,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: isDark
-                        ? [
-                            const Color(0xFF1A1A1A),
-                            const Color(0xFF0D0D0D),
-                          ]
-                        : [
-                            const Color(0xFFFFFFFF),
-                            const Color(0xFFF5F5F5),
-                          ],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF1DB954).withOpacity(0.5)
-                        : isDark
-                            ? Colors.grey[700]!
-                            : Colors.grey[300]!,
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: isDark 
-                          ? Colors.black.withOpacity(0.3)
-                          : Colors.grey.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Simulated app preview
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: double.infinity,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              color: isDark 
-                                  ? Colors.white.withOpacity(0.3)
-                                  : Colors.black.withOpacity(0.3),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Container(
-                            width: 40,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: isDark 
-                                  ? Colors.white.withOpacity(0.2)
-                                  : Colors.black.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const Spacer(),
-                          Row(
-                            children: List.generate(3, (index) {
-                              return Container(
-                                margin: const EdgeInsets.only(right: 4),
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: index == 0 
-                                      ? const Color(0xFF1DB954)
-                                      : (isDark 
-                                          ? Colors.white.withOpacity(0.2)
-                                          : Colors.black.withOpacity(0.2)),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              );
-                            }),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Icon overlay
-                    Center(
-                      child: Icon(
-                        icon,
-                        color: isDark 
-                            ? Colors.white.withOpacity(0.4)
-                            : Colors.black.withOpacity(0.4),
-                        size: (26 * s).clamp(20.0, 36.0),
-                      ),
-                    ),
-                  ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: previewSize,
+              height: previewSize,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: isDark
+                      ? [const Color(0xFF1A1A1A), const Color(0xFF0D0D0D)]
+                      : [Colors.white, const Color(0xFFF5F5F5)],
                 ),
               ),
-              SizedBox(width: 16 * s),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: (17 * s).clamp(14.0, 24.0),
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: Colors.white,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    SizedBox(height: 4 * s),
-                    Row(
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          width: 4,
-                          height: 4,
+                          height: 6,
+                          width: double.infinity,
                           decoration: BoxDecoration(
-                            color: isSelected 
-                                ? const Color(0xFF1DB954)
-                                : Colors.grey[600],
-                            shape: BoxShape.circle,
+                            color:
+                                isDark ? Colors.white24 : Colors.black26,
+                            borderRadius: BorderRadius.circular(2),
                           ),
                         ),
-                        SizedBox(width: 6 * s),
-                        Flexible(
-                          child: Text(
-                            description,
-                            style: TextStyle(
-                              fontSize: (13 * s).clamp(11.0, 16.0),
-                              color: isSelected 
-                                  ? Colors.grey[300]
-                                  : Colors.grey[500],
-                              fontWeight: FontWeight.w500,
+                        const SizedBox(height: 4),
+                        Container(
+                          height: 5,
+                          width: 30,
+                          decoration: BoxDecoration(
+                            color:
+                                isDark ? Colors.white24 : Colors.black26,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        const Spacer(),
+                        Row(
+                          children: List.generate(
+                            3,
+                            (index) => Container(
+                              margin: const EdgeInsets.only(right: 4),
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: index == 0
+                                    ? const Color(0xFF1DB954)
+                                    : (isDark
+                                        ? Colors.white24
+                                        : Colors.black26),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              // Indicateur de sélection
-              AnimatedScale(
-                scale: isSelected ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutBack,
-                child: Container(
-                  width: checkSize,
-                  height: checkSize,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF1DB954),
-                        Color(0xFF1AA34A),
-                      ],
+                  ),
+                  Center(
+                    child: Icon(
+                      icon,
+                      size: 26,
+                      color: isDark
+                          ? Colors.white.withOpacity(0.4)
+                          : Colors.black.withOpacity(0.4),
                     ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1DB954).withOpacity(0.5),
-                        blurRadius: 12,
-                        spreadRadius: -2,
-                      ),
-                    ],
                   ),
-                  child: const Icon(
-                    Icons.check_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+
+            SizedBox(width: 14 * s),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: (17 * s).clamp(14.0, 22.0),
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    description,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: (13 * s).clamp(11.0, 16.0),
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            AnimatedScale(
+              scale: isSelected ? 1 : 0,
+              duration: const Duration(milliseconds: 300),
+              child: const Icon(
+                Icons.check_circle,
+                color: Color(0xFF1DB954),
+              ),
+            ),
+          ],
         ),
       ),
     );
