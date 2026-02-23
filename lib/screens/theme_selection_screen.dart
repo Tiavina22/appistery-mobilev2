@@ -54,6 +54,13 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+    final h = size.height;
+    final s = (w / 375).clamp(0.75, 1.3);
+    final verticalS = (h / 812).clamp(0.7, 1.3);
+    final hPad = (w * 0.064).clamp(16.0, 32.0);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -74,7 +81,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
               children: [
                 // Header avec logo
                 Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(hPad),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -82,8 +89,8 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                         tag: 'app_logo',
                         child: Image.asset(
                           'assets/logo/logo-appistery-no.png',
-                          width: 60,
-                          height: 60,
+                          width: 50 * s,
+                          height: 50 * s,
                         ),
                       ),
                     ],
@@ -93,11 +100,11 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                 // Contenu principal
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: EdgeInsets.symmetric(horizontal: hPad),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 20),
+                        SizedBox(height: 16 * verticalS),
                         
                         // Titre
                         TweenAnimationBuilder<double>(
@@ -115,28 +122,28 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Choose your',
                                 style: TextStyle(
-                                  fontSize: 36,
+                                  fontSize: (28 * s).clamp(22.0, 40.0),
                                   fontWeight: FontWeight.w300,
                                   color: Colors.white70,
                                   height: 1.2,
                                 ),
                               ),
-                              const Text(
+                              Text(
                                 'Theme',
                                 style: TextStyle(
-                                  fontSize: 44,
+                                  fontSize: (36 * s).clamp(28.0, 50.0),
                                   fontWeight: FontWeight.bold,
                                   color: Colors.white,
                                   height: 1.2,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 10 * verticalS),
                               Container(
-                                width: 60,
-                                height: 4,
+                                width: 50 * s,
+                                height: 3.5,
                                 decoration: BoxDecoration(
                                   gradient: const LinearGradient(
                                     colors: [Color(0xFF1DB954), Colors.transparent],
@@ -144,11 +151,11 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              SizedBox(height: 12 * verticalS),
                               Text(
                                 'Select your preferred appearance',
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: (14 * s).clamp(12.0, 18.0),
                                   color: Colors.grey[400],
                                   height: 1.5,
                                 ),
@@ -157,7 +164,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                           ),
                         ),
                         
-                        const SizedBox(height: 40),
+                        SizedBox(height: 28 * verticalS),
                         
                         // Options de thème avec preview
                         TweenAnimationBuilder<double>(
@@ -177,10 +184,12 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                             title: 'Dark Mode',
                             description: 'Easy on the eyes',
                             icon: Icons.dark_mode_rounded,
+                            s: s,
+                            verticalS: verticalS,
                           ),
                         ),
                         
-                        const SizedBox(height: 20),
+                        SizedBox(height: 16 * verticalS),
                         
                         TweenAnimationBuilder<double>(
                           tween: Tween(begin: 0.0, end: 1.0),
@@ -199,10 +208,12 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                             title: 'Light Mode',
                             description: 'Clear and bright',
                             icon: Icons.light_mode_rounded,
+                            s: s,
+                            verticalS: verticalS,
                           ),
                         ),
                         
-                        const SizedBox(height: 40),
+                        SizedBox(height: 24 * verticalS),
                       ],
                     ),
                   ),
@@ -210,7 +221,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                 
                 // Bouton continuer
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 16 * verticalS),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.bottomCenter,
@@ -228,28 +239,31 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1DB954),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+                        padding: EdgeInsets.symmetric(
+                          vertical: (12 * s).clamp(10.0, 16.0),
+                          horizontal: (28 * s).clamp(20.0, 40.0),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         elevation: 6,
                         shadowColor: const Color(0xFF1DB954).withOpacity(0.4),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             'Continue',
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: (14 * s).clamp(12.0, 18.0),
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.3,
                             ),
                           ),
-                          SizedBox(width: 6),
+                          SizedBox(width: 6 * s),
                           Icon(
                             Icons.arrow_forward_rounded,
-                            size: 18,
+                            size: (16 * s).clamp(14.0, 22.0),
                           ),
                         ],
                       ),
@@ -269,8 +283,12 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
     required String title,
     required String description,
     required IconData icon,
+    required double s,
+    required double verticalS,
   }) {
     final isSelected = _selectedTheme == isDark;
+    final previewSize = (65 * s).clamp(50.0, 90.0);
+    final checkSize = (30 * s).clamp(24.0, 40.0);
     
     return Material(
       color: Colors.transparent,
@@ -280,11 +298,11 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
             _selectedTheme = isDark;
           });
         },
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20 * s),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all((18 * s).clamp(14.0, 28.0)),
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
@@ -297,7 +315,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                   )
                 : null,
             color: isSelected ? null : const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20 * s),
             border: Border.all(
               color: isSelected 
                   ? const Color(0xFF1DB954)
@@ -319,8 +337,8 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
               // Preview box
               AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
-                width: 80,
-                height: 80,
+                width: previewSize,
+                height: previewSize,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -411,13 +429,13 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                         color: isDark 
                             ? Colors.white.withOpacity(0.4)
                             : Colors.black.withOpacity(0.4),
-                        size: 32,
+                        size: (26 * s).clamp(20.0, 36.0),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 20),
+              SizedBox(width: 16 * s),
               // Info
               Expanded(
                 child: Column(
@@ -426,13 +444,13 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: (17 * s).clamp(14.0, 24.0),
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
                         color: Colors.white,
                         letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 4 * s),
                     Row(
                       children: [
                         Container(
@@ -445,15 +463,17 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          description,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: isSelected 
-                                ? Colors.grey[300]
-                                : Colors.grey[500],
-                            fontWeight: FontWeight.w500,
+                        SizedBox(width: 6 * s),
+                        Flexible(
+                          child: Text(
+                            description,
+                            style: TextStyle(
+                              fontSize: (13 * s).clamp(11.0, 16.0),
+                              color: isSelected 
+                                  ? Colors.grey[300]
+                                  : Colors.grey[500],
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
                       ],
@@ -467,8 +487,8 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutBack,
                 child: Container(
-                  width: 36,
-                  height: 36,
+                  width: checkSize,
+                  height: checkSize,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
@@ -490,7 +510,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen> with Single
                   child: const Icon(
                     Icons.check_rounded,
                     color: Colors.white,
-                    size: 22,
+                    size: 18,
                   ),
                 ),
               ),

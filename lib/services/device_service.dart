@@ -48,15 +48,23 @@ class DeviceService {
       if (defaultTargetPlatform == TargetPlatform.android) {
         final androidInfo = await _deviceInfo.androidInfo;
         final id = androidInfo.id;
+        debugPrint('[DeviceService] Android device id: "$id" (isEmpty: ${id.isEmpty})');
         if (id.isNotEmpty) return id;
       } else if (defaultTargetPlatform == TargetPlatform.iOS) {
         final iosInfo = await _deviceInfo.iosInfo;
         final id = iosInfo.identifierForVendor;
+        debugPrint('[DeviceService] iOS identifierForVendor: "$id" (isNull: ${id == null})');
         if (id != null && id.isNotEmpty) return id;
+      } else {
+        debugPrint('[DeviceService] Platform non reconnu: $defaultTargetPlatform');
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[DeviceService] Erreur getDeviceId: $e');
+    }
     // Fallback : UUID persistant généré localement
-    return _getOrCreateFallbackId();
+    final fallback = await _getOrCreateFallbackId();
+    debugPrint('[DeviceService] Fallback device id utilisé: "$fallback"');
+    return fallback;
   }
 
   // Obtenir le nom de l'appareil
@@ -124,11 +132,19 @@ class DeviceService {
     final ipAddress = await getPublicIpAddress();
     final userAgent = await getUserAgent();
 
-    return {
+    final info = {
       'device_id': deviceId,
       'device_name': deviceName,
       'ip_address': ipAddress,
       'user_agent': userAgent,
     };
+
+    debugPrint('[DeviceService] getDeviceInfo résultat:');
+    debugPrint('  device_id   = "$deviceId"');
+    debugPrint('  device_name = "$deviceName"');
+    debugPrint('  ip_address  = "$ipAddress"');
+    debugPrint('  user_agent  = "$userAgent"');
+
+    return info;
   }
 }

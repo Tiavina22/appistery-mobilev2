@@ -236,6 +236,13 @@ class _RegisterStep5CountryPhoneScreenState
                           if (value == null || value.isEmpty) {
                             return 'phone_required'.tr();
                           }
+                          final digitsOnly = value.replaceAll(RegExp(r'\s+'), '');
+                          if (!RegExp(r'^\d+$').hasMatch(digitsOnly)) {
+                            return 'phone_digits_only'.tr();
+                          }
+                          if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+                            return 'phone_invalid_length'.tr();
+                          }
                           return null;
                         },
                       ),

@@ -156,10 +156,12 @@ class AuthProvider extends ChangeNotifier {
 
   // Déconnexion
   Future<void> logout() async {
+    debugPrint('[AuthProvider] logout démarré');
     await _authService.logout();
     _isLoggedIn = false;
     _user = null;
     _errorMessage = null;
+    debugPrint('[AuthProvider] logout terminé - état réinitialisé');
     notifyListeners();
   }
 

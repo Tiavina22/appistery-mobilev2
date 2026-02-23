@@ -71,6 +71,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+    final h = size.height;
+    final s = (w / 375).clamp(0.75, 1.3);
+    final verticalS = (h / 812).clamp(0.7, 1.3);
+    final hPad = (w * 0.064).clamp(16.0, 32.0);
+    final topSafe = MediaQuery.of(context).padding.top;
+    final logoTop = topSafe + 8 * verticalS;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -90,13 +99,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
             },
           ),
           
-          // Top gradient overlay - plus subtil
+          // Top gradient overlay
           Positioned(
             top: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 150,
+              height: 120 * verticalS,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -113,7 +122,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
           
           // Logo en haut
           Positioned(
-            top: 50,
+            top: logoTop,
             left: 0,
             right: 0,
             child: Center(
@@ -121,27 +130,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 tag: 'app_logo',
                 child: Image.asset(
                   'assets/logo/logo-appistery-no.png',
-                  width: 50,
-                  height: 50,
+                  width: (40 * s).clamp(32.0, 56.0),
+                  height: (40 * s).clamp(32.0, 56.0),
                 ),
               ),
             ),
           ),
           
-          // Skip button at top right - amélioration design
+          // Skip button at top right
           if (_currentPage < _pages.length - 1)
             Positioned(
-              top: 50,
-              right: 24,
+              top: logoTop,
+              right: hPad,
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
                   onTap: _completeOnboarding,
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: (16 * s).clamp(12.0, 24.0),
+                      vertical: (8 * s).clamp(6.0, 12.0),
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.15),
@@ -160,8 +169,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                     ),
                     child: Text(
                       'skip'.tr(),
-                      style: const TextStyle(
-                        fontSize: 14,
+                      style: TextStyle(
+                        fontSize: (13 * s).clamp(11.0, 16.0),
                         fontWeight: FontWeight.w600,
                         color: Colors.white,
                         letterSpacing: 0.3,
@@ -172,14 +181,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
               ),
             ),
           
-          // Bottom section avec dots et bouton - design amélioré
+          // Bottom section avec dots et bouton
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: SafeArea(
               child: Container(
-                padding: const EdgeInsets.fromLTRB(32, 40, 32, 32),
+                padding: EdgeInsets.fromLTRB(hPad, 32 * verticalS, hPad, 24 * verticalS),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -195,7 +204,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Page indicators - design amélioré
+                    // Page indicators
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(
@@ -203,9 +212,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         (index) => AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOut,
-                          margin: const EdgeInsets.symmetric(horizontal: 5),
-                          width: _currentPage == index ? 32 : 8,
-                          height: 8,
+                          margin: EdgeInsets.symmetric(horizontal: 4 * s),
+                          width: _currentPage == index ? (28 * s).clamp(20.0, 36.0) : (7 * s).clamp(6.0, 10.0),
+                          height: (7 * s).clamp(6.0, 10.0),
                           decoration: BoxDecoration(
                             gradient: _currentPage == index
                                 ? const LinearGradient(
@@ -232,12 +241,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    SizedBox(height: 28 * verticalS),
                     
-                    // Boutons - design amélioré
+                    // Boutons
                     Row(
                       children: [
-                        // Bouton Back (si pas sur la première page)
+                        // Bouton Back
                         if (_currentPage > 0)
                           Expanded(
                             flex: 1,
@@ -254,7 +263,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                                   color: Colors.white.withOpacity(0.3),
                                   width: 1.5,
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: EdgeInsets.symmetric(vertical: (12 * s).clamp(10.0, 16.0)),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -262,12 +271,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Icon(Icons.arrow_back_rounded, size: 18),
-                                  const SizedBox(width: 6),
+                                  Icon(Icons.arrow_back_rounded, size: (16 * s).clamp(14.0, 20.0)),
+                                  SizedBox(width: 4 * s),
                                   Text(
                                     'previous'.tr(),
-                                    style: const TextStyle(
-                                      fontSize: 15,
+                                    style: TextStyle(
+                                      fontSize: (13 * s).clamp(11.0, 16.0),
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.3,
                                     ),
@@ -276,7 +285,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                               ),
                             ),
                           ),
-                        if (_currentPage > 0) const SizedBox(width: 16),
+                        if (_currentPage > 0) SizedBox(width: 12 * s),
                         
                         // Bouton Next/Start
                         Expanded(
@@ -288,7 +297,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF1DB954),
                               foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: EdgeInsets.symmetric(vertical: (12 * s).clamp(10.0, 16.0)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -302,18 +311,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                                   _currentPage == _pages.length - 1
                                       ? 'start'.tr()
                                       : 'next'.tr(),
-                                  style: const TextStyle(
-                                    fontSize: 15,
+                                  style: TextStyle(
+                                    fontSize: (13 * s).clamp(11.0, 16.0),
                                     fontWeight: FontWeight.bold,
                                     letterSpacing: 0.3,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
+                                SizedBox(width: 4 * s),
                                 Icon(
                                   _currentPage == _pages.length - 1
                                       ? Icons.check_rounded
                                       : Icons.arrow_forward_rounded,
-                                  size: 18,
+                                  size: (16 * s).clamp(14.0, 20.0),
                                 ),
                               ],
                             ),
@@ -398,6 +407,15 @@ class _OnboardingPageState extends State<_OnboardingPage>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final w = size.width;
+    final h = size.height;
+    final s = (w / 375).clamp(0.75, 1.3);
+    final verticalS = (h / 812).clamp(0.7, 1.3);
+    final hPad = (w * 0.07).clamp(16.0, 40.0);
+    // Bottom space adapts to screen height so text doesn't overlap controls
+    final bottomSpace = (h * 0.22).clamp(100.0, 220.0);
+
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
@@ -420,7 +438,7 @@ class _OnboardingPageState extends State<_OnboardingPage>
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 40.0),
+            padding: EdgeInsets.symmetric(horizontal: hPad, vertical: 24 * verticalS),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -435,13 +453,13 @@ class _OnboardingPageState extends State<_OnboardingPage>
                       children: [
                         // Title avec background subtil
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 16,
+                          padding: EdgeInsets.symmetric(
+                            horizontal: (20 * s).clamp(14.0, 28.0),
+                            vertical: (12 * s).clamp(10.0, 20.0),
                           ),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(16 * s),
                             border: Border.all(
                               color: Colors.white.withOpacity(0.1),
                               width: 1,
@@ -450,8 +468,8 @@ class _OnboardingPageState extends State<_OnboardingPage>
                           child: Text(
                             widget.data.titleKey.tr(),
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 32,
+                            style: TextStyle(
+                              fontSize: (26 * s).clamp(20.0, 36.0),
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                               letterSpacing: -0.5,
@@ -459,14 +477,14 @@ class _OnboardingPageState extends State<_OnboardingPage>
                             ),
                           ),
                         ),
-                        const SizedBox(height: 24),
+                        SizedBox(height: 18 * verticalS),
                         
                         // Description
                         Text(
                           widget.data.descriptionKey.tr(),
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 17,
+                            fontSize: (15 * s).clamp(13.0, 20.0),
                             color: Colors.white.withOpacity(0.95),
                             height: 1.6,
                             fontWeight: FontWeight.w400,
@@ -478,7 +496,7 @@ class _OnboardingPageState extends State<_OnboardingPage>
                   ),
                 ),
                 
-                const SizedBox(height: 180), // Space pour bottom controls
+                SizedBox(height: bottomSpace),
               ],
             ),
           ),

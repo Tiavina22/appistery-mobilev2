@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -184,9 +185,16 @@ class AuthService {
       final deviceService = DeviceService();
       final deviceInfo = await deviceService.getDeviceInfo();
 
+      debugPrint('[AuthService] completeRegistration - device_id: "${deviceInfo['device_id']}"');
+      debugPrint('[AuthService] completeRegistration - avatarFile: ${avatarFile?.path ?? "null"}');
+      debugPrint('[AuthService] completeRegistration - email: $email, username: $username');
+
       // Si un fichier avatar est fourni, utiliser le nouvel endpoint avec upload
       if (avatarFile != null) {
-        final formData = FormData.fromMap({
+        debugPrint('[AuthService] Utilisation du endpoint complete-registration-with-avatar');
+
+        // Construire le FormData en excluant les valeurs null de deviceInfo
+        final formMap = <String, dynamic>{
           'username': username,
           'email': email,
           'password': password,
@@ -194,17 +202,27 @@ class AuthService {
           if (language != null) 'language': language,
           if (countryId != null) 'country_id': countryId,
           if (cguAccepted != null) 'cgu_accepted': cguAccepted,
-          ...deviceInfo,
+          'device_id': deviceInfo['device_id'],
+          'device_name': deviceInfo['device_name'],
+          if (deviceInfo['ip_address'] != null) 'ip_address': deviceInfo['ip_address'],
+          'user_agent': deviceInfo['user_agent'],
           'avatar': await MultipartFile.fromFile(
             avatarFile.path,
             filename: 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg',
           ),
-        });
+        };
+
+        debugPrint('[AuthService] FormData keys: ${formMap.keys.toList()}');
+        debugPrint('[AuthService] FormData device_id: "${formMap['device_id']}"');
+
+        final formData = FormData.fromMap(formMap);
 
         final response = await _dio.post(
           '$apiUrl/api/auth/complete-registration-with-avatar',
           data: formData,
         );
+
+        debugPrint('[AuthService] Réponse complete-registration-with-avatar: ${response.statusCode}');
 
         if (response.statusCode == 201) {
           final token = response.data['token'];
@@ -217,20 +235,31 @@ class AuthService {
           'message': response.data['message'] ?? 'Erreur d\'inscription',
         };
       } else {
-        // Sinon, utiliser l'ancien endpoint sans avatar (backward compatibility)
+        debugPrint('[AuthService] Utilisation du endpoint complete-registration (sans avatar)');
+
+        final body = {
+          'username': username,
+          'email': email,
+          'password': password,
+          if (telephone != null) 'telephone': telephone,
+          if (language != null) 'language': language,
+          if (countryId != null) 'country_id': countryId,
+          if (cguAccepted != null) 'cgu_accepted': cguAccepted,
+          'device_id': deviceInfo['device_id'],
+          'device_name': deviceInfo['device_name'],
+          if (deviceInfo['ip_address'] != null) 'ip_address': deviceInfo['ip_address'],
+          'user_agent': deviceInfo['user_agent'],
+        };
+
+        debugPrint('[AuthService] Body keys: ${body.keys.toList()}');
+        debugPrint('[AuthService] Body device_id: "${body['device_id']}"');
+
         final response = await _dio.post(
           '$apiUrl/api/auth/complete-registration',
-          data: {
-            'username': username,
-            'email': email,
-            'password': password,
-            if (telephone != null) 'telephone': telephone,
-            if (language != null) 'language': language,
-            if (countryId != null) 'country_id': countryId,
-            if (cguAccepted != null) 'cgu_accepted': cguAccepted,
-            ...deviceInfo,
-          },
+          data: body,
         );
+
+        debugPrint('[AuthService] Réponse complete-registration: ${response.statusCode}');
 
         if (response.statusCode == 201) {
           final token = response.data['token'];
@@ -244,11 +273,19 @@ class AuthService {
         };
       }
     } on DioException catch (e) {
+      debugPrint('[AuthService] DioException completeRegistration:');
+      debugPrint('  status: ${e.response?.statusCode}');
+      debugPrint('  error_code: ${e.response?.data['error_code']}');
+      debugPrint('  message: ${e.response?.data['message']}');
+      debugPrint('  field: ${e.response?.data['field']}');
       return {
         'success': false,
         'message': e.response?.data['message'] ?? 'Erreur d\'inscription',
+        'error_code': e.response?.data['error_code'],
+        'field': e.response?.data['field'],
       };
     } catch (e) {
+      debugPrint('[AuthService] Exception inattendue completeRegistration: $e');
       return {'success': false, 'message': 'Erreur inattendue: $e'};
     }
   }
@@ -259,18 +296,25 @@ class AuthService {
       // Obtenir les infos d'appareil
       final deviceService = DeviceService();
       final deviceId = await deviceService.getDeviceId();
-      
+
+      debugPrint('[AuthService] logout - device_id: "$deviceId"');
+
       // Appeler l'endpoint backend pour mettre à jour la session
       final dio = await getDioWithAuth();
-      await dio.post(
+      final response = await dio.post(
         '/api/auth/logout',
         data: {'device_id': deviceId},
       );
+
+      debugPrint('[AuthService] logout - réponse: ${response.statusCode}');
+    } on DioException catch (e) {
+      debugPrint('[AuthService] logout - DioException (session non désactivée serveur): ${e.response?.statusCode} - ${e.response?.data}');
     } catch (e) {
-      // Si l'appel API échoue, on supprime quand même le token local
-       } finally {
+      debugPrint('[AuthService] logout - erreur inattendue: $e');
+    } finally {
       // Toujours supprimer le token local
       await deleteToken();
+      debugPrint('[AuthService] logout - token local supprimé');
     }
   }
 
