@@ -14,11 +14,13 @@ enum ReaderTheme { light, dark, sepia }
 class ReaderScreen extends StatefulWidget {
   final Story story;
   final int initialChapterIndex;
+  final String? selectedLang;
 
   const ReaderScreen({
     super.key,
     required this.story,
     this.initialChapterIndex = 0,
+    this.selectedLang,
   });
 
   @override
@@ -550,13 +552,28 @@ class _ReaderScreenState extends State<ReaderScreen> {
     }
   }
 
+  /// Mapper le code locale vers la clé backend
+  String _localeToKey(String localeCode) {
+    switch (localeCode) {
+      case 'mg':
+        return 'gasy';
+      case 'fr':
+        return 'fr';
+      case 'en':
+        return 'en';
+      default:
+        return 'gasy';
+    }
+  }
+
   String _getContent(dynamic content, String language) {
     if (content is Map) {
-      // Essayer d'abord la langue actuelle, puis les fallbacks
-      return content[language]?.toString() ?? 
+      final key = _localeToKey(language);
+      // Essayer d'abord la langue mappée, puis les fallbacks (gasy d'abord)
+      return content[key]?.toString() ?? 
+             content['gasy']?.toString() ?? 
              content['fr']?.toString() ?? 
              content['en']?.toString() ?? 
-             content['gasy']?.toString() ?? 
              content.values.firstOrNull?.toString() ?? '';
     }
     return content?.toString() ?? '';
@@ -593,7 +610,9 @@ class _ReaderScreenState extends State<ReaderScreen> {
                 }
 
                 // Contenu du chapitre avec scroll vertical
-                final currentLang = context.locale.languageCode;
+                final currentLang = widget.selectedLang != null 
+                    ? (widget.selectedLang == 'gasy' ? 'mg' : widget.selectedLang!)
+                    : context.locale.languageCode;
                 final content = _getContent(_currentChapter?['content'], currentLang);
                 final title = _getContent(_currentChapter?['title'], currentLang);
                 final chapterNum = _currentChapter?['chapter_number'] ?? '';

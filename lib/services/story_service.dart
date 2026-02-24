@@ -224,6 +224,10 @@ class Story {
   final List<Map<String, dynamic>> chaptersList;
   final DateTime? createdAt;
 
+  // Maps multilingues brutes (pour le switch de langue)
+  final Map<String, String> titleMap;
+  final Map<String, String> synopsisMap;
+
   Story({
     required this.id,
     required this.title,
@@ -241,28 +245,117 @@ class Story {
     required this.genre,
     this.chaptersList = const [],
     this.createdAt,
+    this.titleMap = const {},
+    this.synopsisMap = const {},
   });
 
+  /// Mapping des codes de locale vers les clés JSONB backend
+  static String _localeToKey(String localeCode) {
+    switch (localeCode) {
+      case 'mg':
+        return 'gasy';
+      case 'fr':
+        return 'fr';
+      case 'en':
+        return 'en';
+      default:
+        return 'gasy';
+    }
+  }
+
+  /// Noms affichables des langues
+  static String languageDisplayName(String key) {
+    switch (key) {
+      case 'gasy':
+        return 'Malagasy';
+      case 'fr':
+        return 'Français';
+      case 'en':
+        return 'English';
+      default:
+        return key;
+    }
+  }
+
+  /// Liste des langues disponibles pour cette histoire
+  List<String> get availableLanguages {
+    final langs = <String>{};
+    for (final key in titleMap.keys) {
+      if (titleMap[key] != null && titleMap[key]!.isNotEmpty) {
+        langs.add(key);
+      }
+    }
+    // Ajouter aussi les langues du synopsis
+    for (final key in synopsisMap.keys) {
+      if (synopsisMap[key] != null && synopsisMap[key]!.isNotEmpty) {
+        langs.add(key);
+      }
+    }
+    return langs.toList();
+  }
+
+  /// Obtenir le titre dans une langue donnée (localeCode: mg, fr, en)
+  String getTitle(String localeCode) {
+    final key = _localeToKey(localeCode);
+    return titleMap[key] ?? titleMap['gasy'] ?? titleMap['fr'] ?? titleMap['en'] ?? title;
+  }
+
+  /// Obtenir la description/synopsis dans une langue donnée
+  String getDescription(String localeCode) {
+    final key = _localeToKey(localeCode);
+    return synopsisMap[key] ?? synopsisMap['gasy'] ?? synopsisMap['fr'] ?? synopsisMap['en'] ?? description;
+  }
+
+  /// Helper statique pour extraire du contenu multilingue (chapitres etc.)
+  static String getLocalizedContent(dynamic content, String localeCode) {
+    if (content is Map) {
+      final key = _localeToKey(localeCode);
+      return content[key]?.toString() ??
+             content['gasy']?.toString() ??
+             content['fr']?.toString() ??
+             content['en']?.toString() ??
+             content.values.firstOrNull?.toString() ?? '';
+    }
+    return content?.toString() ?? '';
+  }
+
   factory Story.fromJson(Map<String, dynamic> json) {
+    // Conserver les maps multilingues brutes
+    Map<String, String> titleMap = {};
+    Map<String, String> synopsisMap = {};
+
     // Gérer le titre qui peut être un string ou un JSON avec des langues
     String title = 'Unknown';
     if (json['title'] is String) {
       title = json['title'];
+      titleMap = {'gasy': title};
     } else if (json['title'] is Map) {
-      final titleMap = json['title'] as Map;
-      title = titleMap['fr'] ?? titleMap['en'] ?? titleMap['gasy'] ?? 'Unknown';
+      final rawMap = json['title'] as Map;
+      for (final entry in rawMap.entries) {
+        if (entry.value != null && entry.value.toString().isNotEmpty) {
+          titleMap[entry.key.toString()] = entry.value.toString();
+        }
+      }
+      // Par défaut : gasy d'abord
+      title = titleMap['gasy'] ?? titleMap['fr'] ?? titleMap['en'] ?? 'Unknown';
     }
 
     // Gérer la description/synopsis
     String description = '';
     if (json['synopsis'] is String) {
       description = json['synopsis'];
+      synopsisMap = {'gasy': description};
     } else if (json['synopsis'] is Map) {
-      final synopsisMap = json['synopsis'] as Map;
-      description =
-          synopsisMap['fr'] ?? synopsisMap['en'] ?? synopsisMap['gasy'] ?? '';
+      final rawMap = json['synopsis'] as Map;
+      for (final entry in rawMap.entries) {
+        if (entry.value != null && entry.value.toString().isNotEmpty) {
+          synopsisMap[entry.key.toString()] = entry.value.toString();
+        }
+      }
+      description = synopsisMap['gasy'] ?? synopsisMap['fr'] ?? synopsisMap['en'] ?? '';
     } else if (json['description'] is String) {
       description = json['description'];
+      synopsisMap = {'gasy': description};
     }
 
     // Gérer l'auteur qui peut être un string ou un objet
@@ -345,14 +438,16 @@ class Story {
       createdAt: json['created_at'] != null || json['createdAt'] != null
           ? DateTime.tryParse(json['created_at'] ?? json['createdAt'])
           : null,
+      titleMap: titleMap,
+      synopsisMap: synopsisMap,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'title': title,
-      'synopsis': description,
+      'title': titleMap.isNotEmpty ? titleMap : title,
+      'synopsis': synopsisMap.isNotEmpty ? synopsisMap : description,
       'description': description,
       'cover_image': coverImage,
       'coverImage': coverImage,

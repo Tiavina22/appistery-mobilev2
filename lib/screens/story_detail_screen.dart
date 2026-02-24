@@ -32,6 +32,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   late AuthorService _authorService;
   late ReactionService _reactionService;
 
+  // Langue d'affichage sélectionnée (clé backend: gasy, fr, en)
+  String _selectedLang = 'gasy';
+
   // États pour les réactions
   Map<String, dynamic>? _reactionsData;
   bool _isLoadingReactions = false;
@@ -454,7 +457,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                 children: [
                   // Titre
                   Text(
-                    widget.story.title,
+                    widget.story.titleMap.isNotEmpty
+                        ? (widget.story.titleMap[_selectedLang] ?? widget.story.title)
+                        : widget.story.title,
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -462,6 +467,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       height: 1.2,
                     ),
                   ),
+
+                  // Sélecteur de langue si plusieurs langues disponibles
+                  if (widget.story.availableLanguages.length > 1) ...[
+                    const SizedBox(height: 10),
+                    _buildLanguageSelector(isDarkMode),
+                  ],
+
                   const SizedBox(height: 12),
 
                   // Métadonnées (Genre, Chapitres, Auteur)
@@ -630,6 +642,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                           builder: (context) => ReaderScreen(
                                             story: fullStory,
                                             initialChapterIndex: startChapter,
+                                            selectedLang: _selectedLang,
                                           ),
                                         ),
                                       );
@@ -817,7 +830,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                         duration: const Duration(milliseconds: 300),
                         curve: Curves.easeInOut,
                         child: Text(
-                          widget.story.description,
+                          widget.story.synopsisMap.isNotEmpty
+                              ? (widget.story.synopsisMap[_selectedLang] ?? widget.story.description)
+                              : widget.story.description,
                           maxLines: _isExpanded ? null : 3,
                           overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                           style: TextStyle(
@@ -923,6 +938,77 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     );
   }
 
+  /// Sélecteur de langue pour les histoires multilingues
+  Widget _buildLanguageSelector(bool isDarkMode) {
+    final langs = widget.story.availableLanguages;
+    if (langs.length <= 1) return const SizedBox.shrink();
+
+    final textColor = isDarkMode ? Colors.white70 : Colors.black54;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.translate, size: 16, color: textColor),
+            const SizedBox(width: 6),
+            Text(
+              'Disponible en',
+              style: TextStyle(
+                fontSize: 12,
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          children: langs.map((langKey) {
+            final isSelected = langKey == _selectedLang;
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedLang = langKey;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF1DB954)
+                      : (isDarkMode
+                          ? Colors.white.withOpacity(0.08)
+                          : Colors.black.withOpacity(0.05)),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF1DB954)
+                        : (isDarkMode ? Colors.white24 : Colors.black12),
+                    width: isSelected ? 1.5 : 1,
+                  ),
+                ),
+                child: Text(
+                  Story.languageDisplayName(langKey),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected
+                        ? Colors.white
+                        : (isDarkMode ? Colors.white70 : Colors.black54),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   /// Resolves the story cover image URL for use in the premium dialog
   ImageProvider? _getCoverImageProvider() {
     final coverImage = widget.story.coverImage;
@@ -1005,6 +1091,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           builder: (context) => ReaderScreen(
             story: storyForReader,
             initialChapterIndex: chapterIndex,
+            selectedLang: _selectedLang,
           ),
         ),
       );
@@ -1038,13 +1125,13 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         // Gérer le titre du chapitre (peut être une map avec lang ou un string)
         String chapterTitle = '';
         final titleData = chapter['title'];
-        final currentLang = context.locale.languageCode; // 'fr' ou 'en'
+        // Utiliser la langue sélectionnée par l'utilisateur (gasy par défaut)
         if (titleData is Map) {
-          // Essayer d'abord la langue actuelle, puis les autres langues disponibles
-          chapterTitle = titleData[currentLang]?.toString() ?? 
+          // Essayer d'abord la langue sélectionnée, puis gasy, puis les autres
+          chapterTitle = titleData[_selectedLang]?.toString() ?? 
+                        titleData['gasy']?.toString() ?? 
                         titleData['fr']?.toString() ?? 
-                        titleData['en']?.toString() ?? 
-                        titleData['gasy']?.toString() ??
+                        titleData['en']?.toString() ??
                         titleData.values.firstOrNull?.toString() ??
                         '${'chapter_title'.tr()} ${index + 1}';
         } else if (titleData is String) {
