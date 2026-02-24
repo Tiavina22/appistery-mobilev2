@@ -2296,7 +2296,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildSettingsTile(
               icon: Icons.info_outline_rounded,
               title: 'version'.tr(),
-              subtitle: 'v1.0.1',
+              subtitle: 'v0.0.1',
               onTap: _showAboutBottomSheet,
               trailing: Icon(
                 Icons.chevron_right_rounded,
@@ -2951,7 +2951,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Version
                 Text(
-                  'Version 1.0.1',
+                  'Version 0.0.1',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,

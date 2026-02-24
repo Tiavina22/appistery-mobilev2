@@ -41,7 +41,7 @@ class VersionService {
   static int getAppVersionCode() {
     try {
       final versionCode = dotenv.env['APP_VERSION_CODE'];
-      return int.parse(versionCode ?? '2');
+      return int.parse(versionCode ?? '3');
     } catch (e) {
       return 1; // Default to 1 if parsing fails
     }
@@ -49,7 +49,7 @@ class VersionService {
 
   /// Get the current app version name from environment
   static String getAppVersionName() {
-    return dotenv.env['APP_VERSION_NAME'] ?? '1.0.1';
+    return dotenv.env['APP_VERSION_NAME'] ?? '0.0.1';
   }
 
   /// Get the app platform from environment
