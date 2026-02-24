@@ -747,7 +747,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  widget.story.title,
+                                  widget.story.getTitle(widget.selectedLang ?? 'gasy'),
                                   style: TextStyle(
                                     color: _getTextColor(),
                                     fontSize: 14,
