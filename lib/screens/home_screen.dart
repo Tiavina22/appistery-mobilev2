@@ -397,7 +397,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<StoryProvider>(
       builder: (context, storyProvider, _) {
         if (storyProvider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+          ));
         }
 
         if (storyProvider.error != null) {
@@ -440,7 +442,9 @@ class _HomeScreenState extends State<HomeScreen> {
               if (storyProvider.isLoadingMore)
                 const Padding(
                   padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                  )),
                 ),
               if (!storyProvider.hasMoreStories &&
                   storyProvider.stories.isNotEmpty)
@@ -476,7 +480,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Container(
                   decoration: BoxDecoration(
                     color: isDarkMode
-                        ? const Color.fromARGB(79, 2, 49, 53)
+                        ? const Color(0xFF2C2C2E)
                         : Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -553,7 +557,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: storyProvider.authors.isEmpty
                       ? const Padding(
                           padding: EdgeInsets.symmetric(vertical: 16.0),
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                          ),
                         )
                       : SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
@@ -597,7 +603,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: storyProvider.genres.isEmpty
                       ? const Padding(
                           padding: EdgeInsets.symmetric(vertical: 16.0),
-                          child: CircularProgressIndicator(),
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                          ),
                         )
                       : GridView.builder(
                           physics: const NeverScrollableScrollPhysics(),
@@ -623,7 +631,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 if (storyProvider.isLoading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 60.0),
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                    )),
                   )
                 else if (storyProvider.searchResults.isEmpty)
                   Padding(
@@ -808,7 +818,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                                 color: isDarkMode
-                                    ? const Color.fromARGB(255, 6, 164, 146)
+                                    ? const Color(0xFFFA586A)
                                     : Colors.grey.shade600,
                               ),
                             ),
@@ -817,7 +827,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Icons.arrow_forward_rounded,
                               size: 12,
                               color: isDarkMode
-                                  ? const Color.fromARGB(255, 3, 255, 238)
+                                  ? const Color(0xFFFA586A)
                                   : Colors.grey.shade600,
                             ),
                           ],
@@ -1285,7 +1295,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber,
+                          color: const Color(0xFFFA586A),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text(
@@ -1393,8 +1403,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color.fromARGB(255, 12, 146, 141),
-                              foregroundColor: const Color.fromARGB(255, 255, 250, 250),
+                              backgroundColor: const Color(0xFFFA586A),
+                              foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(
                                 vertical: 14,
                                 horizontal: 24,
@@ -1697,7 +1707,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.amber,
+                    color: const Color(0xFFFA586A),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
@@ -1830,7 +1840,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                  ),
                 ),
               ),
             );
@@ -2915,8 +2928,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
                     'assets/logo/logo-appistery-no.png',
-                    width: 80,
-                    height: 80,
+                    width: 60,
+                    height: 60,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -2959,7 +2972,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 24),
+
+                // Powered by logo
+                Image.asset(
+                  'assets/powered/powered.png',
+                  height: 30,
+                  fit: BoxFit.contain,
+                ),
+
+                const SizedBox(height: 24),
 
                 // Bouton fermer
                 SizedBox(
@@ -2977,7 +2999,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF2E7D32),
+                        color: Color(0xFFFA586A),
                       ),
                     ),
                   ),

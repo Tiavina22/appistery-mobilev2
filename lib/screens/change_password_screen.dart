@@ -220,12 +220,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1DB954).withOpacity(0.1),
+                  color: const Color(0xFFFA586A).withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.check_circle_rounded,
-                  color: Color(0xFF1DB954),
+                  color: Color(0xFFFA586A),
                   size: 32,
                 ),
               ),
@@ -293,7 +293,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     style: const TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1DB954),
+                      color: Color(0xFFFA586A),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -413,7 +413,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1DB954),
+                        color: Color(0xFFFA586A),
                         width: 2,
                       ),
                     ),
@@ -501,7 +501,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1DB954),
+                        color: Color(0xFFFA586A),
                         width: 2,
                       ),
                     ),
@@ -592,7 +592,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(
-                        color: Color(0xFF1DB954),
+                        color: Color(0xFFFA586A),
                         width: 2,
                       ),
                     ),
@@ -635,7 +635,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _changePassword,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1DB954),
+                      backgroundColor: const Color(0xFFFA586A),
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(28),

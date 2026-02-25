@@ -200,7 +200,9 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
             if (_isLoading && _readStories.isEmpty)
               Expanded(
                 child: Center(
-                  child: CircularProgressIndicator(),
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                  ),
                 ),
               )
             else if (_readStories.isEmpty)
@@ -238,7 +240,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                       ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF1DB954),
+                          backgroundColor: const Color(0xFFFA586A),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 32,
@@ -417,9 +419,7 @@ class _MyStoriesScreenState extends State<MyStoriesScreen> {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: isCompleted
-                      ? Colors.green.withOpacity(0.9)
-                      : Colors.blue.withOpacity(0.9),
+                  color: const Color(0xFFFA586A).withOpacity(0.9),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(

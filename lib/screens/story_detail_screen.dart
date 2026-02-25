@@ -267,7 +267,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             context,
             message: '${'now_following'.tr()} ${widget.story.author}',
             icon: Icons.check_circle_outline,
-            backgroundColor: Colors.green[600]!,
+            backgroundColor: const Color(0xFFFA586A),
             duration: const Duration(seconds: 3),
           );
         } else {
@@ -275,7 +275,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
             context,
             message: '${'unfollowed'.tr()} ${widget.story.author}',
             icon: Icons.remove_circle_outline,
-            backgroundColor: Colors.orange[600]!,
+            backgroundColor: const Color(0xFFFA586A),
             duration: const Duration(seconds: 3),
           );
         }
@@ -320,9 +320,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           context,
           message: _isFavorite ? 'Ajouté à Ma liste' : 'Retiré de Ma liste',
           icon: _isFavorite ? Icons.check : Icons.remove,
-          backgroundColor: _isFavorite
-              ? Colors.green[600]!
-              : Colors.orange[600]!,
+          backgroundColor: const Color(0xFFFA586A),
           duration: const Duration(seconds: 2),
         );
       }
@@ -581,6 +579,17 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                           onPressed: _isLoadingStory
                               ? null
                               : () async {
+                                  // Vérifier le statut premium avant de continuer
+                                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                                  final isUserPremium = authProvider.isPremium;
+                                  final isStoryPremium = widget.story.isPremium;
+
+                                  // Bloquer l'accès si l'histoire est premium et l'utilisateur ne l'est pas
+                                  if (isStoryPremium && !isUserPremium) {
+                                    _showPremiumLockedDialog();
+                                    return;
+                                  }
+
                                   setState(() => _isLoadingStory = true);
                                   try {
                                     // Utiliser _fullStory s'il est déjà chargé, sinon charger
@@ -604,7 +613,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                             content: Text(
                                               'no_chapters_yet'.tr(),
                                             ),
-                                            backgroundColor: Colors.orange,
+                                            backgroundColor: const Color(0xFFFA586A),
                                           ),
                                         );
                                       }
@@ -699,9 +708,9 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _isCompleted
-                                ? Colors.green
+                                ? const Color(0xFFFA586A)
                                 : (_hasStartedReading
-                                      ? Colors.orange
+                                      ? const Color(0xFFFA586A)
                                       : (isDarkMode
                                             ? Colors.white
                                             : Colors.black)),
@@ -1189,7 +1198,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                       if (isStoryPremium && !isUserPremium)
                         const Padding(
                           padding: EdgeInsets.only(left: 8.0),
-                          child: Icon(Icons.lock, color: Colors.amber, size: 16),
+                          child: Icon(Icons.lock, color: Color(0xFFFA586A), size: 16),
                         ),
                     ],
                   ),
@@ -1424,7 +1433,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.green,
+              color: const Color(0xFFFA586A),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(

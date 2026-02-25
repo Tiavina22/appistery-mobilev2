@@ -91,7 +91,9 @@ class _CategoryViewAllScreenState extends State<CategoryViewAllScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+            ))
           : _stories.isEmpty
               ? Center(
                   child: Text(
@@ -188,7 +190,7 @@ class _CategoryViewAllScreenState extends State<CategoryViewAllScreen> {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.amber,
+                    color: const Color(0xFFFA586A),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
@@ -271,7 +273,10 @@ class _CategoryViewAllScreenState extends State<CategoryViewAllScreen> {
                 child: SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                  ),
                 ),
               ),
             );
