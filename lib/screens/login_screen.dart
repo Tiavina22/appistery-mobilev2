@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ? const Color(0xFF181818)
         : const Color(0xFFF5F5F5);
     final textColor = isDark ? Colors.white : Colors.black;
-    final accentColor = const Color(0xFF1DB954);
+    final accentColor = const Color(0xFFFA586A);
 
     return Scaffold(
       backgroundColor: bgColor,

@@ -68,7 +68,7 @@ class _RegisterStep3AvatarScreenState extends State<RegisterStep3AvatarScreen> {
     final isDark = themeProvider.isDarkMode;
     final bgColor = isDark ? const Color(0xFF000000) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
-    final accentColor = const Color(0xFF1DB954);
+    final accentColor = const Color(0xFFFA586A);
 
     return Scaffold(
       backgroundColor: bgColor,

@@ -83,7 +83,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
           backgroundColor: Theme.of(context).colorScheme.surface,
           title: Text(
             _cgu!['title'] ?? 'CGU',
-            style: const TextStyle(color: Color(0xFF1DB954)),
+            style: const TextStyle(color: Color(0xFFFA586A)),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -102,7 +102,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
               onPressed: () => Navigator.pop(context),
               child: Text(
                 tr('close'),
-                style: const TextStyle(color: Color(0xFF1DB954)),
+                style: const TextStyle(color: Color(0xFFFA586A)),
               ),
             ),
           ],
@@ -164,12 +164,12 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1DB954).withOpacity(0.2),
+                      color: const Color(0xFFFA586A).withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.check_circle,
-                      color: Color(0xFF1DB954),
+                      color: Color(0xFFFA586A),
                       size: 40,
                     ),
                   ),
@@ -207,8 +207,8 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1DB954),
-                        foregroundColor: Colors.black,
+                        backgroundColor: const Color(0xFFFA586A),
+                        foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(22),
                         ),
@@ -242,7 +242,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
     final isDark = themeProvider.isDarkMode;
     final bgColor = isDark ? const Color(0xFF000000) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
-    final accentColor = const Color(0xFF1DB954);
+    final accentColor = const Color(0xFFFA586A);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -332,7 +332,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                 Center(
                   child: Column(
                     children: [
-                      const CircularProgressIndicator(color: Color(0xFF1DB954)),
+                      const CircularProgressIndicator(color: Color(0xFFFA586A)),
                       const SizedBox(height: 16),
                       Text(
                         'loading_conditions'.tr(),
@@ -364,7 +364,7 @@ class _RegisterStep6CGUScreenState extends State<RegisterStep6CGUScreen> {
                 child: Text(
                   'view_cgu'.tr(),
                   style: const TextStyle(
-                    color: Color(0xFF1DB954),
+                    color: Color(0xFFFA586A),
                     decoration: TextDecoration.underline,
                     fontSize: 14,
                   ),

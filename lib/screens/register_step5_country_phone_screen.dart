@@ -86,7 +86,7 @@ class _RegisterStep5CountryPhoneScreenState
     final isDark = themeProvider.isDarkMode;
     final bgColor = isDark ? const Color(0xFF000000) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
-    final accentColor = const Color(0xFF1DB954);
+    final accentColor = const Color(0xFFFA586A);
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -159,7 +159,7 @@ class _RegisterStep5CountryPhoneScreenState
                     ),
                     focusedBorder: const UnderlineInputBorder(
                       borderSide: BorderSide(
-                        color: Color(0xFF1DB954),
+                        color: Color(0xFFFA586A),
                         width: 2,
                       ),
                     ),
@@ -221,7 +221,7 @@ class _RegisterStep5CountryPhoneScreenState
                           ),
                           focusedBorder: const UnderlineInputBorder(
                             borderSide: BorderSide(
-                              color: Color(0xFF1DB954),
+                              color: Color(0xFFFA586A),
                               width: 2,
                             ),
                           ),

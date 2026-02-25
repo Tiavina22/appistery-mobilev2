@@ -146,7 +146,7 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
     final isDark = themeProvider.isDarkMode;
     final bgColor = isDark ? const Color(0xFF000000) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black;
-    final accentColor = const Color(0xFF1DB954);
+    final accentColor = const Color(0xFFFA586A);
     final cardColor = isDark
         ? const Color(0xFF181818)
         : const Color(0xFFF5F5F5);
@@ -280,14 +280,14 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954).withOpacity(0.1),
+                    color: const Color(0xFFFA586A).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Row(
                     children: [
                       const Icon(
                         Icons.check_circle_outline,
-                        color: Color(0xFF1DB954),
+                        color: Color(0xFFFA586A),
                         size: 20,
                       ),
                       const SizedBox(width: 8),
@@ -295,7 +295,7 @@ class _RegisterStep2OTPScreenState extends State<RegisterStep2OTPScreen> {
                         child: Text(
                           _successMessage!,
                           style: const TextStyle(
-                            color: Color(0xFF1DB954),
+                            color: Color(0xFFFA586A),
                             fontSize: 14,
                           ),
                         ),
