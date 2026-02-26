@@ -10,6 +10,7 @@ import '../services/author_service.dart';
 import '../services/reaction_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/facebook_notification.dart';
+import '../utils/locale_utils.dart';
 import 'author_profile_screen.dart';
 import 'reader_screen.dart';
 import '../widgets/comments_bottom_sheet.dart';
@@ -525,7 +526,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                           icon: Icons.calendar_today_outlined,
                           label: DateFormat(
                             'dd MMM yyyy',
-                            context.locale.languageCode,
+                            getValidDateFormatLocale(context.locale.languageCode),
                           ).format(widget.story.createdAt!),
                           isDarkMode: isDarkMode,
                         ),
