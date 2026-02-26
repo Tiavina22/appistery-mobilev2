@@ -240,7 +240,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen>
                   child: ElevatedButton(
                     onPressed: () => _confirmTheme(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1DB954),
+                      backgroundColor: const Color(0xFFFC3C44),
                       foregroundColor: Colors.white,
                       padding: EdgeInsets.symmetric(
                         vertical: (12 * s).clamp(10.0, 16.0),
@@ -299,7 +299,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen>
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
-                isSelected ? const Color(0xFF1DB954) : Colors.grey.shade800,
+                isSelected ? const Color(0xFFFC3C44) : Colors.grey.shade800,
             width: isSelected ? 2 : 1,
           ),
         ),
@@ -352,7 +352,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen>
                               height: 12,
                               decoration: BoxDecoration(
                                 color: index == 0
-                                    ? const Color(0xFF1DB954)
+                                    ? const Color(0xFFFC3C44)
                                     : (isDark
                                         ? Colors.white24
                                         : Colors.black26),
@@ -409,7 +409,7 @@ class _ThemeSelectionScreenState extends State<ThemeSelectionScreen>
               duration: const Duration(milliseconds: 300),
               child: const Icon(
                 Icons.check_circle,
-                color: Color(0xFF1DB954),
+                color: Color(0xFFFC3C44),
               ),
             ),
           ],

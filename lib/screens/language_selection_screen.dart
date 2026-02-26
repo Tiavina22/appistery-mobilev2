@@ -185,7 +185,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                                   height: 3.5,
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF1DB954), Colors.transparent],
+                                      colors: [Color(0xFFFC3C44), Colors.transparent],
                                     ),
                                     borderRadius: BorderRadius.circular(2),
                                   ),
@@ -254,7 +254,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                               : null,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: _selectedLanguage != null 
-                                ? const Color(0xFF1DB954)
+                                ? const Color(0xFFFC3C44)
                                 : Colors.grey[800],
                             foregroundColor: Colors.white,
                             disabledBackgroundColor: Colors.grey[900],
@@ -268,7 +268,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                             ),
                             elevation: _selectedLanguage != null ? 6 : 0,
                             shadowColor: _selectedLanguage != null 
-                                ? const Color(0xFF1DB954).withOpacity(0.4)
+                                ? const Color(0xFFFC3C44).withOpacity(0.4)
                                 : null,
                           ),
                           child: Row(
@@ -331,8 +331,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        const Color(0xFF1DB954).withOpacity(0.2),
-                        const Color(0xFF1DB954).withOpacity(0.05),
+                        const Color(0xFFFC3C44).withOpacity(0.2),
+                        const Color(0xFFFC3C44).withOpacity(0.05),
                       ],
                     )
                   : null,
@@ -340,14 +340,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
               borderRadius: BorderRadius.circular(18 * s),
               border: Border.all(
                 color: isSelected 
-                    ? const Color(0xFF1DB954)
+                    ? const Color(0xFFFC3C44)
                     : Colors.grey[800]!,
                 width: isSelected ? 2.5 : 1.5,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF1DB954).withOpacity(0.3),
+                        color: const Color(0xFFFC3C44).withOpacity(0.3),
                         blurRadius: 20,
                         spreadRadius: -5,
                       ),
@@ -367,8 +367,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                       end: Alignment.bottomRight,
                       colors: isSelected
                           ? [
-                              const Color(0xFF1DB954).withOpacity(0.15),
-                              const Color(0xFF1DB954).withOpacity(0.05),
+                              const Color(0xFFFC3C44).withOpacity(0.15),
+                              const Color(0xFFFC3C44).withOpacity(0.05),
                             ]
                           : [
                               Colors.grey[850]!,
@@ -378,7 +378,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                     borderRadius: BorderRadius.circular(14 * s),
                     border: Border.all(
                       color: isSelected 
-                          ? const Color(0xFF1DB954).withOpacity(0.5)
+                          ? const Color(0xFFFC3C44).withOpacity(0.5)
                           : Colors.transparent,
                       width: 1.5,
                     ),
@@ -413,7 +413,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                             height: 4,
                             decoration: BoxDecoration(
                               color: isSelected 
-                                  ? const Color(0xFF1DB954)
+                                  ? const Color(0xFFFC3C44)
                                   : Colors.grey[600],
                               shape: BoxShape.circle,
                             ),
@@ -449,14 +449,14 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen> with 
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Color(0xFF1DB954),
-                          Color(0xFF1AA34A),
+                          Color(0xFFFC3C44),
+                          Color(0xFFE63946),
                         ],
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF1DB954).withOpacity(0.5),
+                          color: const Color(0xFFFC3C44).withOpacity(0.5),
                           blurRadius: 12,
                           spreadRadius: -2,
                         ),

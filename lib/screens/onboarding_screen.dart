@@ -20,19 +20,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
       imagePath: 'assets/onboarding/one.png',
       titleKey: 'onboarding_title_1',
       descriptionKey: 'onboarding_desc_1',
-      color: const Color(0xFF1DB954),
+      color: const Color(0xFFFC3C44),
     ),
     OnboardingData(
       imagePath: 'assets/onboarding/two.png',
       titleKey: 'onboarding_title_2',
       descriptionKey: 'onboarding_desc_2',
-      color: const Color(0xFF1DB954),
+      color: const Color(0xFFFC3C44),
     ),
     OnboardingData(
       imagePath: 'assets/onboarding/three.png',
       titleKey: 'onboarding_title_3',
       descriptionKey: 'onboarding_desc_3',
-      color: const Color(0xFF1DB954),
+      color: const Color(0xFFFC3C44),
     ),
   ];
 
@@ -219,8 +219,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             gradient: _currentPage == index
                                 ? const LinearGradient(
                                     colors: [
-                                      Color(0xFF1DB954),
-                                      Color(0xFF1AA34A),
+                                      Color(0xFFFC3C44),
+                                      Color(0xFFE63946),
                                     ],
                                   )
                                 : null,
@@ -231,7 +231,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                             boxShadow: _currentPage == index
                                 ? [
                                     BoxShadow(
-                                      color: const Color(0xFF1DB954).withOpacity(0.5),
+                                      color: const Color(0xFFFC3C44).withOpacity(0.5),
                                       blurRadius: 8,
                                       spreadRadius: -2,
                                     ),
@@ -295,14 +295,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> with SingleTickerPr
                                 ? _completeOnboarding
                                 : _nextPage,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1DB954),
+                              backgroundColor: const Color(0xFFFC3C44),
                               foregroundColor: Colors.white,
                               padding: EdgeInsets.symmetric(vertical: (12 * s).clamp(10.0, 16.0)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               elevation: 6,
-                              shadowColor: const Color(0xFF1DB954).withOpacity(0.4),
+                              shadowColor: const Color(0xFFFC3C44).withOpacity(0.4),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
