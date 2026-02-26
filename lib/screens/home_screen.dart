@@ -1069,9 +1069,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ),
                         ],
-                        onChanged: (Locale? value) {
+                        onChanged: (Locale? value) async {
                           if (value != null) {
-                            context.setLocale(value);
+                            // Use await to ensure locale change completes
+                            await context.setLocale(value);
+                            // Force rebuild
+                            if (mounted) {
+                              setState(() {
+                                // Just trigger rebuild, stay on current tab
+                              });
+                            }
                           }
                         },
                       ),
@@ -2461,6 +2468,24 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Unknown';
   }
 
+  // Method to change language and refresh the UI
+  Future<void> _changeLanguage(BuildContext dialogContext, Locale locale) async {
+    // Change locale with await to ensure it completes  
+    await context.setLocale(locale);
+    
+    // Close the dialog
+    if (dialogContext.mounted) {
+      Navigator.pop(dialogContext);
+    }
+    
+    // Force rebuild of the home screen
+    if (mounted) {
+      setState(() {
+        // Just trigger rebuild, stay on current tab
+      });
+    }
+  }
+
   void _showLanguageDialog(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final currentLocale = context.locale;
@@ -2548,10 +2573,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     // Français
                     InkWell(
-                      onTap: () {
-                        context.setLocale(const Locale('fr'));
-                        Navigator.pop(dialogContext);
-                      },
+                      onTap: () => _changeLanguage(dialogContext, const Locale('fr')),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -2595,10 +2617,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     // English
                     InkWell(
-                      onTap: () {
-                        context.setLocale(const Locale('en'));
-                        Navigator.pop(dialogContext);
-                      },
+                      onTap: () => _changeLanguage(dialogContext, const Locale('en')),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
@@ -2642,10 +2661,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     // Malagasy
                     InkWell(
-                      onTap: () {
-                        context.setLocale(const Locale('mg'));
-                        Navigator.pop(dialogContext);
-                      },
+                      onTap: () => _changeLanguage(dialogContext, const Locale('mg')),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),

@@ -70,6 +70,7 @@ class MainApp extends StatelessWidget {
           supportedLocales: const [
             Locale('en'),
             Locale('fr'),
+            Locale('mg'), // Add mg to trigger rebuild when switching to Malagasy
           ],
           locale: materialLocale,
           debugShowCheckedModeBanner: false,
