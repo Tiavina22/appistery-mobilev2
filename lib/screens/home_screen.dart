@@ -2980,7 +2980,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 // Version
                 Text(
-                  'Version 0.0.1',
+                  'Version 0.0.2',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 13,
