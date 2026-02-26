@@ -606,7 +606,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
               },
               itemBuilder: (context, index) {
                 if (index != _currentChapterIndex || _isLoading) {
-                  return const Center(child: CircularProgressIndicator());
+                  return _buildChapterLoadingSkeleton();
                 }
 
                 // Contenu du chapitre avec scroll vertical
@@ -882,6 +882,57 @@ class _ReaderScreenState extends State<ReaderScreen> {
               ),
           ],
         ),
+      ),
+    );
+  }
+
+  // Build lazy loading skeleton for chapter loading
+  Widget _buildChapterLoadingSkeleton() {
+    return SingleChildScrollView(
+      padding: EdgeInsets.only(
+        left: 24,
+        right: 24,
+        top: _showControls ? 120 : 60,
+        bottom: _showControls ? 120 : 80,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title skeleton
+          Container(
+            width: double.infinity,
+            height: 32,
+            decoration: BoxDecoration(
+              color: _getTextColor().withOpacity(0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Subtitle skeleton
+          Container(
+            width: 150,
+            height: 16,
+            decoration: BoxDecoration(
+              color: _getTextColor().withOpacity(0.08),
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 32),
+          // Content skeleton lines
+          ...List.generate(15, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Container(
+                width: index % 4 == 0 ? double.infinity * 0.85 : double.infinity,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: _getTextColor().withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            );
+          }),
+        ],
       ),
     );
   }
