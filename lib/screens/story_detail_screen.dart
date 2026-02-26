@@ -57,6 +57,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Story? _fullStory;
   bool _isLoadingChapters = false;
 
+  // États pour la gestion des erreurs
+  bool _hasError = false;
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +97,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         }
       }
     } catch (e) {
+      debugPrint('❌ [StoryDetailScreen] Error loading last reading position: $e');
+      // Non-critique, ne pas bloquer l'affichage
     }
   }
 
@@ -124,6 +130,10 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
               completionInfo != null && completionInfo['is_completed'] == true;
         });
       }
+    } catch (e, stackTrace) {
+      debugPrint('❌ [StoryDetailScreen] Error loading reading stats: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // Non-critique, ne pas bloquer l'affichage
     } finally {
       if (mounted) {
         setState(() => _isLoadingStats = false);
@@ -140,7 +150,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         });
       }
     } catch (e) {
-      // Silencieusement échouer
+      debugPrint('❌ [StoryDetailScreen] Error loading following status: $e');
+      // Non-critique, ne pas bloquer l'affichage
     }
   }
 
@@ -165,6 +176,8 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         });
       }
     } catch (e) {
+      debugPrint('❌ [StoryDetailScreen] Error loading reactions: $e');
+      // Non-critique, ne pas bloquer l'affichage
       if (mounted) {
         setState(() => _isLoadingReactions = false);
       }
@@ -231,7 +244,12 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
   Future<void> _loadFullStoryWithChapters() async {
     if (_isLoadingChapters) return;
 
-    setState(() => _isLoadingChapters = true);
+    setState(() {
+      _isLoadingChapters = true;
+      _hasError = false;
+      _errorMessage = null;
+    });
+    
     try {
       final storyService = StoryService();
       final fullStory = await storyService.getStoryById(widget.story.id);
@@ -239,11 +257,18 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
         setState(() {
           _fullStory = fullStory;
           _isLoadingChapters = false;
+          _hasError = false;
         });
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('❌ [StoryDetailScreen] Error loading full story: $e');
+      debugPrint('Stack trace: $stackTrace');
       if (mounted) {
-        setState(() => _isLoadingChapters = false);
+        setState(() {
+          _isLoadingChapters = false;
+          _hasError = true;
+          _errorMessage = e.toString();
+        });
       }
     }
   }
@@ -660,6 +685,7 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
                                       await _loadLastReadingPosition();
                                     }
                                   } catch (e) {
+                                    debugPrint('❌ [StoryDetailScreen] Error opening reader: $e');
                                     if (mounted) {
                                       ScaffoldMessenger.of(
                                         context,
@@ -1076,6 +1102,96 @@ class _StoryDetailScreenState extends State<StoryDetailScreen>
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final textColorSecondary = isDarkMode ? Colors.white70 : Colors.black54;
     final dividerColor = isDarkMode ? Colors.white12 : Colors.black12;
+
+    // Afficher un loader pendant le chargement
+    if (_isLoadingChapters) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              const CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Chargement des chapitres...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textColorSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Afficher un message d'erreur avec retry si le chargement a échoué
+    if (_hasError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Colors.red[400],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Erreur de chargement',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Impossible de charger les chapitres',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textColorSecondary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              if (_errorMessage != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: textColorSecondary.withOpacity(0.7),
+                    fontStyle: FontStyle.italic,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _hasError = false;
+                    _errorMessage = null;
+                  });
+                  _loadFullStoryWithChapters();
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Réessayer'),
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFFFA586A),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     // Vérifier le statut premium de l'utilisateur et de l'histoire
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
