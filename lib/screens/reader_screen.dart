@@ -788,7 +788,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
                             value: _scrollPosition,
                             min: 0,
                             max: 100,
-                            activeColor: Colors.blue,
+                            activeColor: const Color(0xFFFC3C44),
                             inactiveColor: _getTextColor().withOpacity(0.2),
                             onChanged: (value) {
                               if (_scrollController.hasClients) {
