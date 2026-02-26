@@ -148,8 +148,11 @@ class ReactionService {
     }
   }
 
-  // Toggle comment like
-  Future<Map<String, dynamic>> toggleCommentLike(int commentId) async {
+  // Toggle comment like/reaction with type support
+  Future<Map<String, dynamic>> toggleCommentReaction(
+    int commentId, {
+    String reactionType = 'like',
+  }) async {
     try {
       final token = await _authService.getToken();
       if (token == null) {
@@ -157,20 +160,28 @@ class ReactionService {
       }
 
       final response = await _dio.post(
-        '/api/comments/$commentId/like',
+        '/api/comments/$commentId/reactions',
+        data: {'reactionType': reactionType},
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       if (response.statusCode == 200 && response.data['success']) {
         return {
-          'liked': response.data['liked'],
+          'reacted': response.data['reacted'] ?? true,
+          'userReactionType': response.data['userReactionType'],
+          'reactionCounts': response.data['reactionCounts'] ?? {},
           'message': response.data['message'],
         };
       }
-      throw Exception('Erreur lors du like du commentaire');
+      throw Exception('Erreur lors de la réaction au commentaire');
     } catch (e) {
       rethrow;
     }
+  }
+
+  // Toggle comment like (legacy method for backward compatibility)
+  Future<Map<String, dynamic>> toggleCommentLike(int commentId) async {
+    return toggleCommentReaction(commentId, reactionType: 'like');
   }
 
   // Get comment likes

@@ -8,6 +8,7 @@ import '../services/reaction_service.dart';
 import '../services/websocket_service.dart';
 import '../providers/theme_provider.dart';
 import '../providers/auth_provider.dart';
+import 'reaction_picker.dart';
 
 class CommentsBottomSheet extends StatefulWidget {
   final int storyId;
@@ -36,9 +37,9 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   bool _hasMore = true;
   bool _isLoadingMore = false;
   
-  // Pour les likes des commentaires
-  Map<int, bool> _commentLikes = {};
-  Map<int, int> _commentLikesCounts = {};
+  // Pour les réactions des commentaires
+  Map<int, String?> _commentReactionTypes = {}; // Type de réaction de l'utilisateur
+  Map<int, Map<String, int>> _commentReactionCounts = {}; // Nombre total par type
   int? _replyingToCommentId;
   String? _replyingToUsername;
 
@@ -121,22 +122,24 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           final total = data['pagination']?['total'] ?? _comments.length;
           _hasMore = _comments.length < total;
           
-          // Initialiser les likes depuis la réponse du serveur
-          _commentLikes.clear();
-          _commentLikesCounts.clear();
+          // Initialiser les réactions depuis la réponse du serveur
+          _commentReactionTypes.clear();
+          _commentReactionCounts.clear();
           
           for (var comment in _comments) {
             final commentId = comment['id'] as int;
-            // Le serveur retourne user_liked et likes_count
-            _commentLikes[commentId] = comment['user_liked'] ?? false;
-            _commentLikesCounts[commentId] = comment['likes_count'] ?? 0;
+            // Le serveur retourne user_reaction_type et reaction_counts
+            _commentReactionTypes[commentId] = comment['user_reaction_type'];
+            _commentReactionCounts[commentId] = 
+                Map<String, int>.from(comment['reaction_counts'] ?? {});
             
             // Traiter aussi les réponses si elles existent
             if (comment['replies'] != null && comment['replies'] is List) {
               for (var reply in comment['replies']) {
                 final replyId = reply['id'] as int;
-                _commentLikes[replyId] = reply['user_liked'] ?? false;
-                _commentLikesCounts[replyId] = reply['likes_count'] ?? 0;
+                _commentReactionTypes[replyId] = reply['user_reaction_type'];
+                _commentReactionCounts[replyId] = 
+                    Map<String, int>.from(reply['reaction_counts'] ?? {});
               }
             }
           }
@@ -157,10 +160,11 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         setState(() {
           _comments.insert(0, comment);
           
-          // Initialiser les likes pour le nouveau commentaire
+          // Initialiser les réactions pour le nouveau commentaire
           final commentId = comment['id'] as int;
-          _commentLikes[commentId] = comment['user_liked'] ?? false;
-          _commentLikesCounts[commentId] = comment['likes_count'] ?? 0;
+          _commentReactionTypes[commentId] = comment['user_reaction_type'];
+          _commentReactionCounts[commentId] = 
+              Map<String, int>.from(comment['reaction_counts'] ?? {});
         });
         
         // Update cache
@@ -208,18 +212,20 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
           _hasMore = _comments.length < total;
           _isLoadingMore = false;
           
-          // Initialiser les likes pour les nouveaux commentaires
+          // Initialiser les réactions pour les nouveaux commentaires
           for (var comment in newComments) {
             final commentId = comment['id'] as int;
-            _commentLikes[commentId] = comment['user_liked'] ?? false;
-            _commentLikesCounts[commentId] = comment['likes_count'] ?? 0;
+            _commentReactionTypes[commentId] = comment['user_reaction_type'];
+            _commentReactionCounts[commentId] = 
+                Map<String, int>.from(comment['reaction_counts'] ?? {});
             
             // Traiter aussi les réponses
             if (comment['replies'] != null && comment['replies'] is List) {
               for (var reply in comment['replies']) {
                 final replyId = reply['id'] as int;
-                _commentLikes[replyId] = reply['user_liked'] ?? false;
-                _commentLikesCounts[replyId] = reply['likes_count'] ?? 0;
+                _commentReactionTypes[replyId] = reply['user_reaction_type'];
+                _commentReactionCounts[replyId] = 
+                    Map<String, int>.from(reply['reaction_counts'] ?? {});
               }
             }
           }
@@ -266,49 +272,58 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     return null;
   }
 
-  Future<void> _toggleCommentLike(int commentId) async {
+  Future<void> _toggleCommentReaction(int commentId, String reactionType) async {
     try {
       // Optimistic update - update UI immediately
-      final isCurrentlyLiked = _commentLikes[commentId] == true;
-      final currentCount = _commentLikesCounts[commentId] ?? 0;
+      final currentReaction = _commentReactionTypes[commentId];
+      final currentCounts = _commentReactionCounts[commentId] ?? {};
       
       setState(() {
-        _commentLikes[commentId] = !isCurrentlyLiked;
-        _commentLikesCounts[commentId] = !isCurrentlyLiked
-            ? currentCount + 1
-            : (currentCount > 0 ? currentCount - 1 : 0);
+        // If same reaction, remove it
+        if (currentReaction == reactionType) {
+          _commentReactionTypes[commentId] = null;
+          final newCounts = Map<String, int>.from(currentCounts);
+          newCounts[reactionType] = (newCounts[reactionType] ?? 1) - 1;
+          if (newCounts[reactionType]! <= 0) {
+            newCounts.remove(reactionType);
+          }
+          _commentReactionCounts[commentId] = newCounts;
+        } else {
+          // Remove old reaction count if exists
+          final newCounts = Map<String, int>.from(currentCounts);
+          if (currentReaction != null) {
+            newCounts[currentReaction] = (newCounts[currentReaction] ?? 1) - 1;
+            if (newCounts[currentReaction]! <= 0) {
+              newCounts.remove(currentReaction);
+            }
+          }
+          // Add new reaction
+          _commentReactionTypes[commentId] = reactionType;
+          newCounts[reactionType] = (newCounts[reactionType] ?? 0) + 1;
+          _commentReactionCounts[commentId] = newCounts;
+        }
       });
       
-      // Send to server (in background) and calibrate with response
-      final response = await _reactionService.toggleCommentLike(commentId);
+      // Send to server (in background)
+      final response = await _reactionService.toggleCommentReaction(
+        commentId,
+        reactionType: reactionType,
+      );
       
-      // Calibrate state with server response
-      if (response['liked'] != null && mounted) {
-        final serverLikedState = response['liked'] as bool;
+      // Update with server response
+      if (mounted) {
         setState(() {
-          _commentLikes[commentId] = serverLikedState;
-          // Recalculate count based on final state
-          if (serverLikedState && (_commentLikes[commentId] == true)) {
-            // Ensure count is correct if liked
-            _commentLikesCounts[commentId] = (_commentLikesCounts[commentId] ?? 0);
-          } else if (!serverLikedState) {
-            // Ensure count is correct if unliked
-            _commentLikesCounts[commentId] = (_commentLikesCounts[commentId] ?? 0);
-          }
+          _commentReactionTypes[commentId] = response['userReactionType'];
+          _commentReactionCounts[commentId] = 
+              Map<String, int>.from(response['reactionCounts'] ?? {});
         });
       }
       
     } catch (e) {
-      // Revert on error - do optimistic revert
+      // Revert on error
       if (mounted) {
-        setState(() {
-          final isCurrentlyLiked = _commentLikes[commentId] == true;
-          final currentCount = _commentLikesCounts[commentId] ?? 0;
-          _commentLikes[commentId] = !isCurrentlyLiked;
-          _commentLikesCounts[commentId] = !isCurrentlyLiked
-              ? currentCount + 1
-              : (currentCount > 0 ? currentCount - 1 : 0);
-        });
+        // Reload comment reactions from server
+        _refreshComments();
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur: $e')),
@@ -364,8 +379,8 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
         _comments.insert(0, optimisticComment);
         // Initialiser les likes pour le commentaire optimiste
         final commentId = optimisticComment['id'] as int;
-        _commentLikes[commentId] = false;
-        _commentLikesCounts[commentId] = 0;
+        _commentReactionTypes[commentId] = null;
+        _commentReactionCounts[commentId] = {};
       });
       
       _commentController.clear();
@@ -759,8 +774,13 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
     final commentText = comment['comment_text'] ?? '';
     final createdAt = comment['created_at'];
     final isEdited = comment['is_edited'] == true;
-    final likeCount = _commentLikesCounts[comment['id']] ?? 0;
-    final isLiked = _commentLikes[comment['id']] == true;
+    
+    // Get reaction data
+    final commentId = comment['id'] as int;
+    final userReactionType = _commentReactionTypes[commentId];
+    final reactionCounts = _commentReactionCounts[commentId] ?? {};
+    final totalReactions = reactionCounts.values.fold<int>(0, (sum, count) => sum + count);
+    final hasReacted = userReactionType != null;
 
     final timeAgo = createdAt != null
         ? _formatTimeAgo(DateTime.parse(createdAt.toString()))
@@ -918,17 +938,33 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                         ),
                       ),
                     const SizedBox(height: 8),
-                    // Actions - Like et Reply
+                    // Actions - Réaction et Reply
                     Row(
                       children: [
-                        // Like button
+                        // Reaction button avec long press
                         Material(
                           color: Colors.transparent,
-                          child: InkWell(
+                          child: GestureDetector(
                             onTap: () {
                               final commentId = comment['id'];
                               if (commentId != null) {
-                                _toggleCommentLike(commentId as int);
+                                _toggleCommentReaction(commentId as int, 'like');
+                              }
+                            },
+                            onLongPress: () {
+                              final commentId = comment['id'];
+                              if (commentId != null) {
+                                final RenderBox box = context.findRenderObject() as RenderBox;
+                                final position = box.localToGlobal(Offset.zero);
+                                
+                                ReactionPicker.show(
+                                  context,
+                                  currentReaction: userReactionType,
+                                  position: Offset(position.dx, position.dy + 100),
+                                  onReactionSelected: (reactionType) {
+                                    _toggleCommentReaction(commentId as int, reactionType);
+                                  },
+                                );
                               }
                             },
                             child: Padding(
@@ -938,20 +974,26 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(
-                                    isLiked ? Icons.favorite : Icons.favorite_border,
-                                    size: 14,
-                                    color: isLiked ? Colors.red : subtextColor,
-                                  ),
+                                  if (hasReacted)
+                                    Text(
+                                      ReactionPicker.getReactionEmoji(userReactionType),
+                                      style: const TextStyle(fontSize: 16),
+                                    )
+                                  else
+                                    Icon(
+                                      Icons.favorite_border,
+                                      size: 14,
+                                      color: subtextColor,
+                                    ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    likeCount > 0
-                                        ? likeCount.toString()
+                                    totalReactions > 0
+                                        ? totalReactions.toString()
                                         : 'like_button'.tr(),
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: isLiked ? Colors.red : subtextColor,
+                                      color: hasReacted ? const Color(0xFFFC3C44) : subtextColor,
                                     ),
                                   ),
                                 ],
