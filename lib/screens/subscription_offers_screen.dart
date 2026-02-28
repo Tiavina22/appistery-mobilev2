@@ -900,9 +900,18 @@ class _OfferCardState extends State<OfferCard> {
           );
         }
       } else {
+        String errorMsg = '${'server_error'.tr()}: ${response.statusCode}';
+        try {
+          final errorData = json.decode(response.body);
+          if (errorData['error'] != null) {
+            errorMsg = errorData['error'];
+          } else if (errorData['details'] != null) {
+            errorMsg = errorData['details'];
+          }
+        } catch (_) {}
         scaffoldMessenger.showSnackBar(
           SnackBar(
-            content: Text('${'server_error'.tr()}: ${response.statusCode}'),
+            content: Text(errorMsg),
             backgroundColor: Colors.red,
           ),
         );
