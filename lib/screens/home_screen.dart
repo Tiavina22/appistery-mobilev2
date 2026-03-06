@@ -541,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 8.0,
                   ),
                   child: Text(
-                    'Featured creators',
+                    'featured_creators'.tr(),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -587,7 +587,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     vertical: 8.0,
                   ),
                   child: Text(
-                    'Browse all',
+                    'browse_all'.tr(),
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -798,7 +798,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          genre['title'] ?? 'Unknown',
+                          _translateGenre(genre['title'] ?? 'Unknown'),
                           style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -813,7 +813,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Row(
                           children: [
                             Text(
-                              'Explorer',
+                              'explore'.tr(),
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -1612,20 +1612,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                // Apple Grid System: Grille de 3 colonnes
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    mainAxisSpacing: 10,
-                    crossAxisSpacing: 10,
-                    childAspectRatio: 0.68,
-                  ),
-                  itemCount: stories.length > 6 ? 6 : stories.length,
-                  itemBuilder: (context, index) {
-                    final story = stories[index];
-                    return _buildStoryGridItem(story);
+                // Scroll horizontal - mêmes dimensions que les cards de la section nouveautés
+                Builder(
+                  builder: (context) {
+                    // Calculer la taille identique aux cards du GridView (crossAxisCount: 3, ratio: 0.68)
+                    final screenWidth = MediaQuery.of(context).size.width;
+                    final cardWidth = (screenWidth - 32 - 20) / 3; // padding 16*2 + spacing 10*2
+                    final cardHeight = cardWidth / 0.68;
+                    return SizedBox(
+                      height: cardHeight,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: stories.length > 10 ? 10 : stories.length,
+                        itemBuilder: (context, index) {
+                          final story = stories[index];
+                          return Container(
+                            width: cardWidth,
+                            margin: EdgeInsets.only(
+                              right: index < (stories.length > 10 ? 10 : stories.length) - 1 ? 10 : 0,
+                            ),
+                            child: _buildStoryGridItem(story),
+                          );
+                        },
+                      ),
+                    );
                   },
                 ),
               ],
@@ -2316,7 +2326,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _buildSettingsTile(
               icon: Icons.info_outline_rounded,
               title: 'version'.tr(),
-              subtitle: 'v0.0.1',
+              subtitle: 'v0.0.2',
               onTap: _showAboutBottomSheet,
               trailing: Icon(
                 Icons.chevron_right_rounded,

@@ -49,7 +49,7 @@ class VersionService {
 
   /// Get the current app version name from environment
   static String getAppVersionName() {
-    return dotenv.env['APP_VERSION_NAME'] ?? '0.0.1';
+    return dotenv.env['APP_VERSION_NAME'] ?? '0.0.2';
   }
 
   /// Get the app platform from environment
