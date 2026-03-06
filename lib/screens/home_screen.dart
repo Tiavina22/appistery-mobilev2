@@ -59,6 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
     'Mystery': {'fr': 'Mystère', 'en': 'Mystery', 'mg': 'Zava-miafina'},
     'Historique': {'fr': 'Historique', 'en': 'Historical', 'mg': 'Tantara'},
     'Historical': {'fr': 'Historique', 'en': 'Historical', 'mg': 'Tantara'},
+    'Sorcellerie': {'fr': 'Sorcellerie', 'en': 'Witchcraft', 'mg': 'Ody sy mosary'},
+    'Witchcraft': {'fr': 'Sorcellerie', 'en': 'Witchcraft', 'mg': 'Ody sy mosary'},
   };
 
   // Fonction helper pour traduire le genre
@@ -439,24 +441,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildNewReleasesSection(storyProvider),
               const SizedBox(height: 12),
               ..._buildGenreSections(storyProvider),
+              // Lazy loading indicator - only show when loading more
               if (storyProvider.isLoadingMore)
-                const Padding(
-                  padding: EdgeInsets.all(16.0),
-                  child: Center(child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
-                  )),
-                ),
-              if (!storyProvider.hasMoreStories &&
-                  storyProvider.stories.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
                   child: Center(
-                    child: Text(
-                      'no_more_data'.tr(),
-                      style: TextStyle(color: Colors.grey.shade600),
+                    child: SizedBox(
+                      height: 32,
+                      width: 32,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFA586A)),
+                      ),
                     ),
                   ),
                 ),
+              // Add spacing at the end
+              const SizedBox(height: 24),
             ],
           ),
         );
