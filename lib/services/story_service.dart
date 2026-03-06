@@ -388,7 +388,19 @@ class Story {
     if (json['genre'] is String) {
       genre = json['genre'];
     } else if (json['genre'] is Map) {
-      genre = json['genre']['title'] ?? 'Story';
+      // Si genre.title est un objet multilingue
+      final genreTitle = json['genre']['title'];
+      if (genreTitle is Map) {
+        // Extraire selon la locale par défaut (gasy > fr > en)
+        genre = genreTitle['gasy']?.toString() ?? 
+                genreTitle['fr']?.toString() ?? 
+                genreTitle['en']?.toString() ?? 
+                'Story';
+      } else if (genreTitle is String) {
+        genre = genreTitle;
+      } else {
+        genre = 'Story';
+      }
     }
 
     // Gérer la liste des chapitres
